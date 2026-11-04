@@ -1,15 +1,16 @@
-# Builds the Tool Oumijia release zip:
+﻿# Builds the Tool Oumijia release zip:
 #   output\Tool-Oumijia-EPLAN-v<Version>-win-x64.zip
 #
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.1.0
+#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.2.0
 #
 # The archive is self-contained (no .NET runtime installation required on the
-# target machine) and includes README.txt + VERSION.txt for end users.
+# target machine) and includes README.txt + VERSION.txt for end users, plus the
+# addin\ folder (EPLAN add-in bundle) when the add-in has been built.
 
 [CmdletBinding()]
 param(
-    [string]$Version = "0.1.0",
+    [string]$Version = "0.2.0",
     [string]$Runtime = "win-x64",
     [switch]$FrameworkDependent
 )
@@ -50,6 +51,23 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXIT
 Get-ChildItem -Path $publishDir -Force | Move-Item -Destination $stageDir -Force
 Remove-Item $publishDir -Recurse -Force
 
+# --- EPLAN add-in bundle (built separately; requires EPLAN API assemblies) ---
+$addinBuilt = Join-Path $root "src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll"
+$addinBundled = $false
+if (Test-Path $addinBuilt) {
+    $addinDir = Join-Path $stageDir "addin"
+    New-Item -ItemType Directory -Path $addinDir -Force | Out-Null
+    Copy-Item $addinBuilt (Join-Path $addinDir "Oumijia.EplAddin.EDZ.dll") -Force
+    Copy-Item (Join-Path $root "tools\eplan-scripts\OumijiaRegister.cs") $addinDir -Force
+    foreach ($f in @("Install-AddIn.ps1", "Install-AddIn.bat", "Uninstall-AddIn.ps1", "Uninstall-AddIn.bat", "README.txt")) {
+        Copy-Item (Join-Path $root "tools\install-addin\$f") $addinDir -Force
+    }
+    $addinBundled = $true
+    Write-Host "[+] EPLAN add-in bundle included (addin\)" -ForegroundColor Green
+} else {
+    Write-Host "[!] Add-in not built - release zip will NOT include addin\ (build it first, see docs/BUILD.md)" -ForegroundColor Yellow
+}
+
 # VERSION.txt
 $exePath = Join-Path $stageDir "Tool-Oumijia.exe"
 $exeHash = (Get-FileHash $exePath -Algorithm SHA256).Hash
@@ -57,6 +75,7 @@ $exeHash = (Get-FileHash $exePath -Algorithm SHA256).Hash
     "Tool Oumijia (EPLAN Edition) v$Version"
     "Build date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     "Runtime: $Runtime (self-contained: $(-not $FrameworkDependent))"
+    "EPLAN add-in bundle: $(if ($addinBundled) { 'included (addin\)' } else { 'NOT included' })"
     ""
     "Tool-Oumijia.exe SHA256:"
     $exeHash

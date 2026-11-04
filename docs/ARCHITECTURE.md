@@ -38,10 +38,18 @@
 └─────────────────────────────────────────────────────────────────────────────────┘
         ▲                                            
         │ ProjectReference (net48)                   
-┌───────┴──────────────── Oumijia.EplanAddIn (net48) ───────────────────────────┐
-│  AddIn          IEplAddIn (đăng ký với EPLAN)                                  │
-│  OpenToolAction action "OumijiaOpenTool" → Program.ShowMainWindow()            │
-│  (v0.2): OumijiaImportEdz — batch import qua EPLAN API vào Parts Database      │
+┌───────┴──────────────── Oumijia.EplanAddIn (net48, x64) ──────────────────────┐
+│  AddIn          IEplAddIn — OnRegister/OnInit/OnInitGui (ribbon) /OnExit       │
+│  Actions/       OumijiaOpenTool / OumijiaImportEdz / OumijiaExportEdz /        │
+│                 OumijiaSelfTest (IEplAction)                                    │
+│  Ui/            ImportEdzForm (ImportParts batch) · ExportEdzForm (ExportParts)│
+│  AddinLog       %APPDATA%\Tool Oumijia\logs\addin.log + CSV audit              │
+└────────────────────────────────────────────────────────────────────────────────┘
+        ▲
+        │ ghi registration vào EPLAN settings (chạy bên trong EPLAN)
+┌───────┴──────────── tools/eplan-scripts/OumijiaRegister.cs ────────────────────┐
+│  [Start] → Register/Unregister: Module keys + Services.AsmActions per action   │
+│  (chạy qua W3u.exe … ExecuteScript; installer: tools/install-addin/)           │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -70,6 +78,26 @@ inbox folders ──► ScanFiles() ──► với mỗi .edz: EdzPackageReader
                     ├─ validate extension
                     └─ LibraryWriter (copy, policy trùng tên)
                           └─► %PUBLIC%\EPLAN\Data\Macros\<Company>\...  → khởi động lại EPLAN
+```
+*(Core vẫn còn nhưng UI đã gỡ — xem quyết định phạm vi EDZ-only trong AGENTS.md mục 1)*
+
+### Add-in: Import EDZ (bên trong EPLAN)
+```
+ribbon "Nhập EDZ…" ──► ImportEdzForm (chọn file/folder, mode, identifier)
+                          │  xác nhận
+                          ▼
+        MDPartsManagement.ImportParts(files, "IXPartsImportExportEdz",
+                                      mode, bExtraLang, identifier, null)
+                          └─► Parts Database (EPLAN xử lý)  + CSV log
+```
+
+### Add-in: Export EDZ (bên trong EPLAN)
+```
+ribbon "Xuất EDZ…" ──► ExportEdzForm (phạm vi: all / selected; 1 file / mỗi part 1 file)
+                          │  xác nhận
+                          ▼
+        MDPartsDatabase.ExportParts(path, DataFormat.EDZ, IEnumerable<MDPart>)
+                          └─► file .edz  + CSV log
 ```
 
 ## Quyết định thiết kế quan trọng
@@ -101,6 +129,7 @@ inbox folders ──► ScanFiles() ──► với mỗi .edz: EdzPackageReader
 - **Thêm nhóm phân loại**: sửa `ClassifierRules.CreateDefault()` hoặc để người dùng sửa
   `rules.json` (file tự sinh trong `%APPDATA%`).
 - **Thêm nguồn metadata**: `EdzPackageReader.Read()` — thêm bước đọc nếu có định dạng mới.
-- **Batch import EDZ**: `Oumijia.EplanAddIn` — xem AGENTS.md mục 7.
+- **Sửa/thêm action add-in**: `src/Oumijia.EplanAddIn/Actions/` + đăng ký action mới trong
+  `tools/eplan-scripts/OumijiaRegister.cs` (section `Services.AsmActions` — xem AGENTS.md mục 6).
 - **EDZ writer**: tạo `EdzArchiveWriter` mới trong `Edz/`, dùng SharpCompress để ghi
   (ZIP chắc chắn được; 7z-ghi cần kiểm chứng với SharpCompress hoặc LZMA SDK).

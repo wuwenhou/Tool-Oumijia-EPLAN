@@ -8,9 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- EPLAN add-in v0.2: batch EDZ import into the parts database (official EPLAN API), ribbon integration
 - EDZ writer: create/repack packages (fill macros, keep unknown records)
+- Parts Management tab (official EPLAN "Parts Management Extension" API) — xem docs/ROADMAP.md
 - Optional English UI localization
+
+## [0.2.0] - 2026-11-04
+
+### Added — EPLAN add-in (`Oumijia.EplAddin.EDZ`)
+- Real EPLAN add-in (net48, x64) with the ribbon tab **"Tool Oumijia"**:
+  - **Nhập EDZ…** — batch import of EDZ packages into the parts database via the official
+    `MDPartsManagement.ImportParts` API (converter `IXPartsImportExportEdz`) with import modes
+    (append only / update only / update + append), identifier options, and a CSV audit log.
+  - **Xuất EDZ…** — export parts to EDZ via `MDPartsDatabase.ExportParts(..., DataFormat.EDZ)`,
+    whole database or current selection, single file or one file per part.
+  - **Cửa sổ Tool Oumijia** — opens the standalone tool.
+- Headless add-in installer (`addin/Install-AddIn.bat`): copies the DLL and registers the add-in by
+  running a small EPLAN script through `W3u.exe … ExecuteScript` — verified end-to-end on EPLAN
+  Platform 2022.0.3 (load → ribbon → command-line action → clean exit). Uninstall included.
+- Registration reference script (`tools/eplan-scripts/OumijiaRegister.cs`) documenting the complete
+  EPLAN registration surface (module + per-action `Services.AsmActions` entries, `@` escape rule).
+- `Oumijia.Register` console utility (status/read + experimental offline registration; note: EPLAN
+  does not persist offline settings writes — the script installer is the supported path).
+
+### Changed
+- **EDZ-only focus**: Export scan and Import queue now handle only `.edz` files; the EMA/EMP/EMS
+  handling was removed from the UI (per user decision).
+- Version bumped to 0.2.0; release packaging bundles the `addin/` folder with an integrity note.
+
+### Fixed
+- (add-in) `IEplAction.OnRegister(ref string, ref int)` signature corrected for EPLAN 2022.
 
 ## [0.1.0] - 2026-11-04
 
@@ -42,5 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.1.0

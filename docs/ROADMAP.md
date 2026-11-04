@@ -13,14 +13,14 @@
 - Cài macro vào EPLAN master data
 - App WinForms (net8) + khung add-in (net48), 25+ tests, CI, tooling pack/make-samples
 
-## v0.2 — EPLAN Add-in: batch import EDZ (mục tiêu chính)
+## v0.2 — EPLAN Add-in: Import/Export EDZ ✅ (2026-11-04)
 
-- [ ] Ribbon/toolbar "Tool Oumijia" trong EPLAN (Import / Export / Settings)
-- [ ] Action `OumijiaImportEdz`: import danh sách EDZ vào Parts Database qua EPLAN API
-      (nghiên cứu `Eplan.EplApi.MasterData` + `IXPartsImportExportEdz`, đối chiếu Parts Management)
-- [ ] Chế độ import: chỉ thêm mới / cập nhật / thay thế + chọn database đích (test/main)
-- [ ] Báo cáo kết quả từng gói ngay trong UI + log CSV
-- [ ] Kiểm tra trên EPLAN Education trước, tài liệu hóa giới hạn (nếu có)
+- [x] Ribbon "Tool Oumijia" trong EPLAN (Nhập EDZ / Xuất EDZ / Mở cửa sổ Tool)
+- [x] Import batch EDZ vào Parts Database qua `MDPartsManagement.ImportParts`
+      (converter `IXPartsImportExportEdz`), chọn chế độ + định danh part
+- [x] Export parts → EDZ (`MDPartsDatabase.ExportParts`, DataFormat.EDZ)
+- [x] Installer headless 1 click (script + `ExecuteScript`), đã kiểm chứng trên EPLAN 2022.0.3
+- [ ] UAT với người dùng thực trên database test → tinh chỉnh
 
 ## v0.3 — EDZ Writer / Editor
 
