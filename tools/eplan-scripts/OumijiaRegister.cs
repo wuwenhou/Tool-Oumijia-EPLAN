@@ -63,21 +63,47 @@ public class OumijiaRegister
             Settings settings = new Settings();
             try
             {
+                // QUAN TRỌNG: XÓA TRƯỚC KHI GHI.
+                // Settings của EPLAN có thể giữ nhiều giá trị lịch sử cho cùng một key
+                // (vd do đăng ký thủ công qua dialog "API add-ins" bằng đường dẫn khác).
+                // Nếu chỉ SetStringSetting, giá trị CŨ vẫn là thứ EPLAN đọc khi khởi động.
+                DeleteSetting(settings, basePath + ".AssemblyName");
+                DeleteSetting(settings, basePath + ".AssemblyPath");
+                DeleteSetting(settings, basePath + ".TypeName");
+                DeleteSetting(settings, basePath + ".LoadOnStart");
+
                 SetString(settings, basePath + ".AssemblyName", assemblyFullName, logPath);
                 SetString(settings, basePath + ".AssemblyPath", dllPath, logPath);
                 SetString(settings, basePath + ".TypeName", ModuleType, logPath);
                 SetBool(settings, basePath + ".LoadOnStart", true, logPath);
 
-                // Register the action classes of the add-in (Services.AsmActions section,
-                // mirroring what EPLAN's own "API add-ins" dialog writes).
-                WriteAction(settings, "OumijiaOpenTool", 20,
-                    "Oumijia.EplanAddIn.Actions.OpenToolAction", dllPath, assemblyFullName, logPath);
+                // v0.3.0: action "OumijiaOpenTool" (cửa sổ app) đã bị bỏ — dọn key cũ nếu còn.
+                DeleteAction(settings, "OumijiaOpenTool", 20);
+                // Các action hiện hành: xóa trước rồi ghi lại (lý do như trên).
+                DeleteAction(settings, "OumijiaImportEdz", 21);
+                DeleteAction(settings, "OumijiaExportEdz", 22);
+                DeleteAction(settings, "OumijiaSelfTest", 23);
+                DeleteAction(settings, "OumijiaDiagParts", 24);
+
                 WriteAction(settings, "OumijiaImportEdz", 21,
                     "Oumijia.EplanAddIn.Actions.ImportEdzAction", dllPath, assemblyFullName, logPath);
                 WriteAction(settings, "OumijiaExportEdz", 22,
                     "Oumijia.EplanAddIn.Actions.ExportEdzAction", dllPath, assemblyFullName, logPath);
                 WriteAction(settings, "OumijiaSelfTest", 23,
                     "Oumijia.EplanAddIn.Actions.SelfTestAction", dllPath, assemblyFullName, logPath);
+                WriteAction(settings, "OumijiaDiagParts", 24,
+                    "Oumijia.EplanAddIn.Actions.DiagPartsAction", dllPath, assemblyFullName, logPath);
+
+                // Đọc lại để tự xác nhận giá trị EPLAN sẽ dùng khi khởi động.
+                try
+                {
+                    WriteLog(logPath, "VERIFY AssemblyPath  => " + settings.GetStringSetting(basePath + ".AssemblyPath", 0));
+                    WriteLog(logPath, "VERIFY AssemblyName  => " + settings.GetStringSetting(basePath + ".AssemblyName", 0));
+                }
+                catch (Exception exVerify)
+                {
+                    WriteLog(logPath, "VERIFY loi doc lai: " + exVerify.Message);
+                }
             }
             finally
             {
@@ -113,6 +139,7 @@ public class OumijiaRegister
                 DeleteAction(settings, "OumijiaImportEdz", 21);
                 DeleteAction(settings, "OumijiaExportEdz", 22);
                 DeleteAction(settings, "OumijiaSelfTest", 23);
+                DeleteAction(settings, "OumijiaDiagParts", 24);
             }
             finally
             {

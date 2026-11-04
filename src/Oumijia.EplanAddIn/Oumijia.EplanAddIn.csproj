@@ -23,7 +23,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>Oumijia.EplanAddIn</RootNamespace>
     <AssemblyName>Oumijia.EplAddin.EDZ</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>wuwenhou</Authors>
     <Company>Tool Oumijia</Company>
     <Product>Tool Oumijia (EPLAN)</Product>
