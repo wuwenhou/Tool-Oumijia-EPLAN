@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    EPLAN Add-in project.
+
+    This project is intentionally NOT part of Tool-Oumijia-EPLAN.sln: it can only be
+    compiled on a machine with an EPLAN platform installation (the EPLAN API
+    assemblies are required at compile time).
+
+    Build with:
+      dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release ^
+        -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2024.0\Bin"
+
+    See docs/BUILD.md for details. EPLAN API targets .NET Framework 4.8.1.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Oumijia.EplanAddIn</RootNamespace>
+    <AssemblyName>Oumijia.EplanAddIn</AssemblyName>
+    <Version>0.1.0</Version>
+    <Authors>wuwenhou</Authors>
+    <Company>Tool Oumijia</Company>
+    <Product>Tool Oumijia (EPLAN)</Product>
+    <Description>EPLAN add-in entry point for Tool Oumijia (EDZ/EMA import-export assistant).</Description>
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EplanApiDir Condition="'$(EplanApiDir)' == ''">$(EPLAN_API_DIR)</EplanApiDir>
+  </PropertyGroup>
+
+  <Target Name="FailWhenEplanApiMissing" BeforeTargets="BeforeCompile"
+          Condition="'$(EplanApiDir)' == '' Or !Exists('$(EplanApiDir)')">
+    <Error Code="OUMIJIA001"
+           Text="EPLAN API assemblies not found. Build with -p:EplanApiDir=&quot;C:\Program Files\EPLAN\Platform\&lt;version&gt;\Bin&quot; — see docs/BUILD.md." />
+  </Target>
+
+  <ItemGroup Condition="'$(EplanApiDir)' != '' And Exists('$(EplanApiDir)')">
+    <Reference Include="Eplan.EplApi.ApplicationFramework">
+      <HintPath>$(EplanApiDir)\Eplan.EplApi.ApplicationFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Eplan.EplApi.Base">
+      <HintPath>$(EplanApiDir)\Eplan.EplApi.Base.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Eplan.EplApi.HEServices">
+      <HintPath>$(EplanApiDir)\Eplan.EplApi.HEServices.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oumijia.Tool\Oumijia.Tool.csproj" />
+    <ProjectReference Include="..\Oumijia.Core\Oumijia.Core.csproj" />
+  </ItemGroup>
+
+</Project>
