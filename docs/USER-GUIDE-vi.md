@@ -1,7 +1,9 @@
-# Hướng dẫn sử dụng — Tool Oumijia (EPLAN Edition) v0.4.0
+# Hướng dẫn sử dụng — Tool Oumijia (EPLAN Edition) v0.5.0
 
-**Add-in EPLAN** với ribbon "Tool Oumijia" gồm 2 nút: **Nhập EDZ…** và **Xuất EDZ…**
-(toàn bộ thao tác diễn ra trong EPLAN — không có ứng dụng ngoài).
+Tool Oumijia có **2 phiên bản dùng chung một giao diện**: bản **add-in** (EPLAN cũ vd 2022)
+và bản **script** (EPLAN mới/không API license). Cả hai đều hiện ribbon "Tool Oumijia" với
+2 nút **Nhập EDZ…** / **Xuất EDZ…** — toàn bộ thao tác trong EPLAN, không có ứng dụng ngoài.
+Cách cài: [INSTALL.md](INSTALL.md) (installer tự chọn bản phù hợp).
 
 ---
 
@@ -77,11 +79,15 @@ Xem [INSTALL.md](INSTALL.md). Tóm tắt:
 
 ### 3.3 Xuất các part đã chọn
 
-1. Chọn **Đích**:
-   - **Một file EDZ** — tất cả part đã chọn vào 1 file (mặc định `Documents\parts.edz`)
-   - **Mỗi part một file** — mỗi part 1 file `.edz` (tên theo mã hàng) vào một thư mục
+1. Chọn **Đích** (chỉ cần chọn **THƯ MỤC** — tên file tự động):
+   - **Một file EDZ (vào thư mục)** — gộp tất cả part đã chọn vào 1 file:
+     - chọn **1 part** → tên file = **mã sản phẩm** (vd `SIE.6ES7193-4CC30-0AA0.edz`)
+     - chọn **nhiều part** → tên file = `parts.edz`
+     - dòng **"→ sẽ tạo: …"** hiển thị tên file ngay trước khi xuất; nếu file đã tồn tại sẽ hỏi **Ghi đè**
+   - **Mỗi part một file** — mỗi part 1 file `.edz` (tên = mã sản phẩm) vào một thư mục
 2. Bấm **XUẤT RA EDZ ▸** → xác nhận → theo dõi nhật ký
-3. Log kiểm toán: `%APPDATA%\Tool Oumijia\logs\export-YYYYMMDD.csv`
+3. Thư mục đã chọn được **ghi nhớ** cho lần sau; log kiểm toán:
+   `%APPDATA%\Tool Oumijia\logs\export-YYYYMMDD.csv`
 
 ### 3.4 Xuất theo loại bản ghi (như EPLAN) — mới v0.4.0
 
@@ -107,6 +113,13 @@ Chọn **"Theo loại bản ghi (như EPLAN)"** → tick các loại cần xuấ
 
 **Tick chọn rồi mà không thấy dấu ✓?**
 → Đã sửa từ v0.4.0: dấu ✓ hiện ngay + dòng đã chọn in đậm. Nếu vẫn lạ, chụp ảnh gửi lại.
+
+**Nên cài bản add-in hay bản script?**
+→ Không cần tự chọn — chạy `Install-Tool-Oumijia.bat`: tự thử bản add-in trước, nếu EPLAN chặn
+(thiếu API license trên bản mới) thì tự chuyển sang bản script. Xem [INSTALL.md](INSTALL.md).
+
+**Nhập EDZ báo lỗi "S030060: Invalid scheme"?**
+→ Đã sửa từ v0.5.0 (tự dò scheme hợp lệ) — cập nhật bản mới rồi thử lại.
 
 **Mở "Xuất EDZ…" báo "Chưa có Parts Database nào đang mở"?**
 → Mở **Master data → Parts → Management** (chọn database) trước, rồi thực hiện lại.

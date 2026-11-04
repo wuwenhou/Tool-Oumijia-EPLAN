@@ -13,6 +13,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - EDZ writer: create/repack packages
 - Nghiên cứu tab "Parts Management Extension" (API không chính thức)
 
+## [0.5.0] - 2026-11-04 — "Script Edition (cho máy không có API license)"
+
+### Added
+- **Script Edition** (`script\ToolOumijiaScript.cs`): bản port đầy đủ của add-in sang EPLAN Scripting
+  (C# 5) — chạy **KHÔNG cần EPLAN API license**, không cần ký assembly:
+  - Đủ 2 dialog (nhập EDZ + xuất EDZ với cây nhóm, panel chi tiết, loại bản ghi)
+  - Ribbon tạo ở `Eplan.EplApi.OnMainStart` (+ `OnLoadWorkspace`/`OnResetRibbon` trên bản mới)
+  - Actions riêng: `OumijiaScriptImportEdz` / `OumijiaScriptExportEdz` / `OumijiaScriptSelfTest`
+- **Đăng ký script tự nạp** (`OumijiaRegisterScript.cs`): tự ghi `STATION.EplanEplApiScriptGui.Scripts`
+  (đã kiểm chứng persist + loader tự nạp; action `RegisterScript` của EPLAN 2022 không ghi gì — bẫy đã tránh);
+  gỡ đăng ký bằng cùng cơ chế + file cờ
+- **Installer thông minh** (`Install-Tool-Oumijia.bat`): thử bản add-in → self-test headless →
+  nếu bị EPLAN vô hiệu hóa (thiếu license) → tự gỡ add-in + chuyển cài Script Edition + kiểm chứng;
+  gỡ cả hai bản bằng `Uninstall-Tool-Oumijia.bat`
+- Gói release chứa **CẢ HAI bản**: `addin\` + `script\` + installer thông minh + README chọn bản
+
+### Fixed
+- **Nhập EDZ lỗi `S030060: Invalid scheme`**: tự dò field-mapping scheme
+  (`USER.PartsManagementGui.FieldMapping.LastUsed` → fallback `Standardvorgabe EPLAN` →
+  tên đọc từ chính thông báo lỗi). Đã kiểm chứng: re-import 1 part OK — áp dụng cho cả 2 bản
+- **Đích xuất "Một file EDZ"**: chỉ chọn THƯ MỤC; tên file **tự động theo mã sản phẩm** (1 part chọn)
+  hoặc `parts.edz` (nhiều part); dòng xem trước "→ sẽ tạo: …" cập nhật realtime; hỏi **ghi đè**
+  khi file tồn tại; **nhớ thư mục** cho lần sau — áp dụng cho cả 2 bản
+
+### Notes
+- Script Edition cần EPLAN có reference `Eplan.EplApi.MasterData` cho script compiler — có trên
+  các bản EPLAN mới (đã kiểm chứng trên **2026.0.3**); EPLAN cũ (vd 2022) dùng bản add-in
+  (chạy tốt không cần license). Installer thông minh tự chọn bản phù hợp.
+- Debug lỗi compile script: xem `C:\Users\Public\EPLAN\Electric P8\EplLog.eldb` (mã S04600x + chi tiết CSxxxx).
+
 ## [0.4.0] - 2026-11-04 — "Hoàn thiện theo UAT"
 
 ### Added
@@ -126,7 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.0
 [0.4.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.4.0
 [0.3.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.3.0
 [0.2.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.2.0

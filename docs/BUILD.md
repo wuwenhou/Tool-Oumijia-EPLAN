@@ -101,12 +101,36 @@ powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.3.0
 # -> in ra ZIP SHA256 + DLL SHA256
 ```
 
+## Script Edition (bản script C# 5) — build & test
+
+```powershell
+# Compile-check C# 5 (bắt mọi cú pháp quá mới; csc 4.0.30319 là C#5 compiler)
+$csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+$bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
+& $csc /nologo /target:library /langversion:5 /out:"$env:TEMP\ToolOumijiaScript-test.dll" `
+  /reference:"$bin\Eplan.EplApi.Baseu.dll" /reference:"$bin\Eplan.EplApi.AFu.dll" `
+  /reference:"$bin\Eplan.EplApi.Guiu.dll" /reference:"$bin\Eplan.EplApi.MasterDatau.dll" `
+  /reference:"System.Windows.Forms.dll" /reference:"System.Drawing.dll" `
+  /reference:"System.Core.dll" `
+  "tools\script-edition\ToolOumijiaScript.cs"
+
+# Đăng ký + kiểm chứng trên máy (tự chạy W3u headless):
+powershell -ExecutionPolicy Bypass -File tools\script-edition\Install-Script.ps1
+```
+
+> ⚠️ **Reference theo phiên bản EPLAN**: compiler script của EPLAN 2022 **không có**
+> `Eplan.EplApi.MasterData` → script không compile được trên bản cũ (dùng bản add-in);
+> các bản mới (2024+/2026) có. Lỗi compile xem `C:\Users\Public\EPLAN\Electric P8\EplLog.eldb`
+> (mã S046006/S046007 + chi tiết CSxxxx). Chi tiết: AGENTS.md R17/R18.
+
 ## Troubleshooting
 
 | Vấn đề | Cách xử lý |
 |---|---|
 | Add-in không nạp dù register-script.log ghi OK | Chạy `OumijiaReadReg.cs` xem giá trị thực tế; chạy lại installer (delete-first sẽ ghi đè đúng) — xem AGENTS.md R11 |
 | `addin.log` không có dòng mới | Kiểm tra DLL tồn tại ở `%APPDATA%\Tool Oumijia\AddIn\`; chạy lại register script |
-| Script lỗi compile (không thấy lỗi ở ngoài) | csc-check theo recipe phía trên |
+| Nhập EDZ báo `S030060: Invalid scheme` | Từ v0.5.0 đã tự dò scheme; nếu vẫn lỗi xem `ImportPartsSupport.ResolveSchemeCandidates` + log |
+| Script không tự nạp sau khi đăng ký | Kiểm tra danh sách `STATION.EplanEplApiScriptGui.Scripts` (probe: `tools\script-edition\probe\OumijiaProbeSettings.cs`); xem lỗi compile trong `EplLog.eldb` |
+| Script lỗi compile trên EPLAN cũ | Đúng dự kiến (thiếu reference MasterData) — dùng bản add-in |
 | Sửa script PowerShell bị vỡ tiếng Việt | File phải là UTF-8 **có BOM** (snippet trong AGENTS.md mục 7) |
 | EPLAN đang mở không thấy ribbon mới | Khởi động lại EPLAN (registration chỉ đọc lúc start) |

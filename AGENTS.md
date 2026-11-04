@@ -24,21 +24,20 @@ bằng add-in này*.
 - Tool **chỉ xử lý `.edz`** — EMA/EMP/EMS không còn trong phạm vi.
 - Kế hoạch xa hơn (EDZ writer, QElectroTech, AutoCAD) — xem `docs/ROADMAP.md`.
 
-## 2. Trạng thái hiện tại (v0.4.0)
+## 2. Trạng thái hiện tại (v0.5.0)
 
-✅ **Chạy được & đã kiểm chứng trên EPLAN Platform 2022.0.3:**
-- Add-in nạp ổn định; ribbon 2 nút: **Nhập EDZ… / Xuất EDZ…**
-- **Nhập**: dialog đơn giản (chọn file/thư mục → NHẬP; mặc định *cập nhật + thêm mới*, theo mã hàng)
-- **Xuất**: cây nhóm + tick 3 trạng thái (dấu ✓ hiển thị, dòng chọn **in đậm**) + tìm kiếm +
-  **panel chi tiết** kiểu EPLAN Overview + 2 phạm vi: *chọn trên cây* / *theo loại bản ghi như EPLAN*
-  (cờ API đã kiểm chứng — xem R15)
-- Construct-test UI offscreen chạy trong `OumijiaDiagParts` — đã bắt được 1 lỗi crash thật (R16)
-- Đăng ký + installer + pack add-in-only + test headless tất cả xanh (v0.4.0: 647 part đọc ~77 ms;
-  smoke export 25 part OK; 7/7 record-type combos OK)
+✅ **Chạy được & đã kiểm chứng:**
+- **Bản ADD-IN** (cho EPLAN ≤2023 / máy có API license): verified trên EPLAN Platform 2022.0.3 —
+  nạp, ribbon, import/export, self-test, diag đầy đủ (bao gồm import smoke test với scheme thật)
+- **Bản SCRIPT** (không cần API license — cho EPLAN mới chặn add-in chưa ký): người dùng đã kiểm chứng
+  trên EPLAN 2026.0.3 (đọc 552 part, xuất EDZ OK); cơ chế đăng ký + loader tự nạp đã kiểm chứng trên 2022 (R18)
+- Fix **nhập EDZ** (field-mapping scheme) — `IMPORT SMOKE OK (scheme='Standardvorgabe EPLAN')`
+- Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
+- **Installer thông minh** tự chọn bản phù hợp + gỡ cài 1 lệnh
 
 ⚠️ **Cần làm:**
-- UAT trực quan v0.4.0 với người dùng (tick ✓, nút Xuất, panel chi tiết, xuất theo loại bản ghi)
-- Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình cho lô lớn
+- UAT v0.5.0 với người dùng: máy EPLAN 2026.0.3 (bản script) + máy 2022 (bản add-in)
+- Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn
 
 ## 3. Bản đồ repo
 
@@ -57,11 +56,14 @@ src/Oumijia.EplanAddIn/           net48, x64 — ZERO dependency ngoài EPLAN AP
   AddinLog.cs / AddinCsvLog.cs    log %APPDATA%\Tool Oumijia\logs\
 tools/
   eplan-scripts/
-    OumijiaRegister.cs            ⭐ script đăng ký (chạy TRONG EPLAN qua ExecuteScript)
+    OumijiaRegister.cs            ⭐ script đăng ký ADD-IN (chạy TRONG EPLAN qua ExecuteScript)
     OumijiaReadReg.cs             chẩn đoán: đọc lại giá trị registration thực tế
     OumijiaRibbonDiag.cs          chẩn đoán: liệt kê ribbon tabs + commands
-  install-addin/                  Install/Uninstall ps1+bat + README (nguồn cho gói zip)
-  pack.ps1                        đóng gói zip add-in-only
+  script-edition/                 ⭐ bản SCRIPT (C#5): ToolOumijiaScript.cs + OumijiaRegisterScript.cs
+    probe/                        script chẩn đoán (load test / đọc settings / dọn danh sách)
+  install-addin/                  installer bản add-in (nguồn cho gói zip)
+  install-all/                    installer THÔNG MINH (tự chọn bản) — entry point của zip
+  pack.ps1                        đóng gói zip 2 bản (addin\ + script\)
 docs/                             PLAN-v0.3.0, BUILD, INSTALL, USER-GUIDE-vi, ARCHITECTURE, ROADMAP, RELEASING
 ```
 
@@ -161,6 +163,8 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 | **R14** | Đăng ký thủ công qua dialog "API add-ins" của EPLAN (nếu người dùng từng làm) sẽ trỏ vào path người dùng chọn (vd bản giải nén zip) và **đè** lên registration của installer — xử lý bằng R11 (delete-first), không cần đi tìm key. |
 | **R15** | ⭐ **Xuất theo loại bản ghi**: `MDPartsManagement.ExportParts` 15 tham số = (file, converter `"IXPartsImportExportEdz"`, filterScheme `""`) + 6 cặp `{bool, MDObjectFilter}` theo thứ tự: **Parts / Addresses (Customer+Manufacturer/Supplier) / Constructions (= Drilling pattern + `items/contour`) / Terminals (= Connection point pattern) / AccessoryLists / AccessoryPlacements**; filter `null` chấp nhận được. Mapping ĐÃ xác minh bằng giải nén EDZ (EDZ thực chất là **7z container** — `tar`/bsdtar đọc được) đối chiếu số liệu DB. Cảnh báo: chế độ này xuất TOÀN BỘ theo loại (toàn bộ parts của DB demo ≈ 290 MB, accessory lists ≈ 110 MB). |
 | **R16** | ⭐ **Bẫy construct WinForms**: `SplitContainer.Panel2MinSize` / `SplitterDistance` ném `InvalidOperationException` nếu đặt khi control chưa có kích thước thật (trong ctor) → luôn đặt trong `OnShown` + try/catch. Tổng quát: **kiểm tra construct form offscreen** (DiagParts đã làm) để bắt lỗi khởi tạo UI trước khi UAT — cách này đã bắt được 1 lỗi crash mở dialog thật. |
+| **R17** | ⭐ **Script Edition & license**: EPLAN mới (2024+/2026) **vô hiệu hóa DLL add-in chưa ký** khi máy không có API license ("The assembly … is deactivated") — không phải lỗi code. Bản SCRIPT (EPLAN Scripting) **không cần license**. Compiler script của EPLAN reference **theo phiên bản**: 2022.0.3 thiếu `Eplan.EplApi.MasterData` (script dùng MasterData không compile được → dùng add-in); 2026.0.3 có (đã kiểm chứng bởi người dùng). Coverage chuẩn: EPLAN cũ → add-in; EPLAN mới + no license → script. |
+| **R18** | ⭐ **Đăng ký "script tự nạp"**: action `RegisterScript` của EPLAN 2022 chạy không lỗi nhưng **KHÔNG ghi gì** (bẫy!). Cách đã kiểm chứng: script chạy trong EPLAN tự ghi danh sách indexed `STATION.EplanEplApiScriptGui.Scripts` (`SetStringSetting(path, value, index)`; gỡ = đọc lại toàn bộ + `RemoveAllIndexedSetting` + ghi lại các entry giữ). EPLAN **tự thử nạp** các script trong danh sách ở mỗi lần khởi động (xác nhận qua log). Script phải compile được bằng **compiler của EPLAN** (khác csc ngoài!) — lỗi chi tiết nằm trong **`C:\Users\Public\EPLAN\Electric P8\EplLog.eldb`** (mã S046006/S046007 + chi tiết CSxxxx). Attributes `[DeclareRegister]`/`[DeclareUnregister]`/`[DeclareEventHandler]` đều có trên 2022. |
 
 ## 7. Quy ước kỹ thuật
 
@@ -188,17 +192,17 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 
 ## 9. Việc tiếp theo (ưu tiên gợi ý)
 
-**P1 — UAT v0.3.0** với người dùng: mở Cây part, tick chọn (từng part + cả nhóm), tìm kiếm,
-xuất 1 file + mỗi part 1 file, import lại database test kiểm tra; thu phản hồi.
+**P1 — UAT v0.5.0 với người dùng:**
+- Máy **EPLAN 2026.0.3** (không API license): chạy `Install-Tool-Oumijia.bat` → phải tự nhận ra
+  add-in bị chặn → cài bản script → ribbon "Tool Oumijia" → thử nhập/xuất EDZ.
+- Máy **2022**: installer chọn bản add-in; thử nhập file thật (hết lỗi S030060) + đích xuất tự động.
 
 **P2 — chất lượng & usability:**
-- Icon cho 2 nút ribbon (SVG qua `AddCommand(..., svgIcon)` — cần thử nghiệm semantics).
-- Chọn ngôn ngữ hiển thị tên part (hiện hardcode en_US trong `PartInfo.ReadDisplayText`).
-- Thanh tiến trình cho import/export lô lớn (nhớ: EPLAN API trên UI thread).
-- Sắp xếp/tô đậm phần trùng khi tìm kiếm trong cây.
+- Icon cho 2 nút ribbon; chọn ngôn ngữ hiển thị part; tiến trình cho lô lớn;
+  làm mịn danh sách loại bản ghi khi xuất.
 
 **P3 — mở rộng (xem docs/ROADMAP.md):**
-- EDZ writer/editor; export nâng cao (filter scheme); nghiên cứu Parts Management Extension.
+- EDZ writer/editor; nghiên cứu tab "Parts Management Extension".
 
 ## 10. Phát hành
 

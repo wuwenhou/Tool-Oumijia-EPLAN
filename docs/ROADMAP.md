@@ -19,16 +19,15 @@
 - [x] Gói release add-in-only (~26 KB)
 - [ ] **UAT người dùng** trên database thật → tinh chỉnh (đang chờ phản hồi)
 
-## v0.4.0 — "Hoàn thiện theo UAT" ✅ (2026-11-04)
-- [x] Fix tick chọn không hiện dấu ✓ (buộc vẽ lại + dòng chọn in đậm)
-- [x] Fix nút "XUẤT RA EDZ ▸" / "Chọn…" bị khuất (TableLayoutPanel + Dock, an toàn mọi DPI)
-- [x] Panel chi tiết kiểu EPLAN Overview (đầy đủ thuộc tính + copy giá trị)
-- [x] Chế độ xuất "Theo loại bản ghi (như EPLAN)" — cờ API đã kiểm chứng thực tế
-- [x] Nhập EDZ đơn giản hóa (bỏ hàng tùy chọn; mặc định cập nhật + thêm mới)
-- [x] Construct-test UI offscreen trong DiagParts (bắt được 1 lỗi crash mở dialog — đã sửa)
-- [ ] UAT v0.4.0 trên máy người dùng → tinh chỉnh tiếp nếu cần
+## v0.5.0 — "Script Edition" ✅ (2026-11-04)
+- [x] **Bản Script (C#5) chạy không cần API license** — cho EPLAN mới (2024+/2026) chặn add-in chưa ký
+- [x] Đăng ký "script tự nạp" hoạt động (ghi `EplanEplApiScriptGui.Scripts`; loader tự thử nạp khi khởi động — kiểm chứng trên 2022)
+- [x] **Installer thông minh** tự chọn bản add-in/script + gỡ cài 1 lệnh
+- [x] Fix **nhập EDZ** (`S030060` — tự dò field-mapping scheme; smoke test `OK scheme='Standardvorgabe EPLAN'`)
+- [x] Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
+- [ ] UAT v0.5.0: máy EPLAN 2026.0.3 (bản script) + máy 2022 (bản add-in)
 
-## v0.5 — Tinh chỉnh & mở rộng
+## v0.6 — Tinh chỉnh & mở rộng
 - [ ] Icon cho 2 nút ribbon (SVG)
 - [ ] Chọn ngôn ngữ hiển thị tên part trong dialog Xuất (hiện en_US)
 - [ ] Tiến trình (progress) cho import/export lô lớn

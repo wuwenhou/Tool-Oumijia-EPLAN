@@ -96,6 +96,8 @@ Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số 
 | D6 | Trạng thái tick vẽ bằng `ImageList` + `HitTest(Image)` | TreeView WinForms không có checkbox 3 trạng thái native |
 | D7 | CSV + addin.log cho mọi thao tác | Truy vết/đối chiếu khi hỗ trợ người dùng |
 | D8 | Layout dưới bằng TableLayoutPanel/Dock; kiểm tra construct UI offscreen trong DiagParts | Không còn nút bị khuất ở mọi DPI; bắt lỗi khởi tạo dialog trước khi UAT (đã bắt được 1 crash thật — R16) |
+| D9 | Script Edition dùng action `OumijiaScript*` + **tự ghi settings đăng ký** (không dùng action `RegisterScript` của EPLAN) | Không xung đột nếu cài cả 2 bản; `RegisterScript` không hoạt động trên 2022 (R18) |
+| D10 | Installer thông minh tự chọn bản bằng **self-test thực tế** (không check version) | Phản ánh đúng trạng thái license/threshold của từng máy — add-in chạy được thì dùng, bị chặn thì chuyển script |
 
 ## Đăng ký add-in (tóm tắt)
 
@@ -106,3 +108,26 @@ Chi tiết đầy đủ: **AGENTS.md mục 6** (quy tắc R1–R14). Điểm c�
 2. Chỉ ghi được từ **trong EPLAN** (ExecuteScript); script có `[Start]` tự chạy khi load.
 3. **Xóa key trước khi ghi** + đọc lại xác nhận.
 4. Installer `tools/install-addin/` gói gọn toàn bộ quy trình cho người dùng cuối.
+
+## Script Edition (v0.5.0) — chạy không cần API license
+
+```
+tools/script-edition/ToolOumijiaScript.cs   1 file C# 5 (~1900 dòng) — port đầy đủ từ add-in:
+  ├─ [DeclareEventHandler("Eplan.EplApi.OnMainStart")]  → tạo ribbon
+  │  (+ OnLoadWorkspace / OnResetRibbon trên bản EPLAN mới)
+  ├─ [DeclareAction]  OumijiaScriptImportEdz / OumijiaScriptExportEdz / OumijiaScriptSelfTest
+  └─ tự nạp: OumijiaRegisterScript.cs ghi STATION.EplanEplApiScriptGui.Scripts (danh sách indexed)
+
+Installer thông minh (tools/install-all → gốc zip):
+  thử add-in → self-test headless → OK? xong : gỡ add-in → cài script → self-test → báo kết quả
+```
+
+| EPLAN | Bản add-in | Bản script |
+|---|---|---|
+| ≤2023 (vd 2022.0.3) | ✅ chạy (bản cũ không chặn DLL chưa ký) | ⚠️ compiler script thiếu reference `Eplan.EplApi.MasterData` → dùng add-in |
+| 2024+/2026, không API license | ❌ EPLAN vô hiệu hóa DLL chưa ký | ✅ chạy (đã kiểm chứng trên 2026.0.3) |
+
+- Đăng ký script: ghi settings (KHÔNG dùng action `RegisterScript` của EPLAN — không hoạt động
+  trên 2022, đã kiểm chứng); loader của EPLAN tự thử nạp khi khởi động.
+- Debug lỗi compile script: `C:\Users\Public\EPLAN\Electric P8\EplLog.eldb` (S046006/S046007 + CSxxxx).
+- Chi tiết & bẫy: **AGENTS.md R17/R18**.
