@@ -1,47 +1,37 @@
-# Roadmap — Tool Oumijia (EPLAN Edition)
+# Lộ trình — Tool Oumijia (EPLAN Edition)
 
-## Nguyên tắc
+## v0.1.0 — App standalone: phân loại thư viện EDZ ✅ (đã bỏ ở v0.3.0)
+- WinForms: quét `.edz` → phân loại Hãng/Nhóm → xếp thư viện; log CSV
+- *(Đã xóa khỏi repo ở v0.3.0 theo quyết định chỉ giữ add-in — xem git history)*
 
-- Mỗi phiên bản là một sản phẩm **dùng được thật**, có test và release notes đàng hoàng.
-- Core giữ `netstandard2.0`; mọi thứ EPLAN-specific đặt trong add-in.
-- Ranh giới (không đổi): chỉ API chính thức + dữ liệu factual, không bypass license/ToU,
-  không commit dữ liệu hãng thật.
+## v0.2.0 — Add-in EPLAN đầu tiên ✅ (2026-11-04)
+- Ribbon "Tool Oumijia": Nhập EDZ hàng loạt vào Parts Database; Xuất EDZ từ Parts DB
+- Registration script đã kiểm chứng end-to-end trên EPLAN 2022.0.3
+- Installer 1 click
 
-## v0.1.0 — Nền tảng Export/Import ✅ (đã phát hành)
+## v0.3.0 — "Add-in duy nhất" ✅ (2026-11-04)
+- [x] Bỏ hoàn toàn app exe — chỉ còn add-in (ribbon 2 nút)
+- [x] **Dialog Xuất EDZ v2**: chọn part bằng cây nhóm kiểu navigator EPLAN
+      (checkbox 3 trạng thái, tìm kiếm, "Lấy từ Parts Management", đếm "Đã chọn: N")
+- [x] Fix registration bị giá trị lịch sử đè (delete-first + VERIFY)
+- [x] Fix hiển thị tên nhóm/hãng/part (GetDisplayString theo ngôn ngữ)
+- [x] Action chẩn đoán `OumijiaDiagParts` + script chẩn đoán ribbon/registration
+- [x] Gói release add-in-only (~26 KB)
+- [ ] **UAT người dùng** trên database thật → tinh chỉnh (đang chờ phản hồi)
 
-- Đọc EDZ ZIP + 7z, trích metadata, classifier rule-based, xếp thư viện an toàn, log CSV
-- Cài macro vào EPLAN master data
-- App WinForms (net8) + khung add-in (net48), 25+ tests, CI, tooling pack/make-samples
+## v0.4 — Tinh chỉnh theo UAT
+- [ ] Icon cho 2 nút ribbon (SVG)
+- [ ] Chọn ngôn ngữ hiển thị tên part trong dialog xuất (hiện en_US)
+- [ ] Tiến trình cho import/export lô lớn (progress bar)
+- [ ] Sắp xếp/bôi đậm kết quả tìm kiếm trong cây
+- [ ] (Tùy phản hồi) filter nâng cao kiểu EPLAN: Record type/Trade checkboxes
 
-## v0.2 — EPLAN Add-in: Import/Export EDZ ✅ (2026-11-04)
+## v0.5+ — Mở rộng
+- [ ] EDZ writer/editor: tạo gói từ CSV; gắn macro/PDF/STEP; giữ record lạ khi sửa gói
+- [ ] Export nâng cao: filter scheme, giới hạn thuộc tính
+- [ ] Nghiên cứu tab "Parts Management Extension" (API không chính thức — rủi ro tương thích)
+- [ ] Bridge chuyển đổi (QElectroTech `.elmt`, DXF/AutoCAD) — nếu còn nhu cầu
 
-- [x] Ribbon "Tool Oumijia" trong EPLAN (Nhập EDZ / Xuất EDZ / Mở cửa sổ Tool)
-- [x] Import batch EDZ vào Parts Database qua `MDPartsManagement.ImportParts`
-      (converter `IXPartsImportExportEdz`), chọn chế độ + định danh part
-- [x] Export parts → EDZ (`MDPartsDatabase.ExportParts`, DataFormat.EDZ)
-- [x] Installer headless 1 click (script + `ExecuteScript`), đã kiểm chứng trên EPLAN 2022.0.3
-- [ ] UAT với người dùng thực trên database test → tinh chỉnh
-
-## v0.3 — EDZ Writer / Editor
-
-- [ ] `EdzArchiveWriter`: tạo & repack `.edz` (zip trước; 7z nghiên cứu sau)
-- [ ] Tạo gói từ CSV/Excel: part fields + function templates + connection points
-- [ ] Gắn/thay macro vào gói (`P_ARTICLE_GROUPSYMBOLMACRO` / `P_ARTICLE_MACRO`), giữ nguyên phần khác
-- [ ] Validation trước/sau xuất (bắt buộc, độ dài, trùng chân, tính toàn vẹn archive)
-- [ ] Export từ Parts DB ra EDZ (backup thư viện cá nhân)
-
-## v0.4+ — Bridge chuyển đổi (từng bước, có kiểm chứng)
-
-- [ ] EDZ → QElectroTech `.elmt` (chỉ dữ liệu factual; tham chiếu importer sẵn có của QET)
-- [ ] DXF: đóng gói/xuất phần `dxf_data` bên trong EDZ
-- [ ] (Xa hơn) Nghiên cứu luồng EPLAN ↔ AutoCAD qua `HEServices.Import/Export` trong add-in
-- [ ] (Xa hơn) Đóng góp cải thiện cho QET (hỗ trợ thêm container zip cho EDZ import)
-
-## Việc chất lượng xuyên suốt
-
-- [ ] Localization EN (UI hiện tiếng Việt)
-- [ ] High-DPI + icon ứng dụng
-- [ ] Test cho `MacroInstaller`, `OverrideStore`, config round-trip
-- [ ] Ghi chú eCl@ss code thực tế cho classifier (khi có dữ liệu kiểm chứng)
-- [ ] Screenshot trong README + demo GIF
-- [ ] Ký số gói phát hành (SignPath/certificate) khi có điều kiện
+## Nguyên tắc xuyên suốt
+- Chỉ API chính thức + dữ liệu factual; không bẻ license, không tái phân phối dữ liệu hãng
+- Mọi thay đổi registration/dữ liệu phải có log + có recipe kiểm chứng headless (xem AGENTS.md mục 5)

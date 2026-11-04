@@ -8,9 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
+- Icon cho 2 nút ribbon; chọn ngôn ngữ hiển thị tên part (hiện dùng en_US)
 - EDZ writer: create/repack packages (fill macros, keep unknown records)
-- Parts Management tab (official EPLAN "Parts Management Extension" API) — xem docs/ROADMAP.md
-- Optional English UI localization
+- Nghiên cứu tab "Parts Management Extension" (API không chính thức)
+
+## [0.3.0] - 2026-11-04 — "Add-in duy nhất"
+
+### Removed (BREAKING)
+- **Bỏ hoàn toàn app standalone (`.exe`)** theo yêu cầu người dùng — chỉ còn add-in trong EPLAN:
+  - Xóa `src/Oumijia.Tool`, `src/Oumijia.Core`, `tests/`, `examples/`, `src/Oumijia.Register`,
+    `tools/make-samples.ps1`, solution file và CI workflow
+  - Bỏ nút "Cửa sổ Tool Oumijia" + action `OumijiaOpenTool` khỏi ribbon
+
+### Added
+- **Dialog Xuất EDZ v2**: chọn part bằng **cây nhóm kiểu navigator EPLAN**
+  (Nhóm sản phẩm → nhóm → phân nhóm → hãng → part), checkbox 3 trạng thái (chọn/một phần/bỏ),
+  ô tìm kiếm theo mã hàng/tên/hãng, nút *Chọn tất cả / Bỏ chọn / Lấy từ Parts Management*,
+  đếm "Đã chọn: N part"; xuất **1 file `parts.edz`** hoặc **mỗi part 1 file** — giống EPLAN
+- `OumijiaDiagParts` — action chẩn đoán headless: mở Parts Database, đo tốc độ đọc part
+  (647 part ~80 ms), tóm tắt cây nhóm, smoke-export 25 part ra EDZ
+- Script chẩn đoán: `tools/eplan-scripts/OumijiaRibbonDiag.cs` (liệt kê ribbon tabs)
+  và `OumijiaReadReg.cs` (đọc lại giá trị registration thực tế)
+- Gói release **add-in-only** `Tool-Oumijia-AddIn-vX.zip` (~26 KB thay vì 67 MB)
+
+### Fixed
+- **Registration bị giá trị lịch sử "đè"**: script đăng ký giờ **xóa key trước khi ghi**
+  (delete-first) + đọc lại xác nhận (VERIFY) — khắc phục triệt để việc EPLAN vẫn nạp DLL cũ
+  từ đường dẫn khác (vd đăng ký thủ công qua dialog "API add-ins" với path bản giải nén)
+- Hiển thị tên nhóm/hãng/tên part: dùng `MDPropertyValue.GetDisplayString().GetStringToDisplay()`
+  — nhóm hiện đúng tên ("Electrical engineering / PLC / General") thay vì mã số,
+  tên part hiện đúng một ngôn ngữ ("LOGO! 24RC") thay vì chuỗi đa ngôn ngữ trộn
+
+### Notes
+- Script đăng ký tự dọn key `OumijiaOpenTool` cũ khi chạy lại; chạy lại installer là đủ để nâng cấp.
 
 ## [0.2.0] - 2026-11-04
 
@@ -68,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.3.0
 [0.2.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.1.0

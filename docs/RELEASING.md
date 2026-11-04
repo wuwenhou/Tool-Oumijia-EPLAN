@@ -1,40 +1,43 @@
 # Releasing — Tool Oumijia (EPLAN Edition)
 
-Quy trình phát hành chuẩn (làm theo đúng thứ tự):
+Quy trình phát hành chuẩn cho **add-in-only** (v0.3.0+):
 
 ## 1. Chuẩn bị
 
 ```powershell
 git checkout main
 git pull
-dotnet test Tool-Oumijia-EPLAN.sln -c Release   # phải xanh 100%
+# Đảm bảo máy có EPLAN để build add-in (xem docs/BUILD.md)
 ```
 
-## 2. Bump version (SemVer)
+## 2. Bump version
 
-Sửa `<Version>` trong **cả 3 csproj**:
+- `src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj` — `<Version>X.Y.Z</Version>`
+- `CHANGELOG.md` — thêm mục `[X.Y.Z]` (ngày), cập nhật link refs cuối file
 
-- `src/Oumijia.Core/Oumijia.Core.csproj`
-- `src/Oumijia.Tool/Oumijia.Tool.csproj`
-- `src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj`
-
-Cập nhật `CHANGELOG.md` (chuyển mục *Unreleased* → phiên bản mới, ghi ngày).
-
-## 3. Đóng gói
+## 3. Build add-in + kiểm tra compile script
 
 ```powershell
-# (v0.2+) build add-in TRƯỚC khi pack để zip kèm thư mục addin\ (cần máy có EPLAN):
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
   -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
-
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
-# -> output\Tool-Oumijia-EPLAN-vX.Y.Z-win-x64.zip  (kèm addin\ + VERSION.txt)
-# -> in ra ZIP SHA256 + EXE SHA256
+# + csc-check OumijiaRegister.cs (recipe: docs/BUILD.md)
 ```
 
-> Nếu không build add-in, pack.ps1 vẫn chạy nhưng zip thiếu `addin\` (có cảnh báo).
+## 4. Test headless (khuyến nghị; recipe: docs/BUILD.md)
 
-## 4. Commit + tag + push
+```powershell
+# Deploy + register + selftest + diagparts — xem docs/BUILD.md mục "Kiểm thử headless"
+```
+
+## 5. Đóng gói
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
+# -> output\Tool-Oumijia-AddIn-vX.Y.Z.zip  (~26 KB)
+# -> in ra ZIP SHA256 + DLL SHA256
+```
+
+## 6. Commit + tag + push
 
 ```powershell
 git add -A
@@ -44,28 +47,22 @@ git push origin main
 git push origin vX.Y.Z
 ```
 
-## 5. Tạo GitHub Release
+## 7. Tạo GitHub Release
 
 ```powershell
-gh release create vX.Y.Z "output\Tool-Oumijia-EPLAN-vX.Y.Z-win-x64.zip" `
+gh release create vX.Y.Z "output\Tool-Oumijia-AddIn-vX.Y.Z.zip" `
   --title "Tool Oumijia (EPLAN) vX.Y.Z" `
   --notes-file "docs\releases\vX.Y.Z.md"
 ```
 
-- **docs/releases/vX.Y.Z.md**: mở đầu bằng tóm tắt thay đổi, kèm mục *Tải về* (yêu cầu Windows 10/11,
-  self-contained không cần .NET), mục *Kiểm tra toàn vẹn* — **dán SHA-256 của ZIP vào đây**.
+- **docs/releases/vX.Y.Z.md**: tóm tắt thay đổi + mục *Tải về* + **dán SHA-256 của ZIP vào đây**.
 - Kiểm tra lại trang Release: asset tải được, notes hiển thị đúng.
-
-## 6. Sau phát hành
-
-- Xác nhận CI xanh trên tag mới (badge trong README).
-- Nếu có thay đổi hành vi ảnh hưởng người dùng cũ → ghi rõ trong release notes mục *Breaking changes*.
 
 ## Quy ước đặt tên
 
 | Thứ | Quy ước | Ví dụ |
 |---|---|---|
-| Tag | `v` + SemVer | `v0.2.0` |
-| Asset | `Tool-Oumijia-EPLAN-v<ver>-win-x64.zip` | `Tool-Oumijia-EPLAN-v0.2.0-win-x64.zip` |
-| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.2.0` |
+| Tag | `v` + SemVer | `v0.3.0` |
+| Asset | `Tool-Oumijia-AddIn-v<ver>.zip` | `Tool-Oumijia-AddIn-v0.3.0.zip` |
+| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.3.0` |
 | Commit phát hành | `release: vX.Y.Z` | |

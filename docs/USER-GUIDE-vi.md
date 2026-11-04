@@ -1,192 +1,128 @@
-# Hướng dẫn sử dụng — Tool Oumijia (EPLAN Edition) v0.2.0
+# Hướng dẫn sử dụng — Tool Oumijia (EPLAN Edition) v0.3.0
 
-Có **2 cách dùng**, dùng chung một bộ xử lý:
-
-| | Cách dùng | Phù hợp với |
-|---|---|---|
-| **A** | **App standalone** (`Tool-Oumijia.exe`) — quét & phân loại thư viện EDZ | Làm việc ngoài EPLAN, dọn kho file |
-| **B** | **Add-in trong EPLAN** (ribbon "Tool Oumijia") — Nhập/Xuất EDZ trực tiếp | Batch import vào Parts Database, export parts ra EDZ |
-
-> **v0.2.0 xử lý DUY NHẤT file `.edz`** (theo yêu cầu dự án). Các định dạng macro `.ema/.emp/.ems`
-> tạm thời không còn xuất hiện trong giao diện.
+**Add-in EPLAN** với ribbon "Tool Oumijia" gồm 2 nút: **Nhập EDZ…** và **Xuất EDZ…**
+(toàn bộ thao tác diễn ra trong EPLAN — không có ứng dụng ngoài).
 
 ---
 
-## Phần A — App standalone
+## 1. Cài đặt & gỡ cài đặt
 
-App gồm 3 tab: **Xuất (Export)** · **Nhập (Import)** · **Cài đặt**.
+Xem [INSTALL.md](INSTALL.md). Tóm tắt:
 
-### A1. Tab Xuất — quét & phân loại thư viện
-
-1. Thêm thư mục "inbox" chứa file `.edz` (có thể thêm nhiều thư mục; tick *Gồm thư mục con* nếu cần)
-2. Bấm **🔍 Quét ngay** — app đọc từng gói, trích Hãng / Mã hàng / Nhóm
-3. Kiểm tra bảng:
-
-| Cột | Ý nghĩa |
-|---|---|
-| **Chọn** | Tick để xuất (mặc định chọn hết) |
-| **Tệp** | Tên file nguồn (`.edz`) |
-| **Hãng** | Đọc từ metadata |
-| **Nhóm** | Kết quả phân loại tự động |
-| **Mã hàng** | Part / Type / Order number |
-| **Đến thư mục** | **Sửa được** — đường dẫn tương đối trong thư viện |
-| **Trạng thái** | Tóm tắt gói (số part/macro/ảnh) hoặc lỗi |
-
-4. Muốn giữ nguyên các đích đã sửa cho lần sau → bấm **Lưu đích đã sửa** (ghi vào `overrides.json`)
-5. Bấm **XUẤT ▸** — app sao chép (hoặc di chuyển) vào:
-
-```
-<Thư viện>\<Hãng>\<Nhóm>\<tên file>
-Ví dụ:     D:\Tool Oumijia\Import\Siemens\PLC\siemens_6es7214.edz
-```
-
-6. Log CSV chi tiết: `%APPDATA%\Tool Oumijia\logs\export-YYYYMMDD-HHMMSS.csv`
-   (nguồn, đích, hành động, kích thước, SHA-256)
-
-#### Quy tắc phân loại (cách hoạt động)
-
-- **Hãng**: lấy từ metadata EDZ → áp bảng alias (vd `Siemens AG` → `Siemens`) → nếu không có
-  thì bỏ các hậu tố công ty (GmbH, Ltd, …) → sanitize tên thư mục.
-- **Nhóm**: tìm từ khóa (không phân biệt hoa thường) trong **product group + designation + mã hàng + tên file**.
-  Quy tắc đầu tiên khớp sẽ thắng. Không khớp → rơi vào `_Unsorted`.
-
-#### Trùng tên file (chính sách)
-
-Đặt trong tab Cài đặt:
-
-| Chính sách | Hành vi |
-|---|---|
-| **Rename** (mặc định) | Giữ cả hai — file mới thành `tên (2).edz` |
-| **Skip** | Bỏ qua file mới nếu đã tồn tại file khác nội dung |
-| **Overwrite** | Ghi đè file cũ |
-
-Nếu file tồn tại **giống hệt nội dung** (SHA-256), luôn được bỏ qua — không tạo bản sao.
-
-#### Di chuyển hay sao chép?
-
-- Mặc định: **sao chép** (an toàn — file gốc còn nguyên).
-- Tick *Di chuyển (move)* trong Cài đặt nếu muốn dọn inbox sau khi xếp thư viện.
-
-### A2. Tab Nhập — trợ lý danh sách EDZ
-
-Tab này giúp **gom danh sách** các gói EDZ cần nhập vào EPLAN Parts Database:
-
-1. **Thêm tệp…** / **Thêm thư mục…** (quét cả thư mục con) — chỉ nhận `.edz`
-2. **Copy danh sách** — dán vào ghi chú, email, tài liệu… để theo dõi
-3. Cách nhập vào EPLAN:
-   - **Khuyến nghị (v0.2)**: dùng **add-in** — ribbon "Tool Oumijia" → **Nhập EDZ…** (batch, xem Phần B)
-   - Hoặc thủ công: **Master data → Parts → Management → [Extras] → Import** → chọn từng file `.edz`
-4. Khuyến nghị: thao tác trên **database test** trước với tùy chọn *"chỉ thêm mới"*, đối chiếu kết quả
-   rồi mới nhập vào database chính.
-
-### A3. Tab Cài đặt
-
-| Mục | Ý nghĩa |
-|---|---|
-| **Thư mục gốc thư viện** | Gốc cây `Import/<Hãng>/<Nhóm>` (mặc định `Documents\Tool Oumijia\Import`) |
-| **Thư mục quét (inbox)** | Danh sách thư mục nguồn |
-| **Chính sách trùng tên** | Rename / Skip / Overwrite |
-| **Di chuyển thay vì sao chép** | Như trên |
-| **Thư mục không phân loại** | Tên thư mục fallback (mặc định `_Unsorted`) |
-| **Mở rules.json** | Tùy chỉnh quy tắc phân loại |
-
-#### Tùy chỉnh `rules.json`
-
-File tự sinh tại `%APPDATA%\Tool Oumijia\rules.json`. Ví dụ thêm nhóm mới:
-
-```json
-{
-  "FallbackCategory": "_Unsorted",
-  "ManufacturerAliases": {
-    "schneider electric": "Schneider Electric"
-  },
-  "Categories": [
-    {
-      "Folder": "ServoMotor",
-      "Keywords": ["servo motor", "servomotor", "ac servo"],
-      "EClassPrefixes": []
-    }
-  ]
-}
-```
-
-- `Categories` xét **theo thứ tự** — nhóm cụ thể hơn nên đặt trước.
-- `EClassPrefixes`: so khớp đầu mã eCl@ss (vd `"27-14"` khớp `27-14-05-11`) — hiện để trống mặc định,
-  thêm khi bạn có dữ liệu kiểm chứng.
-- Sau khi sửa: mở lại app hoặc quét lại; bấm **Áp dụng lại quy tắc** để tính lại bảng.
+1. Giải nén `Tool-Oumijia-AddIn-v0.3.0.zip` → chạy **`Install-AddIn.bat`**
+2. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện
+3. Gỡ cài đặt: chạy `Uninstall-AddIn.bat`
 
 ---
 
-## Phần B — Add-in trong EPLAN (v0.2)
+## 2. Nhập EDZ vào Parts Database
 
-### B1. Cài đặt
-
-Xem **Cách 3** trong [INSTALL.md](INSTALL.md). Tóm tắt: chạy `addin\Install-AddIn.bat`
-(không cần admin) → mở EPLAN → ribbon **"Tool Oumijia"**.
-
-### B2. Nhập EDZ vào Parts Database — thay thế nhập thủ công
+### 2.1 Thao tác
 
 1. Trong EPLAN, bấm ribbon **Tool Oumijia → Nhập EDZ…**
-2. **Thêm tệp…** / **Thêm thư mục…** (quét cả thư mục con) — gom tất cả gói `.edz` cần nhập
+2. **Thêm tệp…** / **Thêm thư mục…** (quét cả thư mục con) để gom các gói `.edz` cần nhập
 3. Chọn tùy chọn:
-   - **Chế độ nhập**:
-     | Chế độ | Ý nghĩa |
-     |---|---|
-     | Chỉ thêm mới | Chỉ thêm part chưa tồn tại; bỏ qua part đã có |
-     | Chỉ cập nhật | Chỉ ghi đè part đã tồn tại |
-     | Cập nhật + thêm mới | Kết hợp cả hai (dùng phổ biến nhất khi sync thư viện) |
-   - **Nhận dạng part**: Theo mã hàng (mặc định) / Theo UniqueId / UniqueId + mã hàng —
-     cách EPLAN nhận diện part nào là "trùng" với part nào
-   - **Nhập thêm ngôn ngữ phụ**: tick nếu gói EDZ có đa ngôn ngữ
+
+   | Tùy chọn | Ý nghĩa |
+   |---|---|
+   | **Chế độ nhập** | *Chỉ thêm mới* — bỏ qua part đã tồn tại; *Chỉ cập nhật* — ghi đè part đã có; *Cập nhật + thêm mới* — kết hợp (dùng phổ biến nhất khi sync thư viện) |
+   | **Nhận dạng part** | Cách EPLAN xác định part "trùng": *Theo mã hàng* (mặc định) / *Theo UniqueId* / *UniqueId + mã hàng* |
+   | **Nhập thêm ngôn ngữ phụ** | Tick nếu gói EDZ có đa ngôn ngữ |
+
 4. Bấm **NHẬP VÀO PARTS DATABASE ▸** → xác nhận
-5. Kiểm tra **Parts Management** để xác nhận kết quả.
-   Log kiểm toán: `%APPDATA%\Tool Oumijia\logs\import-YYYYMMDD.csv`
+5. Kiểm tra kết quả trong **Parts Management**
 
-> ⚠️ **Khuyến nghị**: thử trên **database test** trước (Parts Management → database → tạo/chọn bản test)
-> khi nhập lô lớn.
+### 2.2 Lưu ý
 
-### B3. Xuất Parts Database ra EDZ (backup / chia sẻ nội bộ)
-
-1. Trong EPLAN, mở **Parts Management** và chọn database (nếu chưa mở)
-2. Bấm ribbon **Tool Oumijia → Xuất EDZ…**
-3. Chọn:
-   - **Phạm vi**: toàn bộ database đang mở, hoặc các part đang chọn trong Parts Management
-   - **Cách xuất**: 1 file EDZ duy nhất, hoặc mỗi part 1 file EDZ (vào thư mục)
-4. Chọn đích → **XUẤT RA EDZ ▸**
-5. Log: `%APPDATA%\Tool Oumijia\logs\export-YYYYMMDD.csv`
-
-Gói EDZ sinh ra bằng converter chính thức của EPLAN (`IXPartsImportExportEdz`) — có thể import lại
-trên máy khác, hoặc đưa vào app standalone để phân loại thư viện.
-
-### B4. Cửa sổ Tool Oumijia
-
-Nút thứ 3 mở app standalone ngay từ EPLAN. Lần đầu sẽ hỏi đường dẫn `Tool-Oumijia.exe`
-(nếu chưa nằm cạnh add-in hoặc trong `%APPDATA%\Tool Oumijia`) — chọn một lần, app sẽ nhớ.
+- ⚠️ **Thử trên database test trước** khi nhập lô lớn vào database chính
+  (Parts Management → chọn/tạo database test).
+- Chế độ *Chỉ thêm mới* sẽ **bỏ qua** part đã tồn tại — không phải lỗi.
+- Log kiểm toán: `%APPDATA%\Tool Oumijia\logs\import-YYYYMMDD.csv`
 
 ---
 
-## Phần C — Câu hỏi thường gặp
+## 3. Xuất EDZ — chọn part bằng cây nhóm (kiểu EPLAN)
 
-**Gói EDZ đọc lỗi "Lỗi đọc: …"?**
-→ File có thể hỏng hoặc dùng container ngoài ZIP/7z. Gửi issue kèm thông báo lỗi.
+### 3.1 Giao diện
 
-**Hãng/Nhóm phân loại sai?**
-→ Sửa trực tiếp cột *Đến thư mục* và bấm *Lưu đích đã sửa*; hoặc cập nhật `rules.json`.
+```
+┌─ Tool Oumijia — Xuất EDZ (chọn part cần xuất) ────────────────────────────┐
+│ Database: ESS_part001 — 647 part                                          │
+│ Tìm: [____________]  [Chọn tất cả] [Bỏ chọn] [Lấy từ Parts Management ▸]   │
+│ Mẹo: tick ô vuông trước mỗi mục để chọn; tick vào nhóm = chọn cả nhánh.    │
+│ ┌─ Cây part (như navigator EPLAN) ──────────────────────────────────────┐ │
+│ │ ☑ Electrical engineering                                              │ │
+│ │   ▣ PLC                                                               │ │
+│ │     ☑ General         └─ SIE.6ED1052-1HB00-0BA6 (LOGO! 24RC)          │ │
+│ │     ☐ ...                                                             │ │
+│ │ ☐ Mechanics                                                           │ │
+│ └───────────────────────────────────────────────────────────────────────┘ │
+│ Cách xuất:  (•) Một file EDZ:   [parts.edz____________] [Chọn…]           │
+│             ( ) Mỗi part 1 file:[D:\Export\EDZ________] [Chọn…]           │
+│ Đã chọn: 12 part                              [XUẤT RA EDZ ▸]             │
+│ ┌ Nhật ký ──────────────────────────────────────────────────────────────┐ │
+└───────────────────────────────────────────────────────────────────────────┘
+   ☑ = đã tick   ☐ = chưa tick   ▣ = tick một phần (nhóm)
+```
 
-**Nhập EDZ xong không thấy part trong Parts Management?**
-→ Kiểm tra đúng Parts Database đang mở; xem log `%APPDATA%\Tool Oumijia\logs\addin.log`.
-Với chế độ *Chỉ thêm mới*, part đã tồn tại sẽ bị bỏ qua (không phải lỗi).
+### 3.2 Cấu trúc cây
 
-**Xuất EDZ báo "Chưa có Parts Database nào đang mở"?**
-→ Mở **Master data → Parts → Management** trước, chọn database rồi thực hiện lại.
+Giống hệt navigator Parts Management của EPLAN:
 
-**Ribbon "Tool Oumijia" không xuất hiện sau khi cài?**
-→ Khởi động lại EPLAN. Nếu vẫn không có: xem `%APPDATA%\Tool Oumijia\logs\register-script.log`
-và thử phương án dự phòng trong [INSTALL.md](INSTALL.md) (Scripts → Run…).
+**Nhóm sản phẩm** → **nhóm** → **(phân nhóm)** → **hãng** → **part**
 
-**Tool có cần license EPLAN không?**
-→ Không. Tool chạy độc lập, không can thiệp bản quyền; add-in dùng API chính thức của EPLAN.
-Script đăng ký add-in chạy qua chức năng scripting miễn phí của EPLAN.
+Ví dụ thực tế: `Electrical engineering → PLC → General → SIE → SIE.6ED1052-1HB00-0BA6 (LOGO! 24RC)`
+
+### 3.3 Thao tác
+
+| Thao tác | Kết quả |
+|---|---|
+| **Tick ô vuông** trước part | Chọn/bỏ chọn part đó |
+| **Tick ô vuông** trước nhóm | Chọn/bỏ chọn **toàn bộ part trong nhánh** |
+| Nhóm hiện **▣** | Trong nhánh có part được chọn một phần |
+| **Tìm** (gõ vào ô) | Lọc cây theo mã hàng/tên/hãng; tự mở rộng các nhánh khớp |
+| **Chọn tất cả** | Tick mọi part đang hiển thị (theo bộ lọc hiện tại) |
+| **Bỏ chọn** | Bỏ tick toàn bộ |
+| **Lấy từ Parts Management ▸** | Đổ các part bạn đang chọn sẵn trong cửa sổ Parts Management vào danh sách tick |
+| **Đã chọn: N part** | Luôn hiển thị chính xác số part sẽ xuất |
+
+### 3.4 Xuất
+
+1. Chọn **Cách xuất**:
+   - **Một file EDZ duy nhất** — tất cả part đã chọn vào 1 file (đặt tên, mặc định `parts.edz`)
+   - **Mỗi part một file** — mỗi part 1 file `.edz` (đặt tên theo mã hàng) vào một thư mục
+2. Chọn đích bằng nút **Chọn…**
+3. Bấm **XUẤT RA EDZ ▸** → xác nhận
+4. Theo dõi tiến trình trong ô nhật ký; kết quả tổng kết hiện cuối
+5. Log kiểm toán: `%APPDATA%\Tool Oumijia\logs\export-YYYYMMDD.csv`
+
+> 💡 Gói EDZ sinh ra bằng converter chính thức của EPLAN (`IXPartsImportExportEdz`) —
+> có thể import lại trên máy khác bằng nút **Nhập EDZ…**, hoặc mở trong Parts Management.
+
+---
+
+## 4. Câu hỏi thường gặp
+
+**Mở "Xuất EDZ…" báo "Chưa có Parts Database nào đang mở"?**
+→ Mở **Master data → Parts → Management** (chọn database) trước, rồi thực hiện lại.
+
+**Cây part trống hoặc thiếu part?**
+→ Kiểm tra đúng database đang mở; gõ ô *Tìm* xoá trắng để bỏ lọc.
+
+**Nhập xong không thấy part trong Parts Management?**
+→ Kiểm tra đúng database đang xem; với chế độ *Chỉ thêm mới*, part đã tồn tại bị bỏ qua.
+Xem `%APPDATA%\Tool Oumijia\logs\addin.log` để biết chi tiết.
+
+**Ribbon "Tool Oumijia" không xuất hiện?**
+→ Khởi động lại EPLAN. Nếu vẫn không có: xem `%APPDATA%\Tool Oumijia\logs\register-script.log`,
+chạy lại `Install-AddIn.bat`, hoặc phương án dự phòng trong [INSTALL.md](INSTALL.md).
+
+**Tên part hiển thị tiếng Anh?**
+→ Hiện tại tên nhóm/tên part lấy theo tiếng Anh (en_US). Việc chọn ngôn ngữ hiển thị nằm
+trong lộ trình.
+
+**Có cần license EPLAN không?**
+→ Không. Add-in dùng API chính thức + chức năng scripting miễn phí của EPLAN.
 
 **Có hỗ trợ dữ liệu hãng thật để chia sẻ không?**
-→ Không. Dữ liệu linh kiện thuộc bản quyền hãng — chỉ dùng cá nhân/nội bộ, không phân phối lại.
+→ Dữ liệu linh kiện thuộc bản quyền hãng — chỉ dùng cá nhân/nội bộ, không phân phối lại.

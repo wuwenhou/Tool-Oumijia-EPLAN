@@ -1,80 +1,69 @@
-# Cài đặt — Tool Oumijia (EPLAN Edition)
+# Cài đặt — Tool Oumijia (EPLAN Edition) v0.3.0
 
-## Cách 1 — Bản phát hành sẵn (khuyến nghị)
+> v0.3.0 là **add-in EPLAN** — cài một lần, dùng ngay trong EPLAN. Không còn app exe.
+
+## Cách cài (1 bước — khuyến nghị)
 
 1. Vào **[Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)**, tải
-   `Tool-Oumijia-EPLAN-v<version>-win-x64.zip`
-2. **Giải nén toàn bộ** zip ra một thư mục (vd `D:\Tool Oumijia\`)
-3. Chạy **`Tool-Oumijia.exe`**
-   - Bản self-contained: **không cần cài .NET**.
-   - Windows SmartScreen có thể cảnh báo lần đầu (file tải từ Internet, chưa ký số):
-     bấm **More info → Run anyway**.
-4. Xong! Cấu hình được tạo tự động tại `%APPDATA%\Tool Oumijia\`.
-
-## Cách 2 — Build từ source
-
-Xem [BUILD.md](BUILD.md).
-
-## Cách 3 — Cài EPLAN Add-in (v0.2+)
-
-Add-in hiển thị ribbon **"Tool Oumijia"** trong EPLAN với 3 nút **Nhập EDZ… / Xuất EDZ… / Cửa sổ Tool Oumijia**.
-
-**Cài 1 bước** (khuyến nghị) — nếu bạn tải bản release zip:
-
-1. Trong thư mục giải nén, mở `addin\`
-2. Chạy **`Install-AddIn.bat`** — không cần quyền Administrator, không đụng license EPLAN
-   - Installer copy DLL vào `%APPDATA%\Tool Oumijia\AddIn\` rồi đăng ký add-in bằng cách
-     chạy EPLAN ẩn một lần (script `OumijiaRegister.cs` + action `ExecuteScript`)
-3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện
-
-**Gỡ cài đặt**: chạy `addin\Uninstall-AddIn.bat`.
-
-**Phương án dự phòng** (nếu installer báo lỗi) — đăng ký thủ công trong 30 giây:
-
-1. Mở EPLAN → **File → Extras → Interfaces → Scripts → Run…**
-2. Chọn file `addin\OumijiaRegister.cs`
-3. Khởi động lại EPLAN
-
-> **Yêu cầu**: EPLAN Platform 2022 trở lên (x64). Đã kiểm chứng đầy đủ trên EPLAN Platform 2022.0.3.
-> Build add-in từ source: xem [BUILD.md](BUILD.md).
-> Nhật ký: `%APPDATA%\Tool Oumijia\logs\` (`register-script.log` = đăng ký, `addin.log` = khi chạy).
-
-## Gỡ cài đặt
-
-- Xóa thư mục cài đặt tool (bản giải nén là portable, không ghi vào hệ thống).
-- Add-in EPLAN: chạy `addin\Uninstall-AddIn.bat` (hoặc xóa registration — xem BUILD.md).
-- (Tùy chọn) xóa cấu hình + log: `%APPDATA%\Tool Oumijia\`.
+   `Tool-Oumijia-AddIn-v0.3.0.zip` (~26 KB)
+2. **Giải nén** ra một thư mục bất kỳ (vd `D:\Tool Oumijia\`)
+3. **Tắt EPLAN** (khuyến nghị) rồi chạy **`Install-AddIn.bat`**
+   - Installer copy DLL vào `%APPDATA%\Tool Oumijia\AddIn\` và đăng ký add-in trong EPLAN
+     bằng cách chạy EPLAN ẩn một lần (script `OumijiaRegister.cs` + action `ExecuteScript`)
+   - **Không cần quyền Administrator**; **không đụng gì tới license EPLAN**
+     (dùng chức năng scripting miễn phí)
+4. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
 
 ## Yêu cầu hệ thống
 
 | | |
 |---|---|
 | OS | Windows 10 / 11 (x64) |
-| RAM | ~100 MB khi chạy |
+| EPLAN | **Platform 2022 trở lên** — đã kiểm chứng đầy đủ trên 2022.0.3 |
 | Quyền | Không cần Administrator |
-| EPLAN | Không bắt buộc — chỉ cần khi muốn cài macro / import vào Parts DB |
-| .NET | Không cần (bản self-contained) |
+| .NET | Không cần cài (add-in chạy trên .NET Framework có sẵn của EPLAN) |
 
-## Kiểm tra tính toàn vẹn của bản tải
+## Kiểm tra tính toàn vẹn
 
-Mỗi release có kèm mã **SHA-256** của file ZIP. Đối chiếu nhanh:
+Mỗi release kèm mã **SHA-256** của file ZIP. Đối chiếu nhanh:
 
 ```powershell
-Get-FileHash .\Tool-Oumijia-EPLAN-v0.2.0-win-x64.zip -Algorithm SHA256
+Get-FileHash .\Tool-Oumijia-AddIn-v0.3.0.zip -Algorithm SHA256
 ```
 
-(và so với giá trị ghi trong Release notes / `VERSION.txt` sau khi giải nén — hash của `Tool-Oumijia.exe`).
+(và so với giá trị ghi trong Release notes / `VERSION.txt` sau khi giải nén — hash của DLL).
+
+## Gỡ cài đặt
+
+Chạy **`Uninstall-AddIn.bat`** (trong thư mục đã giải nén) — gỡ registration khỏi EPLAN
+và xóa DLL trong `%APPDATA%\Tool Oumijia\AddIn\`.
+
+(Tùy chọn) xóa log/cấu hình: `%APPDATA%\Tool Oumijia\`.
+
+## Phương án dự phòng (nếu Install-AddIn.bat báo lỗi)
+
+Đăng ký thủ công trong 30 giây:
+
+1. Trong thư mục giải nén: copy `Oumijia.EplAddin.EDZ.dll` vào `%APPDATA%\Tool Oumijia\AddIn\`
+   (tạo thư mục nếu chưa có)
+2. Mở EPLAN → **File → Extras → Interfaces → Scripts → Run…** → chọn file **`OumijiaRegister.cs`**
+   (nằm cạnh file này)
+3. Khởi động lại EPLAN
 
 ## Sử dụng với EPLAN Education
 
-Tool hoạt động độc lập với license EPLAN (không đụng bản quyền). Gợi ý quy trình:
+Add-in hoạt động độc lập với license EPLAN (không đụng bản quyền). Gợi ý quy trình:
 
 1. Trong EPLAN: **Data Portal → Import part** vào Parts Database (theo tài khoản của bạn)
-2. Backup/phân loại: dùng Tool Oumijia quét các `.edz` bạn có (từ website hãng hoặc tự tạo)
-3. Muốn lấy EDZ từ Parts DB của chính bạn: **Parts Management → [Extras] → Export → EDZ**
-   rồi đưa vào tool để phân loại thư viện.
-4. (v0.2) Ngược lại — **Nhập EDZ…** bằng ribbon "Tool Oumijia" trong EPLAN để batch import
-   vào Parts Database; **Xuất EDZ…** để backup parts DB ra EDZ.
+2. Muốn chia sẻ/backup: dùng add-in **Xuất EDZ…** để lấy parts ra `.edz` (chọn theo cây nhóm)
+3. Trên máy khác: dùng add-in **Nhập EDZ…** để nhập lô `.edz` vào Parts Database
+   (thử trên **database test** trước với chế độ *Chỉ thêm mới*)
 
 > Tuân thủ điều khoản sử dụng của EPLAN/Miền dữ liệu hãng: chỉ dùng cá nhân/nội bộ,
 > không tái phân phối dữ liệu linh kiện.
+
+## Nhật ký & hỗ trợ
+
+- Log: `%APPDATA%\Tool Oumijia\logs\`
+  (`register-script.log` = đăng ký; `addin.log` = hoạt động; `import-*.csv`/`export-*.csv` = kiểm toán)
+- Gặp lỗi: mở issue kèm nội dung `addin.log` (và `register-script.log` nếu lỗi cài đặt).
