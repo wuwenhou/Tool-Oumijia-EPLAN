@@ -1,0 +1,13 @@
+* text=auto
+
+*.sln text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+
+*.png binary
+*.ico binary
+*.zip binary
+*.edz binary
+*.ema binary

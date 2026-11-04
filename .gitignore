@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+output/
+publish/
+TestResults/
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# NuGet
+*.nupkg
+
+# Local scratch
+*.local.json

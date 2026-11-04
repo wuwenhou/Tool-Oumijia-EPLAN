@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Oumijia.Core</RootNamespace>
+    <AssemblyName>Oumijia.Core</AssemblyName>
+    <Version>0.1.0</Version>
+    <Authors>wuwenhou</Authors>
+    <Company>Tool Oumijia</Company>
+    <Product>Tool Oumijia (EPLAN)</Product>
+    <Description>Core library for Tool Oumijia (EPLAN Edition): EDZ archive reading, part metadata extraction, rule-based classification, library filing and EPLAN macro installation.</Description>
+    <RepositoryUrl>https://github.com/wuwenhou/Tool-Oumijia-EPLAN</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.50.8" />
+    <PackageReference Include="System.Text.Json" Version="10.0.14" />
+  </ItemGroup>
+
+</Project>
