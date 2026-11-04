@@ -63,6 +63,6 @@ gh release create vX.Y.Z "output\Tool-Oumijia-AddIn-vX.Y.Z.zip" `
 | Thứ | Quy ước | Ví dụ |
 |---|---|---|
 | Tag | `v` + SemVer | `v0.3.0` |
-| Asset | `Tool-Oumijia-AddIn-v<ver>.zip` | `Tool-Oumijia-AddIn-v0.3.0.zip` |
+| Asset | `Tool-Oumijia-AddIn-v<ver>.zip` | `Tool-Oumijia-AddIn-v0.4.0.zip` |
 | Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.3.0` |
 | Commit phát hành | `release: vX.Y.Z` | |

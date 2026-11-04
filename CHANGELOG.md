@@ -9,8 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 - Icon cho 2 nút ribbon; chọn ngôn ngữ hiển thị tên part (hiện dùng en_US)
-- EDZ writer: create/repack packages (fill macros, keep unknown records)
+- Thanh tiến trình cho import/export lô lớn
+- EDZ writer: create/repack packages
 - Nghiên cứu tab "Parts Management Extension" (API không chính thức)
+
+## [0.4.0] - 2026-11-04 — "Hoàn thiện theo UAT"
+
+### Added
+- **Panel chi tiết** trong dialog Xuất (như EPLAN Overview): bấm part/nhóm → bảng
+  Thuộc tính/Giá trị (mã hàng, type/order/ERP, hãng, nhà cung cấp, nhóm 3 cấp,
+  tên 1/2/3, mô tả, eCl@ss, EAN, macro, kích thước, ngày/người tạo & sửa); nháy đúp = copy
+- **Chế độ xuất "Theo loại bản ghi (như EPLAN)"**: tick chọn Parts / Accessory list /
+  Accessory placement / Drilling pattern / Connection point pattern /
+  Customer+Manufacturer+Supplier — dùng `MDPartsManagement.ExportParts` (cờ đã kiểm chứng
+  thực tế bằng giải nén EDZ đối chiếu số liệu database)
+- Ô đích xuất **tự điền sẵn** `Documents\parts.edz`; nhãn database gọn (`ESS_part001.alk — 647 part`)
+- Kiểm tra **construct UI offscreen** trong `OumijiaDiagParts` (bắt lỗi khởi tạo/layout)
+
+### Changed
+- **Dialog Nhập đơn giản hóa**: bỏ hàng tùy chọn (Chế độ nhập / Nhận dạng part / Ngôn ngữ phụ);
+  cố định mặc định hợp lý — cập nhật + thêm mới, theo mã hàng
+- Dialog Xuất: layout làm lại bằng TableLayoutPanel + Dock (không còn toạ độ tuyệt đối/neo phải
+  dễ khuất); dòng đã chọn **in đậm**; đếm "Đã chọn: N part" luôn hiển thị
+
+### Fixed
+- **Tick chọn không hiện dấu ✓** (dù đã đếm đúng): buộc vẽ lại TreeView (`Invalidate/Update`)
+  sau mỗi thay đổi trạng thái + in đậm dòng đã chọn làm chỉ báo phụ
+- **Nút "XUẤT RA EDZ ▸" và "Chọn…" bị khuất** khỏi vùng nhìn (layout neo toạ độ cũ) — nay
+  luôn ở đúng vị trí (nút Xuất neo phải hàng "Đã chọn" bằng bảng layout)
+- **Crash khi mở dialog Xuất** (`SplitterDistance must be between Panel1MinSize and…`) —
+  bắt được nhờ construct-test, sửa bằng cách áp dụng min-size trong `OnShown` có guard
 
 ## [0.3.0] - 2026-11-04 — "Add-in duy nhất"
 
@@ -98,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.4.0
 [0.3.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.3.0
 [0.2.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.1.0

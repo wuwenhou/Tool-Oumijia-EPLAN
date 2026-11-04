@@ -24,18 +24,21 @@ bằng add-in này*.
 - Tool **chỉ xử lý `.edz`** — EMA/EMP/EMS không còn trong phạm vi.
 - Kế hoạch xa hơn (EDZ writer, QElectroTech, AutoCAD) — xem `docs/ROADMAP.md`.
 
-## 2. Trạng thái hiện tại (v0.3.0)
+## 2. Trạng thái hiện tại (v0.4.0)
 
 ✅ **Chạy được & đã kiểm chứng trên EPLAN Platform 2022.0.3:**
-- Add-in nạp ổn định (`OnInit` → `OnInitGui` ribbon 2 nút → `OnExit` sạch với `/Auto`)
-- Đăng ký headless 1 click (`tools/install-addin/` + `tools/eplan-scripts/OumijiaRegister.cs`)
-- Nhập EDZ: dialog + pipeline API (đã UAT gián tiếp qua smoke test)
-- Xuất EDZ: dialog cây nhóm đầy đủ + smoke-export headless (`OumijiaDiagParts`: 647 part → 25 part EDZ OK)
-- Đọc dữ liệu part nhanh: 647 part trong **~80 ms** (enum + đọc property)
+- Add-in nạp ổn định; ribbon 2 nút: **Nhập EDZ… / Xuất EDZ…**
+- **Nhập**: dialog đơn giản (chọn file/thư mục → NHẬP; mặc định *cập nhật + thêm mới*, theo mã hàng)
+- **Xuất**: cây nhóm + tick 3 trạng thái (dấu ✓ hiển thị, dòng chọn **in đậm**) + tìm kiếm +
+  **panel chi tiết** kiểu EPLAN Overview + 2 phạm vi: *chọn trên cây* / *theo loại bản ghi như EPLAN*
+  (cờ API đã kiểm chứng — xem R15)
+- Construct-test UI offscreen chạy trong `OumijiaDiagParts` — đã bắt được 1 lỗi crash thật (R16)
+- Đăng ký + installer + pack add-in-only + test headless tất cả xanh (v0.4.0: 647 part đọc ~77 ms;
+  smoke export 25 part OK; 7/7 record-type combos OK)
 
 ⚠️ **Cần làm:**
-- UAT trực quan với người dùng: mở dialog Xuất, tick chọn, export thật, import lại kiểm tra
-- Icon cho 2 nút ribbon; chọn ngôn ngữ hiển thị tên part (hiện hardcode `en_US`)
+- UAT trực quan v0.4.0 với người dùng (tick ✓, nút Xuất, panel chi tiết, xuất theo loại bản ghi)
+- Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình cho lô lớn
 
 ## 3. Bản đồ repo
 
@@ -156,6 +159,8 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 | **R12** | ⭐ **Đọc chuỗi hiển thị property part**: dùng `MDPropertyValue.GetDisplayString().GetStringToDisplay(ISOCode.Language.L_en_US)` — hoạt động cho cả 3 kiểu: enum nhóm ("26" → "PLC"), đa ngôn ngữ ("de_DE@…;en_US@LOGO! 24RC;" → "LOGO! 24RC"), chuỗi thường ("SIE"). `ToString()` trần trả mã số/chuỗi trộn; `ToString(Language)` trả số với thuộc tính enum. Code chuẩn: `Ui/PartsTreeModel.cs` (PartInfo.ReadDisplayText). |
 | **R13** | Property ID: `Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_*` (field type nested, truyền thẳng vào `part.Properties[...]`). Enum nhóm: `MDPartsDatabaseItem.Enums.ProductTopGroup/ProductGroup/ProductSubGroup` (1=Electric, 2=Fluid, 3=Mechanic, 4=Process). Part number cũng có `part.PartNr`; `AdoId` (int) ổn định để key theo part. |
 | **R14** | Đăng ký thủ công qua dialog "API add-ins" của EPLAN (nếu người dùng từng làm) sẽ trỏ vào path người dùng chọn (vd bản giải nén zip) và **đè** lên registration của installer — xử lý bằng R11 (delete-first), không cần đi tìm key. |
+| **R15** | ⭐ **Xuất theo loại bản ghi**: `MDPartsManagement.ExportParts` 15 tham số = (file, converter `"IXPartsImportExportEdz"`, filterScheme `""`) + 6 cặp `{bool, MDObjectFilter}` theo thứ tự: **Parts / Addresses (Customer+Manufacturer/Supplier) / Constructions (= Drilling pattern + `items/contour`) / Terminals (= Connection point pattern) / AccessoryLists / AccessoryPlacements**; filter `null` chấp nhận được. Mapping ĐÃ xác minh bằng giải nén EDZ (EDZ thực chất là **7z container** — `tar`/bsdtar đọc được) đối chiếu số liệu DB. Cảnh báo: chế độ này xuất TOÀN BỘ theo loại (toàn bộ parts của DB demo ≈ 290 MB, accessory lists ≈ 110 MB). |
+| **R16** | ⭐ **Bẫy construct WinForms**: `SplitContainer.Panel2MinSize` / `SplitterDistance` ném `InvalidOperationException` nếu đặt khi control chưa có kích thước thật (trong ctor) → luôn đặt trong `OnShown` + try/catch. Tổng quát: **kiểm tra construct form offscreen** (DiagParts đã làm) để bắt lỗi khởi tạo UI trước khi UAT — cách này đã bắt được 1 lỗi crash mở dialog thật. |
 
 ## 7. Quy ước kỹ thuật
 

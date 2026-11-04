@@ -19,18 +19,22 @@
 - [x] Gói release add-in-only (~26 KB)
 - [ ] **UAT người dùng** trên database thật → tinh chỉnh (đang chờ phản hồi)
 
-## v0.4 — Tinh chỉnh theo UAT
-- [ ] Icon cho 2 nút ribbon (SVG)
-- [ ] Chọn ngôn ngữ hiển thị tên part trong dialog xuất (hiện en_US)
-- [ ] Tiến trình cho import/export lô lớn (progress bar)
-- [ ] Sắp xếp/bôi đậm kết quả tìm kiếm trong cây
-- [ ] (Tùy phản hồi) filter nâng cao kiểu EPLAN: Record type/Trade checkboxes
+## v0.4.0 — "Hoàn thiện theo UAT" ✅ (2026-11-04)
+- [x] Fix tick chọn không hiện dấu ✓ (buộc vẽ lại + dòng chọn in đậm)
+- [x] Fix nút "XUẤT RA EDZ ▸" / "Chọn…" bị khuất (TableLayoutPanel + Dock, an toàn mọi DPI)
+- [x] Panel chi tiết kiểu EPLAN Overview (đầy đủ thuộc tính + copy giá trị)
+- [x] Chế độ xuất "Theo loại bản ghi (như EPLAN)" — cờ API đã kiểm chứng thực tế
+- [x] Nhập EDZ đơn giản hóa (bỏ hàng tùy chọn; mặc định cập nhật + thêm mới)
+- [x] Construct-test UI offscreen trong DiagParts (bắt được 1 lỗi crash mở dialog — đã sửa)
+- [ ] UAT v0.4.0 trên máy người dùng → tinh chỉnh tiếp nếu cần
 
-## v0.5+ — Mở rộng
+## v0.5 — Tinh chỉnh & mở rộng
+- [ ] Icon cho 2 nút ribbon (SVG)
+- [ ] Chọn ngôn ngữ hiển thị tên part trong dialog Xuất (hiện en_US)
+- [ ] Tiến trình (progress) cho import/export lô lớn
+- [ ] Sắp xếp/bôi đậm kết quả tìm kiếm trong cây
 - [ ] EDZ writer/editor: tạo gói từ CSV; gắn macro/PDF/STEP; giữ record lạ khi sửa gói
-- [ ] Export nâng cao: filter scheme, giới hạn thuộc tính
 - [ ] Nghiên cứu tab "Parts Management Extension" (API không chính thức — rủi ro tương thích)
-- [ ] Bridge chuyển đổi (QElectroTech `.elmt`, DXF/AutoCAD) — nếu còn nhu cầu
 
 ## Nguyên tắc xuyên suốt
 - Chỉ API chính thức + dữ liệu factual; không bẻ license, không tái phân phối dữ liệu hãng

@@ -10,24 +10,27 @@
 
 ---
 
-## Tính năng (v0.3.0)
+## Tính năng (v0.4.0)
 
-### 📥 Nhập EDZ… (Import)
-- Chọn **nhiều file hoặc cả thư mục** `.edz` (quét cả thư mục con)
-- **Batch import** vào Parts Database qua API chính thức của EPLAN
-  (`IXPartsImportExportEdz`), với:
-  - 3 chế độ: *Chỉ thêm mới* / *Chỉ cập nhật* / *Cập nhật + thêm mới*
-  - 3 cách nhận dạng part: *Mã hàng* / *UniqueId* / *UniqueId + mã hàng*
-  - Tùy chọn nhập thêm ngôn ngữ phụ
-- Log CSV kiểm toán từng đợt nhập
+### 📥 Nhập EDZ… (Import) — đơn giản
+- Chọn **nhiều file hoặc cả thư mục** `.edz` (quét cả thư mục con) → bấm **NHẬP**
+- Mặc định hợp lý (cố định, không cần cấu hình): *cập nhật part đã có + thêm part mới*,
+  nhận dạng theo *mã hàng*
+- Batch import qua API chính thức của EPLAN (`IXPartsImportExportEdz`) + log CSV kiểm toán
 
 ### 📤 Xuất EDZ… (Export) — chọn part như EPLAN
 - **Cây nhóm kiểu navigator EPLAN**: Nhóm sản phẩm → nhóm → phân nhóm → hãng → part
-- **Tick chọn từng part hoặc cả nhóm** (checkbox 3 trạng thái: chọn / bỏ / một phần)
-- **Tìm kiếm** nhanh theo mã hàng / tên / hãng; nút *Chọn tất cả / Bỏ chọn / Lấy từ Parts Management*
-- Đếm **"Đã chọn: N part"** — luôn biết chính xác sẽ xuất gì
-- Xuất **1 file `parts.edz` duy nhất** hoặc **mỗi part 1 file** vào thư mục
-- Log CSV từng part
+- **Tick chọn từng part hoặc cả nhóm** — dấu ✓ hiện ngay, dòng đã chọn **in đậm**,
+  nhóm chọn một phần hiện ▣
+- **Panel CHI TIẾT** bên phải (như EPLAN Overview): bấm part → xem đầy đủ thuộc tính
+  (mã hàng, type/order/ERP, hãng, nhóm, tên 1-3, mô tả, eCl@ss, macro, kích thước, ngày sửa…);
+  nháy đúp = copy giá trị
+- **Tìm kiếm** nhanh; nút *Chọn tất cả / Bỏ chọn / Lấy từ Parts Management*; đếm **"Đã chọn: N part"**
+- Xuất **1 file `parts.edz`** (tự điền sẵn đích) hoặc **mỗi part 1 file** vào thư mục
+- 🆕 **Chế độ "Theo loại bản ghi (như EPLAN)"**: xuất cả **Parts / Accessory list /
+  Accessory placement / Drilling pattern / Connection point pattern /
+  Customer + Manufacturer/Supplier** — cờ API đã kiểm chứng thực tế
+- Log CSV từng part / từng đợt xuất
 
 ### ⚙️ Khác
 - **Cài đặt 1 click** (`Install-AddIn.bat`) — không cần Administrator, không đụng license EPLAN;
@@ -38,7 +41,7 @@
 
 ## 🚀 Bắt đầu nhanh
 
-1. Tải **`Tool-Oumijia-AddIn-v0.3.0.zip`** (~26 KB) tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
+1. Tải **`Tool-Oumijia-AddIn-v0.4.0.zip`** (~26 KB) tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
 2. Giải nén ra một thư mục bất kỳ → chạy **`Install-AddIn.bat`**
 3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
 
@@ -78,8 +81,8 @@ Tool-Oumijia-EPLAN/
 ## 🗺️ Định hướng (Roadmap)
 
 - **v0.3.0** ✅ — Add-in duy nhất: nhập/xuất EDZ với cây chọn part như EPLAN; bỏ app exe
-- **v0.4** — Icon ribbon; chọn ngôn ngữ hiển thị part; tinh chỉnh theo phản hồi UAT
-- **v0.5+** — EDZ writer (tạo gói); nghiên cứu tab "Parts Management Extension" — xem [docs/ROADMAP.md](docs/ROADMAP.md)
+- **v0.4.0** ✅ — Panel chi tiết + xuất theo loại bản ghi (như EPLAN) + fix toàn bộ lỗi UAT
+- **v0.5** — Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer — xem [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ## ⚖️ Ghi chú pháp lý
 

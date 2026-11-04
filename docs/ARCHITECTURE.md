@@ -31,8 +31,8 @@
 | `Actions/ExportEdzAction.cs` | action `OumijiaExportEdz` (22) — mở dialog xuất |
 | `Actions/SelfTestAction.cs` | action `OumijiaSelfTest` (23) — self-test headless |
 | `Actions/DiagPartsAction.cs` | action `OumijiaDiagParts` (24) — chẩn đoán DB + smoke export |
-| `Ui/ImportEdzForm.cs` | chọn file/thư mục + chế độ nhập + nhận dạng part + log |
-| `Ui/ExportEdzForm.cs` | dialog xuất v2: cây nhóm, tick 3 trạng thái, tìm kiếm, đếm chọn |
+| `Ui/ImportEdzForm.cs` | nhập batch EDZ (đơn giản hóa v0.4.0: chọn file/thư mục → NHẬP; mặc định cập nhật + thêm mới) |
+| `Ui/ExportEdzForm.cs` | dialog xuất v3: cây nhóm + panel chi tiết + 2 chế độ (chọn cây / theo loại bản ghi) |
 | `Ui/PartsTreeModel.cs` | `PartEntry`/`PartInfo` (đọc chuỗi hiển thị), `PartsTreeModel` (dựng cây nhóm) |
 | `AddinLog.cs` / `AddinCsvLog.cs` | log `%APPDATA%\Tool Oumijia\logs\` + CSV kiểm toán |
 
@@ -50,20 +50,26 @@ MDPartsManagement.ImportParts(files, "IXPartsImportExportEdz", mode, bExtraLang,
     └─► Parts Database  +  CSV log (import-YYYYMMDD.csv)
 ```
 
-### Xuất EDZ
+### Xuất EDZ (2 chế độ)
 ```
-ExportEdzForm mở lên
-    │
-    ├─ 1) management.SelectedPartsDatabase → database.Parts (enum ~60ms/647 part)
-    ├─ 2) PartEntry.FromPart() cho từng part (đọc property ~80ms/647 part)
-    ├─ 3) PartsTreeModel.Build() → cây Nhóm → nhóm → [phân nhóm] → hãng → part
-    │
-    ▼  người dùng tick chọn + chọn đích
+A) Xuất theo lựa chọn trên cây:
+ExportEdzForm (cây + panel chi tiết)
+    │  tick chọn part/nhóm
+    ▼
 MDPartsDatabase.ExportParts(đích, DataFormat.EDZ, IEnumerable<MDPart>)
-    ├─► 1 file parts.edz   (một lần gọi)
-    └─► mỗi part 1 file    (gọi từng part; tên = mã hàng sanitize)
-        + CSV log (export-YYYYMMDD.csv)
+    ├─► 1 file parts.edz   hoặc   mỗi part 1 file
+
+B) Xuất theo loại bản ghi (như EPLAN):
+MDPartsManagement.ExportParts(đích, "IXPartsImportExportEdz", "",
+    bExportParts, null,              // Parts
+    bExportAddresses, null,          // Customer + Manufacturer/Supplier
+    bExportConstructions, null,      // Drilling pattern (+ items/contour)
+    bExportTerminals, null,          // Connection point pattern
+    bExportAccessoryLists, null,     // Accessory list
+    bExportAccessoryPlacements, null)// Accessory placement
+    └─► 1 file EDZ (TOÀN BỘ theo loại — có thể rất lớn)
 ```
+Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số liệu database (AGENTS.md R15).
 
 ## Đọc dữ liệu part (quan trọng — xem AGENTS.md R12/R13)
 
@@ -89,6 +95,7 @@ MDPartsDatabase.ExportParts(đích, DataFormat.EDZ, IEnumerable<MDPart>)
 | D5 | Tick chọn lưu theo `AdoId` (không theo node) | Lọc/tìm kiếm dựng lại cây mà không mất trạng thái tick |
 | D6 | Trạng thái tick vẽ bằng `ImageList` + `HitTest(Image)` | TreeView WinForms không có checkbox 3 trạng thái native |
 | D7 | CSV + addin.log cho mọi thao tác | Truy vết/đối chiếu khi hỗ trợ người dùng |
+| D8 | Layout dưới bằng TableLayoutPanel/Dock; kiểm tra construct UI offscreen trong DiagParts | Không còn nút bị khuất ở mọi DPI; bắt lỗi khởi tạo dialog trước khi UAT (đã bắt được 1 crash thật — R16) |
 
 ## Đăng ký add-in (tóm tắt)
 
