@@ -31,6 +31,7 @@ namespace Oumijia.EplanAddIn.Ui
         private const int ImageUnchecked = 0;
         private const int ImageChecked = 1;
         private const int ImageMixed = 2;
+        private const string PartsDefaultFileName = "parts.edz";
 
         private readonly ImageList _stateImages = CreateStateImages();
         private readonly Font _boldFont = new Font("Segoe UI", 9F, FontStyle.Bold);
@@ -67,6 +68,7 @@ namespace Oumijia.EplanAddIn.Ui
         private readonly RadioButton _rbPerPart = new RadioButton();
         private readonly TextBox _folderTarget = new TextBox();
         private readonly Button _browseFolder = new Button();
+        private readonly Label _targetPreview = new Label();
 
         // ----- đáy
         private readonly Label _countLabel = new Label();
@@ -306,9 +308,9 @@ namespace Oumijia.EplanAddIn.Ui
             var targetLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 62,
+                Height = 90,
                 ColumnCount = 3,
-                RowCount = 2,
+                RowCount = 3,
                 Padding = new Padding(6, 0, 6, 0)
             };
             targetLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -316,18 +318,20 @@ namespace Oumijia.EplanAddIn.Ui
             targetLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
             targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
+            targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26f));
 
-            _rbSingle.Text = "Một file EDZ:";
+            _rbSingle.Text = "Một file EDZ (vào thư mục):";
             _rbSingle.AutoSize = true;
             _rbSingle.Checked = true;
             _rbSingle.Anchor = AnchorStyles.Left;
             _rbSingle.Margin = new Padding(0, 4, 8, 0);
+            _rbSingle.CheckedChanged += (s, e) => UpdateTargetPreview();
 
             _fileTarget.Dock = DockStyle.Fill;
             _fileTarget.Margin = new Padding(0, 3, 6, 3);
 
-            _browseFile.Text = "Chọn file…";
-            _browseFile.Size = new Size(104, 26);
+            _browseFile.Text = "Chọn thư mục…";
+            _browseFile.Size = new Size(116, 26);
             _browseFile.Anchor = AnchorStyles.Left;
             _browseFile.Margin = new Padding(0, 2, 0, 0);
             _browseFile.Click += OnBrowseFileClicked;
@@ -336,6 +340,7 @@ namespace Oumijia.EplanAddIn.Ui
             _rbPerPart.AutoSize = true;
             _rbPerPart.Anchor = AnchorStyles.Left;
             _rbPerPart.Margin = new Padding(0, 4, 8, 0);
+            _rbPerPart.CheckedChanged += (s, e) => UpdateTargetPreview();
 
             _folderTarget.Dock = DockStyle.Fill;
             _folderTarget.Margin = new Padding(0, 3, 6, 3);
@@ -346,12 +351,20 @@ namespace Oumijia.EplanAddIn.Ui
             _browseFolder.Margin = new Padding(0, 2, 0, 0);
             _browseFolder.Click += OnBrowseFolderClicked;
 
+            _targetPreview.Dock = DockStyle.Fill;
+            _targetPreview.ForeColor = Color.DimGray;
+            _targetPreview.Margin = new Padding(0, 4, 0, 0);
+            _targetPreview.TextAlign = ContentAlignment.MiddleLeft;
+            _targetPreview.Text = "→ sẽ tạo: …";
+
             targetLayout.Controls.Add(_rbSingle, 0, 0);
             targetLayout.Controls.Add(_fileTarget, 1, 0);
             targetLayout.Controls.Add(_browseFile, 2, 0);
             targetLayout.Controls.Add(_rbPerPart, 0, 1);
             targetLayout.Controls.Add(_folderTarget, 1, 1);
             targetLayout.Controls.Add(_browseFolder, 2, 1);
+            targetLayout.Controls.Add(_targetPreview, 0, 2);
+            targetLayout.SetColumnSpan(_targetPreview, 3);
 
             // Thứ tự add ngược để dock xếp đúng: targetLayout trên cùng? Không —
             // mong muốn từ trên xuống: scopeFlow, recordsPanel, recordsHint, targetLayout.
@@ -485,11 +498,8 @@ namespace Oumijia.EplanAddIn.Ui
 
             AdjustDetailsColumns();
 
-            if (string.IsNullOrWhiteSpace(_fileTarget.Text))
-            {
-                _fileTarget.Text = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "parts.edz");
-            }
+            LoadLastFolders();
+            UpdateTargetPreview();
 
             LoadDatabase();
         }
@@ -945,7 +955,7 @@ namespace Oumijia.EplanAddIn.Ui
 
             _recordsPanel.Visible = records;
             _recordsHint.Visible = records;
-            _outputGroup.Height = records ? 196 : 126;
+            _outputGroup.Height = records ? 228 : 158;
 
             _btnSelectAll.Enabled = !records;
             _btnClear.Enabled = !records;
@@ -960,6 +970,7 @@ namespace Oumijia.EplanAddIn.Ui
             }
 
             UpdateCount();
+            UpdateTargetPreview();
         }
 
         private void UpdateCount()
@@ -981,20 +992,22 @@ namespace Oumijia.EplanAddIn.Ui
                 _countLabel.Text = "Đã chọn: " + _checkedIds.Count + " part";
                 _exportButton.Enabled = _checkedIds.Count > 0;
             }
+
+            UpdateTargetPreview();
         }
 
         // ================================================================ chọn đích
 
         private void OnBrowseFileClicked(object sender, EventArgs e)
         {
-            using (var dialog = new SaveFileDialog())
+            using (var dialog = new FolderBrowserDialog())
             {
-                dialog.Title = "Chọn file EDZ đích";
-                dialog.Filter = "Gói EPLAN (*.edz)|*.edz";
-                dialog.FileName = "parts.edz";
+                dialog.Description = "Chọn THƯ MỤC đích (file EDZ được đặt tên tự động)";
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
-                    _fileTarget.Text = dialog.FileName;
+                    _fileTarget.Text = dialog.SelectedPath;
+                    SaveLastFolders();
+                    UpdateTargetPreview();
                 }
             }
         }
@@ -1007,7 +1020,121 @@ namespace Oumijia.EplanAddIn.Ui
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
                     _folderTarget.Text = dialog.SelectedPath;
+                    SaveLastFolders();
+                    UpdateTargetPreview();
                 }
+            }
+        }
+
+        // ================================================================ tên file tự động + nhớ thư mục
+
+        /// <summary>Chế độ "Một file EDZ": 1 part → tên = mã sản phẩm; nhiều part → parts.edz.</summary>
+        private string SelectedSingleFileName()
+        {
+            var selected = _entries.Where(x => _checkedIds.Contains(x.Part.AdoId)).ToList();
+            if (selected.Count == 1)
+            {
+                var number = selected[0].Number;
+                if (!string.IsNullOrWhiteSpace(number)) return SanitizeFileName(number) + ".edz";
+            }
+            return PartsDefaultFileName;
+        }
+
+        /// <summary>Cập nhật dòng "→ sẽ tạo: …" theo chế độ + lựa chọn hiện tại.</summary>
+        private void UpdateTargetPreview()
+        {
+            try
+            {
+                if (_rbRecords.Checked)
+                {
+                    _targetPreview.Text = "→ sẽ tạo: " + PartsDefaultFileName + " (trong thư mục trên)";
+                }
+                else if (_rbSingle.Checked)
+                {
+                    var count = _checkedIds.Count;
+                    if (count == 0)
+                    {
+                        _targetPreview.Text = "→ sẽ tạo: (chưa chọn part nào)";
+                    }
+                    else if (count == 1)
+                    {
+                        _targetPreview.Text = "→ sẽ tạo: " + SelectedSingleFileName() + "  (theo mã sản phẩm)";
+                    }
+                    else
+                    {
+                        _targetPreview.Text = "→ sẽ tạo: " + PartsDefaultFileName + "  (gộp " + count + " part)";
+                    }
+                }
+                else
+                {
+                    _targetPreview.Text = "→ mỗi part 1 file, tên = mã sản phẩm (trong thư mục trên)";
+                }
+            }
+            catch
+            {
+                // bỏ qua
+            }
+        }
+
+        private static string LastFolderFile
+        {
+            get
+            {
+                return Path.Combine(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Tool Oumijia"), "export-folders.txt");
+            }
+        }
+
+        private void LoadLastFolders()
+        {
+            var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string single = null;
+            string perPart = null;
+
+            try
+            {
+                if (File.Exists(LastFolderFile))
+                {
+                    var lines = File.ReadAllLines(LastFolderFile);
+                    if (lines.Length > 0) single = lines[0];
+                    if (lines.Length > 1) perPart = lines[1];
+                }
+            }
+            catch
+            {
+                // không đọc được — dùng mặc định
+            }
+
+            if (string.IsNullOrWhiteSpace(_fileTarget.Text))
+            {
+                _fileTarget.Text = !string.IsNullOrWhiteSpace(single) && Directory.Exists(single.Trim())
+                    ? single.Trim()
+                    : documents;
+            }
+            if (string.IsNullOrWhiteSpace(_folderTarget.Text))
+            {
+                _folderTarget.Text = !string.IsNullOrWhiteSpace(perPart) && Directory.Exists(perPart.Trim())
+                    ? perPart.Trim()
+                    : documents;
+            }
+        }
+
+        private void SaveLastFolders()
+        {
+            try
+            {
+                var dir = Path.GetDirectoryName(LastFolderFile);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                File.WriteAllLines(LastFolderFile, new[]
+                {
+                    (_fileTarget.Text ?? string.Empty).Trim(),
+                    (_folderTarget.Text ?? string.Empty).Trim()
+                });
+            }
+            catch
+            {
+                // ghi nhớ là best-effort
             }
         }
 
@@ -1035,19 +1162,40 @@ namespace Oumijia.EplanAddIn.Ui
                 return;
             }
 
-            var target = (_rbSingle.Checked ? _fileTarget.Text : _folderTarget.Text) ?? string.Empty;
-            target = target.Trim();
-            if (target.Length == 0)
+            string target;
+            if (_rbSingle.Checked)
             {
-                MessageBox.Show(this, "Chưa chọn đích xuất (file hoặc thư mục).", "Tool Oumijia",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                var folder = (_fileTarget.Text ?? string.Empty).Trim();
+                if (folder.Length == 0)
+                {
+                    MessageBox.Show(this, "Chưa chọn thư mục đích.", "Tool Oumijia",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                try { Directory.CreateDirectory(folder); } catch { /* báo lỗi khi ghi */ }
+                target = Path.Combine(folder, SelectedSingleFileName());
+
+                if (File.Exists(target))
+                {
+                    var overwrite = MessageBox.Show(this,
+                        "File đã tồn tại:\n" + target + "\n\nGhi đè?", "Tool Oumijia",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (overwrite != DialogResult.Yes) return;
+                }
+            }
+            else
+            {
+                target = (_folderTarget.Text ?? string.Empty).Trim();
+                if (target.Length == 0)
+                {
+                    MessageBox.Show(this, "Chưa chọn thư mục đích.", "Tool Oumijia",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
             }
 
-            if (_rbSingle.Checked && !target.EndsWith(".edz", StringComparison.OrdinalIgnoreCase))
-            {
-                target += ".edz";
-            }
+            SaveLastFolders();
 
             var confirm = MessageBox.Show(this,
                 "Xuất " + selected.Count + " part ra EDZ?\n\n" +
@@ -1120,16 +1268,24 @@ namespace Oumijia.EplanAddIn.Ui
 
         private void ExportRecordTypes()
         {
-            var target = (_fileTarget.Text ?? string.Empty).Trim();
-            if (target.Length == 0)
+            var folder = (_fileTarget.Text ?? string.Empty).Trim();
+            if (folder.Length == 0)
             {
-                MessageBox.Show(this, "Chưa chọn file EDZ đích.", "Tool Oumijia",
+                MessageBox.Show(this, "Chưa chọn thư mục đích.", "Tool Oumijia",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (!target.EndsWith(".edz", StringComparison.OrdinalIgnoreCase))
+
+            try { Directory.CreateDirectory(folder); } catch { /* báo lỗi khi ghi */ }
+            var target = Path.Combine(folder, PartsDefaultFileName);
+            SaveLastFolders();
+
+            if (File.Exists(target))
             {
-                target += ".edz";
+                var overwrite = MessageBox.Show(this,
+                    "File đã tồn tại:\n" + target + "\n\nGhi đè?", "Tool Oumijia",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (overwrite != DialogResult.Yes) return;
             }
 
             var checkedNames = new List<string>();

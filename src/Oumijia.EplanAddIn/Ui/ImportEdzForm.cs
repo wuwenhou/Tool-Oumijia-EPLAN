@@ -206,12 +206,13 @@ namespace Oumijia.EplanAddIn.Ui
                 AddinLog.Write("Import: " + files.Count + " files, mode=UpdateAndAppend, identifier=PartNumber");
 
                 var management = new MDPartsManagement();
-                management.ImportParts(files, "IXPartsImportExportEdz",
-                    FixedImportMode, FixedAdditionalLanguage, FixedIdentifier, null);
+                var scheme = ImportPartsSupport.Import(management, files,
+                    FixedImportMode, FixedAdditionalLanguage, FixedIdentifier);
 
-                Log("EPLAN đã xử lý xong yêu cầu nhập.");
-                AddinLog.Write("Import finished OK");
-                AddinCsvLog.Append("import", "OK", FixedImportMode.ToString(), FixedIdentifier.ToString(), files.Count.ToString());
+                Log("EPLAN đã xử lý xong yêu cầu nhập (scheme: '" + scheme + "').");
+                AddinLog.Write("Import finished OK (scheme='" + scheme + "')");
+                AddinCsvLog.Append("import", "OK", FixedImportMode.ToString(), FixedIdentifier.ToString(),
+                    files.Count.ToString(), scheme);
 
                 MessageBox.Show(this,
                     "Đã gửi yêu cầu nhập " + files.Count + " gói cho EPLAN.\n" +

@@ -164,6 +164,33 @@ namespace Oumijia.EplanAddIn.Actions
                 TryExportCombo(report, management, "rt-05-accessorylists", false, false, false, false, true, false);
                 TryExportCombo(report, management, "rt-06-accessoryplacements", false, false, false, false, false, true);
                 TryExportCombo(report, management, "rt-07-all", true, true, true, true, true, true);
+
+                // ----- import smoke test: export 1 part rồi NHẬP LẠI (kiểm chứng scheme nhập)
+                try
+                {
+                    var importFile = Path.Combine(targetDir, "import-smoke.edz");
+                    var one = new List<MDPart>();
+                    if (entries.Count > 0) one.Add(entries[0].Part);
+
+                    if (one.Count > 0)
+                    {
+                        database.ExportParts(importFile, MDPartsDatabase.DataFormat.EDZ, one);
+
+                        var candidates = ImportPartsSupport.ResolveSchemeCandidates();
+                        report.AppendLine("IMPORT scheme candidates: " + string.Join(" | ", candidates.ToArray()));
+
+                        var files = new System.Collections.ArrayList();
+                        files.Add(importFile);
+                        var used = ImportPartsSupport.Import(management, files,
+                            MDPartsManagement.ImportMode.UpdateAndAppend, false,
+                            MDPartsManagement.ImportIdentifier.PartNumber);
+                        report.AppendLine("IMPORT SMOKE OK: 1 part re-imported (scheme='" + used + "')");
+                    }
+                }
+                catch (Exception exImport)
+                {
+                    report.AppendLine("IMPORT SMOKE LỖI: " + exImport.Message);
+                }
             }
             catch (Exception ex)
             {
