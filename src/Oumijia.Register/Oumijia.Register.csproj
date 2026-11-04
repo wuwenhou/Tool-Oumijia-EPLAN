@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Oumijia.Register — registers/unregisters the Tool Oumijia EPLAN add-in
+    without launching EPLAN (writes EPLAN settings via the offline API).
+
+    Runtime layout: this exe sits next to Oumijia.EplAddin.EDZ.dll + Eplan.EplApi.Starteru.dll.
+    Baseu (Settings) is loaded from the local EPLAN installation through the
+    EPLAN AssemblyResolver at runtime (see Program.cs for the resolution order).
+
+    Build: dotnet build src/Oumijia.Register -c Release [-p:EplanApiDir=...]
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Oumijia.Register</RootNamespace>
+    <AssemblyName>Oumijia.Register</AssemblyName>
+    <Version>0.2.0</Version>
+    <Authors>wuwenhou</Authors>
+    <Company>Tool Oumijia</Company>
+    <Product>Tool Oumijia (EPLAN)</Product>
+    <Description>Registration helper: installs/uninstalls the Tool Oumijia EPLAN add-in.</Description>
+    <RepositoryUrl>https://github.com/wuwenhou/Tool-Oumijia-EPLAN</RepositoryUrl>
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EplanApiDir Condition="'$(EplanApiDir)' == ''">$(EPLAN_API_DIR)</EplanApiDir>
+    <EplanApiDir Condition="'$(EplanApiDir)' == '' And Exists('C:\Program Files\EPLAN\Platform\2022.0.3\Bin\Eplan.EplApi.AFu.dll')">C:\Program Files\EPLAN\Platform\2022.0.3\Bin</EplanApiDir>
+  </PropertyGroup>
+
+  <Target Name="FailWhenEplanApiMissing" BeforeTargets="BeforeCompile"
+          Condition="'$(EplanApiDir)' == '' Or !Exists('$(EplanApiDir)\Eplan.EplApi.AFu.dll')">
+    <Error Code="OUMIJIA001"
+           Text="EPLAN API assemblies not found. Build with -p:EplanApiDir=&quot;C:\Program Files\EPLAN\Platform\&lt;version&gt;\Bin&quot; — see docs/BUILD.md." />
+  </Target>
+
+  <ItemGroup Condition="'$(EplanApiDir)' != '' And Exists('$(EplanApiDir)\Eplan.EplApi.AFu.dll')">
+    <!-- Starter is copied next to the exe (offline bootstrapping pattern). -->
+    <Reference Include="Eplan.EplApi.Starteru">
+      <HintPath>$(EplanApiDir)\Eplan.EplApi.Starteru.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <!-- Base is resolved from the EPLAN installation at runtime. -->
+    <Reference Include="Eplan.EplApi.Baseu">
+      <HintPath>$(EplanApiDir)\Eplan.EplApi.Baseu.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

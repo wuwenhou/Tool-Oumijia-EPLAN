@@ -1,47 +1,86 @@
+using System;
 using Eplan.EplApi.ApplicationFramework;
+using Eplan.EplApi.Gui;
 
 namespace Oumijia.EplanAddIn
 {
     /// <summary>
-    /// EPLAN add-in entry point ("Tool Oumijia").
+    /// EPLAN add-in entry point ("Tool Oumijia — EDZ assistant").
     ///
-    /// Registration on a machine (EPLAN 2.9+ / Platform):
-    ///   Utilities &gt; API Add-ins &gt; register "Oumijia.EplanAddIn.dll"
-    /// or ship as an EPLAN add-on (see docs/BUILD.md).
-    ///
-    /// TODO(v0.2): register a ribbon button for the "OumijiaOpenTool" action, and
-    /// implement batch EDZ import into the parts database via the EPLAN API
-    /// (Eplan.EplApi.MasterData / parts import services). Verify interface and
-    /// method signatures against your platform version:
-    ///   EPLAN Help &gt; Eplan Platform API &gt; Add-ins / Actions (IEplAddIn, IEplAction).
+    /// Registration (see Oumijia.Register tool / docs/BUILD.md):
+    ///   STATION.EplanEplApiModule.Module.Oumijia@EplAddin@EDZ.AssemblyPath  = path to this dll
+    ///   ...AssemblyName / ...TypeName / ...LoadOnStart
     /// </summary>
     public class AddIn : IEplAddIn
     {
+        private const string RibbonTabName = "Tool Oumijia";
+        private const string CommandGroupName = "Quản lý EDZ";
+
         public bool OnRegister(ref bool bLoadOnStart)
         {
-            // Load on EPLAN start so the API action is available immediately.
             bLoadOnStart = true;
+            AddinLog.Write("OnRegister");
             return true;
         }
 
         public bool OnUnregister()
         {
+            AddinLog.Write("OnUnregister");
             return true;
         }
 
         public bool OnInit()
         {
+            var version = typeof(AddIn).Assembly.GetName().Version;
+            AddinLog.Write("OnInit (version " + (version != null ? version.ToString() : "?") + ")");
             return true;
         }
 
         public bool OnInitGui()
         {
-            return true;
+            try
+            {
+                var ribbon = new RibbonBar();
+
+                var tab = ribbon.GetTab(RibbonTabName);
+                if (tab == null) tab = ribbon.AddTab(RibbonTabName);
+
+                var group = tab.GetCommandGroup(CommandGroupName);
+                if (group == null) group = tab.AddCommandGroup(CommandGroupName);
+
+                EnsureCommand(group, "Nhập EDZ…", "OumijiaImportEdz");
+                EnsureCommand(group, "Xuất EDZ…", "OumijiaExportEdz");
+                EnsureCommand(group, "Cửa sổ Tool Oumijia", "OumijiaOpenTool");
+
+                AddinLog.Write("OnInitGui: ribbon ready");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("OnInitGui", ex);
+                return false;
+            }
         }
 
         public bool OnExit()
         {
+            AddinLog.Write("OnExit");
             return true;
+        }
+
+        private static void EnsureCommand(RibbonCommandGroup group, string buttonText, string actionName)
+        {
+            try
+            {
+                if (group.GetCommand(actionName) == null)
+                {
+                    group.AddCommand(buttonText, actionName);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("EnsureCommand(" + actionName + ")", ex);
+            }
         }
     }
 }
