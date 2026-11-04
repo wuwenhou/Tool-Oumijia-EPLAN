@@ -11,9 +11,20 @@ using Eplan.EplApi.MasterData;
 namespace Oumijia.EplanAddIn.Ui
 {
     /// <summary>
-    /// Xuất part ra EDZ — chọn part bằng CÂY NHÓM kiểu navigator EPLAN
-    /// (Nhóm sản phẩm → nhóm → [phân nhóm] → hãng → part), tick chọn, tìm kiếm,
-    /// xuất 1 file hoặc mỗi part 1 file. Dữ liệu qua API chính thức (ExportParts/EDZ).
+    /// Xuất EDZ — v3:
+    ///  - Cây nhóm kiểu navigator EPLAN (tick 3 trạng thái, dòng đã chọn in đậm, tìm kiếm)
+    ///  - Panel CHI TIẾT bên phải (thuộc tính part kiểu EPLAN Overview)
+    ///  - Hai phạm vi xuất: "Part đã chọn trên cây" hoặc "Theo loại bản ghi (như EPLAN)"
+    ///    (Parts / Accessory list / Accessory placement / Drilling pattern /
+    ///     Connection point pattern / Customer + Manufacturer/Supplier)
+    ///
+    /// Cờ API đã kiểm chứng thực tế (giải nén EDZ đối chiếu số liệu database):
+    ///   bExportParts               → partxml/*.part.xml
+    ///   bExportAddresses           → *.manufacturer.xml (+ customer nếu có)
+    ///   bExportConstructions       → *.construction.xml (Drilling pattern) + items/contour
+    ///   bExportTerminals           → *.connectionpoints.xml (Connection point pattern)
+    ///   bExportAccessoryLists      → *.accessorylist*.xml (Accessory list)
+    ///   bExportAccessoryPlacements → *.accessoryplacementlist.xml (Accessory placement)
     /// </summary>
     internal sealed class ExportEdzForm : Form
     {
@@ -22,18 +33,46 @@ namespace Oumijia.EplanAddIn.Ui
         private const int ImageMixed = 2;
 
         private readonly ImageList _stateImages = CreateStateImages();
+        private readonly Font _boldFont = new Font("Segoe UI", 9F, FontStyle.Bold);
 
+        // ----- hàng trên
         private readonly Label _dbLabel = new Label();
         private readonly TextBox _searchBox = new TextBox();
-        private readonly TreeView _tree = new TreeView();
+        private readonly Button _btnSelectAll = new Button();
+        private readonly Button _btnClear = new Button();
+        private readonly Button _btnFromPartsMgmt = new Button();
         private readonly Label _hintLabel = new Label();
+
+        // ----- giữa: cây + chi tiết
+        private readonly TreeView _tree = new TreeView();
+        private readonly Label _detailsHeader = new Label();
+        private readonly ListView _details = new ListView();
+        private SplitContainer _split;
+
+        // ----- tùy chọn xuất
+        private readonly GroupBox _outputGroup = new GroupBox();
+        private readonly RadioButton _rbTree = new RadioButton();
+        private readonly RadioButton _rbRecords = new RadioButton();
+        private readonly FlowLayoutPanel _recordsPanel = new FlowLayoutPanel();
+        private readonly CheckBox _cbParts = new CheckBox();
+        private readonly CheckBox _cbAccessoryLists = new CheckBox();
+        private readonly CheckBox _cbAccessoryPlacements = new CheckBox();
+        private readonly CheckBox _cbDrilling = new CheckBox();
+        private readonly CheckBox _cbConnectionPoints = new CheckBox();
+        private readonly CheckBox _cbAddresses = new CheckBox();
+        private readonly Label _recordsHint = new Label();
+        private readonly RadioButton _rbSingle = new RadioButton();
+        private readonly TextBox _fileTarget = new TextBox();
+        private readonly Button _browseFile = new Button();
+        private readonly RadioButton _rbPerPart = new RadioButton();
+        private readonly TextBox _folderTarget = new TextBox();
+        private readonly Button _browseFolder = new Button();
+
+        // ----- đáy
         private readonly Label _countLabel = new Label();
-        private readonly RadioButton _outputSingle = new RadioButton();
-        private readonly RadioButton _outputPerPart = new RadioButton();
-        private readonly TextBox _target = new TextBox();
-        private readonly Button _browseButton = new Button();
-        private readonly TextBox _log = new TextBox();
         private readonly Button _exportButton = new Button();
+        private readonly TextBox _log = new TextBox();
+
         private readonly Timer _searchTimer = new Timer();
 
         private MDPartsManagement _management;
@@ -45,57 +84,69 @@ namespace Oumijia.EplanAddIn.Ui
         public ExportEdzForm()
         {
             Text = "Tool Oumijia — Xuất EDZ (chọn part cần xuất)";
-            ClientSize = new Size(900, 660);
-            MinimumSize = new Size(760, 560);
+            ClientSize = new Size(1080, 780);
+            MinimumSize = new Size(940, 640);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 9F);
-
             BuildUi();
         }
 
-        // ------------------------------------------------------------------ UI
+        // ================================================================ UI
 
         private void BuildUi()
         {
-            // ----- hàng 1: database + tìm kiếm + nút
-            var topPanel = new Panel { Dock = DockStyle.Top, Height = 86 };
+            // ----- hàng trên
+            var topPanel = new Panel { Dock = DockStyle.Top, Height = 92 };
 
             _dbLabel.Dock = DockStyle.Top;
             _dbLabel.Height = 24;
             _dbLabel.Padding = new Padding(4, 4, 0, 0);
             _dbLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 
-            var searchRow = new Panel { Dock = DockStyle.Top, Height = 34 };
+            var searchRow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                WrapContents = false,
+                Padding = new Padding(4, 2, 0, 0)
+            };
 
-            var lblSearch = new Label { Text = "Tìm:", AutoSize = true, Location = new Point(4, 8) };
-            _searchBox.Location = new Point(40, 4);
+            var lblSearch = new Label { Text = "Tìm:", AutoSize = true, Margin = new Padding(0, 7, 4, 0) };
             _searchBox.Width = 240;
-            _searchBox.PlaceholderTextSafe("mã hàng / tên / hãng…");
+            _searchBox.Margin = new Padding(0, 4, 8, 0);
 
-            var btnSelectAll = new Button { Text = "Chọn tất cả", Location = new Point(292, 3), Size = new Size(96, 26) };
-            btnSelectAll.Click += OnSelectAllClicked;
-            var btnClear = new Button { Text = "Bỏ chọn", Location = new Point(394, 3), Size = new Size(80, 26) };
-            btnClear.Click += OnClearAllClicked;
-            var btnFromPartsMgmt = new Button { Text = "Lấy từ Parts Management ▸", Location = new Point(480, 3), Size = new Size(190, 26) };
-            btnFromPartsMgmt.Click += OnUseSelectionClicked;
+            _btnSelectAll.Text = "Chọn tất cả";
+            _btnSelectAll.Size = new Size(96, 26);
+            _btnSelectAll.Margin = new Padding(0, 3, 4, 0);
+            _btnSelectAll.Click += OnSelectAllClicked;
+
+            _btnClear.Text = "Bỏ chọn";
+            _btnClear.Size = new Size(80, 26);
+            _btnClear.Margin = new Padding(0, 3, 4, 0);
+            _btnClear.Click += OnClearAllClicked;
+
+            _btnFromPartsMgmt.Text = "Lấy từ Parts Management ▸";
+            _btnFromPartsMgmt.Size = new Size(190, 26);
+            _btnFromPartsMgmt.Margin = new Padding(0, 3, 0, 0);
+            _btnFromPartsMgmt.Click += OnUseSelectionClicked;
 
             searchRow.Controls.Add(lblSearch);
             searchRow.Controls.Add(_searchBox);
-            searchRow.Controls.Add(btnSelectAll);
-            searchRow.Controls.Add(btnClear);
-            searchRow.Controls.Add(btnFromPartsMgmt);
+            searchRow.Controls.Add(_btnSelectAll);
+            searchRow.Controls.Add(_btnClear);
+            searchRow.Controls.Add(_btnFromPartsMgmt);
 
             _hintLabel.Dock = DockStyle.Top;
-            _hintLabel.Height = 20;
+            _hintLabel.Height = 22;
             _hintLabel.Padding = new Padding(4, 0, 0, 0);
             _hintLabel.ForeColor = Color.DimGray;
-            _hintLabel.Text = "Mẹo: tick ô vuông trước mỗi mục để chọn; tick vào nhóm = chọn cả nhánh; gõ vào ô Tìm để lọc nhanh.";
+            _hintLabel.Text = "Mẹo: tick ô vuông trước mỗi mục để chọn; tick nhóm = chọn cả nhánh · bấm dòng để xem chi tiết.";
 
             topPanel.Controls.Add(_hintLabel);
             topPanel.Controls.Add(searchRow);
             topPanel.Controls.Add(_dbLabel);
 
-            // ----- cây
+            // ----- giữa: cây | chi tiết
             _tree.Dock = DockStyle.Fill;
             _tree.BorderStyle = BorderStyle.FixedSingle;
             _tree.HideSelection = false;
@@ -104,56 +155,69 @@ namespace Oumijia.EplanAddIn.Ui
             _tree.ItemHeight = 20;
             _tree.ImageList = _stateImages;
             _tree.MouseDown += OnTreeMouseDown;
+            _tree.AfterSelect += (s, e) => ShowDetails(e.Node);
             EnableDoubleBuffering(_tree);
 
-            // ----- đáy: tùy chọn xuất + đếm + log
-            var bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 250 };
+            _detailsHeader.Dock = DockStyle.Top;
+            _detailsHeader.Height = 24;
+            _detailsHeader.Padding = new Padding(4, 3, 0, 0);
+            _detailsHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _detailsHeader.Text = "Chi tiết";
 
-            var outputGroup = new GroupBox { Dock = DockStyle.Top, Height = 90, Text = "Cách xuất" };
+            _details.Dock = DockStyle.Fill;
+            _details.View = View.Details;
+            _details.FullRowSelect = true;
+            _details.MultiSelect = false;
+            _details.HideSelection = false;
+            _details.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            _details.Columns.Add("Thuộc tính", 190);
+            _details.Columns.Add("Giá trị", 320);
+            _details.DoubleClick += OnDetailsDoubleClick;
 
-            _outputSingle.Text = "Một file EDZ duy nhất:";
-            _outputSingle.AutoSize = true;
-            _outputSingle.Location = new Point(12, 22);
-            _outputSingle.Checked = true;
-            _outputSingle.CheckedChanged += (s, e) => UpdateTargetHint();
+            _split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical
+            };
+            // Lưu ý: Panel1MinSize/Panel2MinSize và SplitterDistance chỉ đặt được khi
+            // SplitContainer đã có kích thước thật — sẽ áp dụng trong OnShown (có guard).
+            _split.Panel1.Controls.Add(_tree);
+            _split.Panel2.Controls.Add(_details);
+            _split.Panel2.Controls.Add(_detailsHeader);
+            _split.Panel2.Resize += (s, e) => AdjustDetailsColumns();
+            _split.SplitterMoved += (s, e) => AdjustDetailsColumns();
 
-            _target.Location = new Point(178, 20);
-            _target.Width = 500;
-            _target.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            // ----- đáy: tùy chọn + đếm + log
+            var bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 330 };
 
-            _browseButton.Text = "Chọn…";
-            _browseButton.Location = new Point(690, 18);
-            _browseButton.Size = new Size(96, 25);
-            _browseButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _browseButton.Click += OnBrowseClicked;
+            BuildOutputGroup();
 
-            _outputPerPart.Text = "Mỗi part một file EDZ (xuất vào thư mục):";
-            _outputPerPart.AutoSize = true;
-            _outputPerPart.Location = new Point(12, 54);
-            _outputPerPart.CheckedChanged += (s, e) => UpdateTargetHint();
-
-            outputGroup.Controls.Add(_outputSingle);
-            outputGroup.Controls.Add(_target);
-            outputGroup.Controls.Add(_browseButton);
-            outputGroup.Controls.Add(_outputPerPart);
-
-            var actionPanel = new Panel { Dock = DockStyle.Top, Height = 40 };
+            var actionPanel = new Panel { Dock = DockStyle.Top, Height = 42 };
+            var actionLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1
+            };
+            actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             _countLabel.Text = "Đã chọn: 0 part";
             _countLabel.AutoSize = true;
             _countLabel.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            _countLabel.Location = new Point(12, 10);
+            _countLabel.Anchor = AnchorStyles.Left;
+            _countLabel.Margin = new Padding(4, 10, 0, 0);
 
             _exportButton.Text = "XUẤT RA EDZ ▸";
-            _exportButton.Size = new Size(150, 32);
-            _exportButton.Location = new Point(730, 4);
-            _exportButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _exportButton.Size = new Size(160, 32);
             _exportButton.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             _exportButton.Enabled = false;
+            _exportButton.Dock = DockStyle.Right;
             _exportButton.Click += OnExportClicked;
 
-            actionPanel.Controls.Add(_countLabel);
-            actionPanel.Controls.Add(_exportButton);
+            actionLayout.Controls.Add(_countLabel, 0, 0);
+            actionLayout.Controls.Add(_exportButton, 1, 0);
+            actionPanel.Controls.Add(actionLayout);
 
             _log.Dock = DockStyle.Fill;
             _log.Multiline = true;
@@ -164,13 +228,13 @@ namespace Oumijia.EplanAddIn.Ui
 
             bottomPanel.Controls.Add(_log);
             bottomPanel.Controls.Add(actionPanel);
-            bottomPanel.Controls.Add(outputGroup);
+            bottomPanel.Controls.Add(_outputGroup);
 
-            Controls.Add(_tree);
+            Controls.Add(_split);
             Controls.Add(bottomPanel);
             Controls.Add(topPanel);
 
-            // ----- tìm kiếm có debounce nhẹ
+            // ----- tìm kiếm (debounce)
             _searchTimer.Interval = 250;
             _searchTimer.Tick += (s, e) =>
             {
@@ -187,11 +251,133 @@ namespace Oumijia.EplanAddIn.Ui
             };
         }
 
+        private void BuildOutputGroup()
+        {
+            _outputGroup.Dock = DockStyle.Top;
+            _outputGroup.Height = 126;
+            _outputGroup.Text = "Cách xuất";
+
+            // ----- hàng "phạm vi"
+            var scopeFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 28,
+                WrapContents = false,
+                Padding = new Padding(6, 2, 0, 0)
+            };
+
+            var lblScope = new Label { Text = "Phạm vi:", AutoSize = true, Margin = new Padding(0, 5, 4, 0) };
+            _rbTree.Text = "Part đã chọn trên cây";
+            _rbTree.AutoSize = true;
+            _rbTree.Checked = true;
+            _rbTree.Margin = new Padding(0, 3, 12, 0);
+            _rbTree.CheckedChanged += (s, e) => UpdateModes();
+            _rbRecords.Text = "Theo loại bản ghi (như EPLAN)";
+            _rbRecords.AutoSize = true;
+            _rbRecords.Margin = new Padding(0, 3, 0, 0);
+            _rbRecords.CheckedChanged += (s, e) => UpdateModes();
+
+            scopeFlow.Controls.Add(lblScope);
+            scopeFlow.Controls.Add(_rbTree);
+            scopeFlow.Controls.Add(_rbRecords);
+
+            // ----- hàng checkbox loại bản ghi (đầy đủ theo API đã kiểm chứng)
+            _recordsPanel.Dock = DockStyle.Top;
+            _recordsPanel.Height = 58;
+            _recordsPanel.WrapContents = true;
+            _recordsPanel.Padding = new Padding(20, 0, 0, 0);
+            _recordsPanel.Visible = false;
+
+            SetupRecordCheckBox(_cbParts, "Parts (linh kiện)", true);
+            SetupRecordCheckBox(_cbAccessoryLists, "Accessory list (danh mục phụ kiện)", false);
+            SetupRecordCheckBox(_cbAccessoryPlacements, "Accessory placement (vị trí phụ kiện)", false);
+            SetupRecordCheckBox(_cbDrilling, "Drilling pattern (mẫu khoan)", false);
+            SetupRecordCheckBox(_cbConnectionPoints, "Connection point pattern (mẫu điểm nối)", false);
+            SetupRecordCheckBox(_cbAddresses, "Customer / Manufacturer / Supplier (KH & hãng)", false);
+
+            _recordsHint.Dock = DockStyle.Top;
+            _recordsHint.Height = 20;
+            _recordsHint.Padding = new Padding(20, 0, 0, 0);
+            _recordsHint.ForeColor = Color.DimGray;
+            _recordsHint.Visible = false;
+            _recordsHint.Text = "Chế độ này xuất TOÀN BỘ bản ghi theo loại đã tick (không dùng tick trên cây); file kèm macro/tài liệu nên có thể lớn.";
+
+            // ----- hàng đích xuất (bảng 3 cột × 2 hàng)
+            var targetLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 62,
+                ColumnCount = 3,
+                RowCount = 2,
+                Padding = new Padding(6, 0, 6, 0)
+            };
+            targetLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            targetLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            targetLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
+            targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
+
+            _rbSingle.Text = "Một file EDZ:";
+            _rbSingle.AutoSize = true;
+            _rbSingle.Checked = true;
+            _rbSingle.Anchor = AnchorStyles.Left;
+            _rbSingle.Margin = new Padding(0, 4, 8, 0);
+
+            _fileTarget.Dock = DockStyle.Fill;
+            _fileTarget.Margin = new Padding(0, 3, 6, 3);
+
+            _browseFile.Text = "Chọn file…";
+            _browseFile.Size = new Size(104, 26);
+            _browseFile.Anchor = AnchorStyles.Left;
+            _browseFile.Margin = new Padding(0, 2, 0, 0);
+            _browseFile.Click += OnBrowseFileClicked;
+
+            _rbPerPart.Text = "Mỗi part một file (vào thư mục):";
+            _rbPerPart.AutoSize = true;
+            _rbPerPart.Anchor = AnchorStyles.Left;
+            _rbPerPart.Margin = new Padding(0, 4, 8, 0);
+
+            _folderTarget.Dock = DockStyle.Fill;
+            _folderTarget.Margin = new Padding(0, 3, 6, 3);
+
+            _browseFolder.Text = "Chọn thư mục…";
+            _browseFolder.Size = new Size(116, 26);
+            _browseFolder.Anchor = AnchorStyles.Left;
+            _browseFolder.Margin = new Padding(0, 2, 0, 0);
+            _browseFolder.Click += OnBrowseFolderClicked;
+
+            targetLayout.Controls.Add(_rbSingle, 0, 0);
+            targetLayout.Controls.Add(_fileTarget, 1, 0);
+            targetLayout.Controls.Add(_browseFile, 2, 0);
+            targetLayout.Controls.Add(_rbPerPart, 0, 1);
+            targetLayout.Controls.Add(_folderTarget, 1, 1);
+            targetLayout.Controls.Add(_browseFolder, 2, 1);
+
+            // Thứ tự add ngược để dock xếp đúng: targetLayout trên cùng? Không —
+            // mong muốn từ trên xuống: scopeFlow, recordsPanel, recordsHint, targetLayout.
+            // Dock=Top: control thêm SAU nằm TRÊN → thêm ngược thứ tự hiển thị.
+            _outputGroup.Controls.Add(targetLayout);
+            _outputGroup.Controls.Add(_recordsHint);
+            _outputGroup.Controls.Add(_recordsPanel);
+            _outputGroup.Controls.Add(scopeFlow);
+        }
+
+        private void SetupRecordCheckBox(CheckBox box, string text, bool isChecked)
+        {
+            box.Text = text;
+            box.AutoSize = true;
+            box.Checked = isChecked;
+            box.Margin = new Padding(0, 2, 16, 0);
+            box.CheckedChanged += (s, e) => UpdateCount();
+            _recordsPanel.Controls.Add(box);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _stateImages.Dispose();
+                _boldFont.Dispose();
                 _searchTimer.Dispose();
             }
             base.Dispose(disposing);
@@ -213,7 +399,7 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 g.Clear(Color.Transparent);
                 using (var fill = new SolidBrush(Color.White))
-                using (var border = new Pen(Color.FromArgb(130, 130, 130)))
+                using (var border = new Pen(Color.FromArgb(120, 120, 120)))
                 {
                     g.FillRectangle(fill, 2, 2, 11, 11);
                     g.DrawRectangle(border, 2, 2, 11, 11);
@@ -252,15 +438,59 @@ namespace Oumijia.EplanAddIn.Ui
             }
             catch
             {
-                // Không bắt buộc — chỉ là tối ưu vẽ.
+                // Chỉ là tối ưu vẽ.
             }
         }
 
-        // ------------------------------------------------------------------ nạp dữ liệu
+        private void AdjustDetailsColumns()
+        {
+            try
+            {
+                if (_details.Columns.Count >= 2)
+                {
+                    _details.Columns[1].Width = Math.Max(120, _details.ClientSize.Width - _details.Columns[0].Width - 26);
+                }
+            }
+            catch
+            {
+                // bỏ qua
+            }
+        }
+
+        // ================================================================ nạp dữ liệu
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+
+            // Áp dụng kích thước splitter sau khi form đã có kích thước thật (có guard —
+            // SplitContainer ném lỗi nếu min-size vượt quá bề rộng hiện tại).
+            try
+            {
+                _split.Panel1MinSize = 380;
+                _split.Panel2MinSize = 250;
+            }
+            catch
+            {
+                // giữ mặc định
+            }
+            try
+            {
+                _split.SplitterDistance = Math.Max(400, (int)(_split.Width * 0.58));
+            }
+            catch
+            {
+                // giữ mặc định
+            }
+
+            AdjustDetailsColumns();
+
+            if (string.IsNullOrWhiteSpace(_fileTarget.Text))
+            {
+                _fileTarget.Text = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "parts.edz");
+            }
+
             LoadDatabase();
         }
 
@@ -327,8 +557,19 @@ namespace Oumijia.EplanAddIn.Ui
         {
             try
             {
-                var name = MDPartsManagement.SelectedPartsDatabaseAsString;
-                return string.IsNullOrWhiteSpace(name) ? "(không rõ)" : name.Trim();
+                var raw = MDPartsManagement.SelectedPartsDatabaseAsString;
+                if (string.IsNullOrWhiteSpace(raw)) return "(không rõ)";
+                // "$(MD_PARTS)\ESS_part001.alk" → "ESS_part001.alk"
+                try
+                {
+                    var fileName = Path.GetFileName(raw.Trim());
+                    if (!string.IsNullOrWhiteSpace(fileName)) return fileName;
+                }
+                catch
+                {
+                    // giữ nguyên chuỗi gốc
+                }
+                return raw.Trim();
             }
             catch
             {
@@ -336,7 +577,7 @@ namespace Oumijia.EplanAddIn.Ui
             }
         }
 
-        // ------------------------------------------------------------------ cây
+        // ================================================================ cây
 
         private void RebuildTree()
         {
@@ -392,12 +633,14 @@ namespace Oumijia.EplanAddIn.Ui
             return treeNode;
         }
 
-        /// <summary>Tính lại trạng thái (ảnh tick) của một node từ dữ liệu bên dưới — gọi theo thứ tự lá → gốc.</summary>
+        /// <summary>Tính lại trạng thái (ảnh tick + in đậm) của một node — gọi theo thứ tự lá → gốc.</summary>
         private void RefreshNodeState(TreeNode node)
         {
             if (node.Tag is PartEntry entry)
             {
-                node.ImageIndex = _checkedIds.Contains(entry.Part.AdoId) ? ImageChecked : ImageUnchecked;
+                var isChecked = _checkedIds.Contains(entry.Part.AdoId);
+                node.ImageIndex = isChecked ? ImageChecked : ImageUnchecked;
+                node.NodeFont = isChecked ? _boldFont : null;
                 return;
             }
 
@@ -411,6 +654,7 @@ namespace Oumijia.EplanAddIn.Ui
             node.ImageIndex = checkedCount == 0
                 ? ImageUnchecked
                 : (checkedCount == total ? ImageChecked : ImageMixed);
+            node.NodeFont = null;
         }
 
         private void RefreshTreeStatesDeep(TreeNode node)
@@ -448,6 +692,14 @@ namespace Oumijia.EplanAddIn.Ui
             RefreshNodeState(node);
         }
 
+        private void ForceTreeRepaint()
+        {
+            // Windows TreeView có thể không vẽ lại ô tick khi đổi hình trạng thái —
+            // buộc vẽ lại để dấu ✓ hiện ngay.
+            _tree.Invalidate();
+            _tree.Update();
+        }
+
         private void OnTreeMouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left) return;
@@ -455,53 +707,67 @@ namespace Oumijia.EplanAddIn.Ui
             var hit = _tree.HitTest(e.Location);
             if (hit.Node == null) return;
 
-            // Chỉ toggle khi bấm đúng vào ô vuông (ảnh trạng thái) — bấm chữ chỉ chọn dòng.
-            if (hit.Location == TreeViewHitTestLocations.Image)
-            {
-                var node = hit.Node;
-                bool turnOn;
-                if (node.Tag is PartEntry entry)
-                {
-                    turnOn = !_checkedIds.Contains(entry.Part.AdoId);
-                }
-                else
-                {
-                    turnOn = node.ImageIndex != ImageChecked;
-                }
+            // Chỉ toggle khi bấm đúng vào ô vuông (ảnh trạng thái); bấm chữ chỉ chọn dòng.
+            if (hit.Location != TreeViewHitTestLocations.Image) return;
 
-                SetCheckedForSubtree(node, turnOn);
-                RefreshAncestors(node);
-                UpdateCount();
+            // Chế độ theo loại bản ghi không dùng tick trên cây.
+            if (_rbRecords.Checked)
+            {
+                MessageBox.Show(this,
+                    "Đang ở chế độ \"Theo loại bản ghi\" — tick trên cây không được dùng.\n" +
+                    "Chuyển về \"Part đã chọn trên cây\" nếu muốn chọn từng part.",
+                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
+
+            var node = hit.Node;
+            bool turnOn;
+            if (node.Tag is PartEntry entry)
+            {
+                turnOn = !_checkedIds.Contains(entry.Part.AdoId);
+            }
+            else
+            {
+                turnOn = node.ImageIndex != ImageChecked;
+            }
+
+            SetCheckedForSubtree(node, turnOn);
+            RefreshAncestors(node);
+            ForceTreeRepaint();
+            UpdateCount();
+            ShowDetails(_tree.SelectedNode);
         }
 
         private void OnSelectAllClicked(object sender, EventArgs e)
         {
+            if (_rbRecords.Checked) return;
             foreach (TreeNode top in _tree.Nodes)
             {
                 SetCheckedForSubtree(top, true);
             }
+            ForceTreeRepaint();
             UpdateCount();
+            ShowDetails(_tree.SelectedNode);
             Log("Đã chọn tất cả part đang hiển thị.");
         }
 
         private void OnClearAllClicked(object sender, EventArgs e)
         {
+            if (_rbRecords.Checked) return;
             _checkedIds.Clear();
             foreach (TreeNode top in _tree.Nodes)
             {
                 RefreshTreeStatesDeep(top);
             }
+            ForceTreeRepaint();
             UpdateCount();
+            ShowDetails(_tree.SelectedNode);
             Log("Đã bỏ chọn tất cả.");
         }
 
         private void OnUseSelectionClicked(object sender, EventArgs e)
         {
-            if (_management == null)
-            {
-                return;
-            }
+            if (_management == null || _rbRecords.Checked) return;
 
             var added = 0;
             try
@@ -522,56 +788,244 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 RefreshTreeStatesDeep(top);
             }
+            ForceTreeRepaint();
             UpdateCount();
+            ShowDetails(_tree.SelectedNode);
             Log("Lấy " + added + " part từ Parts Management (tổng đã chọn: " + _checkedIds.Count + ").");
+        }
+
+        // ================================================================ chi tiết
+
+        private void ShowDetails(TreeNode node)
+        {
+            _details.BeginUpdate();
+            try
+            {
+                _details.Items.Clear();
+
+                if (node == null)
+                {
+                    _detailsHeader.Text = "Chi tiết";
+                    return;
+                }
+
+                if (node.Tag is PartEntry entry)
+                {
+                    var part = entry.Part;
+                    _detailsHeader.Text = entry.Label;
+
+                    AddDetail("Mã hàng (Part number)", entry.Number);
+                    AddDetail("Số bản (Type number)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_TYPENR));
+                    AddDetail("Số đặt hàng (Order number)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_ORDERNR));
+                    AddDetail("ERP number", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_ERPNR));
+
+                    var manufacturerName = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_MANUFACTURER_NAME);
+                    AddDetail("Hãng (Manufacturer)",
+                        manufacturerName.Length > 0 && !string.Equals(manufacturerName, entry.Manufacturer, StringComparison.OrdinalIgnoreCase)
+                            ? entry.Manufacturer + " (" + manufacturerName + ")"
+                            : entry.Manufacturer);
+
+                    var supplier = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_SUPPLIER);
+                    var supplierName = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_SUPPLIER_NAME);
+                    AddDetail("Nhà cung cấp (Supplier)",
+                        supplier.Length == 0
+                            ? supplierName
+                            : (supplierName.Length > 0 && !string.Equals(supplierName, supplier, StringComparison.OrdinalIgnoreCase)
+                                ? supplier + " (" + supplierName + ")"
+                                : supplier));
+
+                    var groupPath = entry.Path.Length > 1
+                        ? string.Join(" / ", entry.Path.Take(entry.Path.Length - 1))
+                        : string.Empty;
+                    AddDetail("Nhóm sản phẩm", groupPath);
+
+                    AddDetail("Tên 1 (Designation 1)", entry.Designation);
+                    AddDetail("Tên 2 (Designation 2)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_DESCR2));
+                    AddDetail("Tên 3 (Designation 3)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_DESCR3));
+                    AddDetail("Mô tả (Description)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_NOTE));
+#pragma warning disable CS0618 // một số property chú thích "internal use" nhưng vẫn đọc được dữ liệu thật
+                    AddDetail("Văn bản bổ sung", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_ADDITIONALTEXT));
+#pragma warning restore CS0618
+#pragma warning disable CS0618
+                    AddDetail("eCl@ss", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.PART_ECLASS));
+#pragma warning restore CS0618
+                    AddDetail("Mã nhận dạng (EAN)",
+                        (ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_IDENTTYPE) + " " +
+                         ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_IDENTCODE)).Trim());
+                    AddDetail("Macro ký hiệu (schematic)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_GROUPSYMBOLMACRO));
+                    AddDetail("Macro đồ họa (graphical)", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_MACRO));
+                    AddDetail("Kích thước R×C×S (mm)", ComposeDimensions(part));
+                    AddDetail("Ngày tạo", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.PART_CREATE_DATE));
+                    AddDetail("Người tạo", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.PART_CREATE_USER));
+                    AddDetail("Sửa đổi cuối", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.PART_LASTCHANGE_DATE));
+                    AddDetail("Người sửa cuối", ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.PART_LASTCHANGE_USER));
+                }
+                else if (node.Tag is PartsTreeModel.Node group)
+                {
+                    _detailsHeader.Text = "Nhóm: " + group.Name;
+                    AddDetail("Số part trong nhóm", group.TotalParts.ToString());
+                    AddDetail("Đã chọn trong nhóm", CountCheckedInSubtree(node).ToString());
+                    AddDetail("Gợi ý", "Tick ô vuông trước nhóm để chọn/bỏ chọn cả nhánh.");
+                }
+                else
+                {
+                    _detailsHeader.Text = node.Text ?? "Chi tiết";
+                }
+            }
+            finally
+            {
+                _details.EndUpdate();
+            }
+        }
+
+        private static string ReadProp(MDPart part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem id)
+        {
+            return PartInfo.ReadText(part, id);
+        }
+
+        private static string ComposeDimensions(MDPart part)
+        {
+            var width = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_WIDTH);
+            var height = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_HEIGHT);
+            var depth = ReadProp(part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_DEPTH);
+            var parts = new List<string>();
+            if (width.Length > 0) parts.Add(width);
+            if (height.Length > 0) parts.Add(height);
+            if (depth.Length > 0) parts.Add(depth);
+            return string.Join(" × ", parts);
+        }
+
+        private void AddDetail(string name, string value)
+        {
+            var item = new ListViewItem(name ?? string.Empty);
+            item.SubItems.Add(string.IsNullOrWhiteSpace(value) ? "—" : value);
+            _details.Items.Add(item);
+        }
+
+        private int CountCheckedInSubtree(TreeNode node)
+        {
+            if (node.Tag is PartEntry entry)
+            {
+                return _checkedIds.Contains(entry.Part.AdoId) ? 1 : 0;
+            }
+
+            var count = 0;
+            foreach (TreeNode child in node.Nodes)
+            {
+                count += CountCheckedInSubtree(child);
+            }
+            return count;
+        }
+
+        private void OnDetailsDoubleClick(object sender, EventArgs e)
+        {
+            if (_details.SelectedItems.Count == 0) return;
+            var item = _details.SelectedItems[0];
+            if (item.SubItems.Count < 2) return;
+
+            var value = item.SubItems[1].Text;
+            if (string.IsNullOrEmpty(value) || value == "—") return;
+
+            try
+            {
+                Clipboard.SetText(value);
+                Log("Đã copy vào clipboard: " + value);
+            }
+            catch (Exception ex)
+            {
+                Log("Không copy được: " + ex.Message);
+            }
+        }
+
+        // ================================================================ chế độ & đếm
+
+        private void UpdateModes()
+        {
+            var records = _rbRecords.Checked;
+
+            _recordsPanel.Visible = records;
+            _recordsHint.Visible = records;
+            _outputGroup.Height = records ? 196 : 126;
+
+            _btnSelectAll.Enabled = !records;
+            _btnClear.Enabled = !records;
+            _btnFromPartsMgmt.Enabled = !records;
+
+            _rbPerPart.Enabled = !records;
+            _folderTarget.Enabled = !records;
+            _browseFolder.Enabled = !records;
+            if (records && _rbPerPart.Checked)
+            {
+                _rbSingle.Checked = true;
+            }
+
+            UpdateCount();
         }
 
         private void UpdateCount()
         {
-            _countLabel.Text = "Đã chọn: " + _checkedIds.Count + " part";
-            _exportButton.Enabled = _checkedIds.Count > 0;
-        }
-
-        // ------------------------------------------------------------------ xuất
-
-        private void UpdateTargetHint()
-        {
-            // Placeholder động (giữ trống nếu người dùng đã gõ) — chỉ cập nhật gợi ý.
-            if (string.IsNullOrWhiteSpace(_target.Text))
+            if (_rbRecords.Checked)
             {
-                _target.PlaceholderTextSafe(_outputSingle.Checked ? "ví dụ: D:\\Export\\parts.edz" : "ví dụ: D:\\Export\\EDZ");
-            }
-        }
-
-        private void OnBrowseClicked(object sender, EventArgs e)
-        {
-            if (_outputSingle.Checked)
-            {
-                using (var dialog = new SaveFileDialog())
+                var checkedCount = 0;
+                foreach (Control control in _recordsPanel.Controls)
                 {
-                    dialog.Title = "Chọn file EDZ đích";
-                    dialog.Filter = "Gói EPLAN (*.edz)|*.edz";
-                    dialog.FileName = "parts.edz";
-                    if (dialog.ShowDialog(this) == DialogResult.OK)
-                    {
-                        _target.Text = dialog.FileName;
-                    }
+                    var box = control as CheckBox;
+                    if (box != null && box.Checked) checkedCount++;
                 }
+
+                _countLabel.Text = "Chế độ theo loại bản ghi (" + checkedCount + " loại được chọn)";
+                _exportButton.Enabled = checkedCount > 0;
             }
             else
             {
-                using (var dialog = new FolderBrowserDialog())
+                _countLabel.Text = "Đã chọn: " + _checkedIds.Count + " part";
+                _exportButton.Enabled = _checkedIds.Count > 0;
+            }
+        }
+
+        // ================================================================ chọn đích
+
+        private void OnBrowseFileClicked(object sender, EventArgs e)
+        {
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.Title = "Chọn file EDZ đích";
+                dialog.Filter = "Gói EPLAN (*.edz)|*.edz";
+                dialog.FileName = "parts.edz";
+                if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
-                    dialog.Description = "Chọn thư mục đích (mỗi part một file .edz)";
-                    if (dialog.ShowDialog(this) == DialogResult.OK)
-                    {
-                        _target.Text = dialog.SelectedPath;
-                    }
+                    _fileTarget.Text = dialog.FileName;
                 }
             }
         }
 
+        private void OnBrowseFolderClicked(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Chọn thư mục đích (mỗi part một file .edz)";
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    _folderTarget.Text = dialog.SelectedPath;
+                }
+            }
+        }
+
+        // ================================================================ xuất
+
         private void OnExportClicked(object sender, EventArgs e)
+        {
+            if (_rbRecords.Checked)
+            {
+                ExportRecordTypes();
+            }
+            else
+            {
+                ExportSelectedParts();
+            }
+        }
+
+        private void ExportSelectedParts()
         {
             var selected = _entries.Where(x => _checkedIds.Contains(x.Part.AdoId)).ToList();
             if (selected.Count == 0)
@@ -581,7 +1035,8 @@ namespace Oumijia.EplanAddIn.Ui
                 return;
             }
 
-            var target = (_target.Text ?? string.Empty).Trim();
+            var target = (_rbSingle.Checked ? _fileTarget.Text : _folderTarget.Text) ?? string.Empty;
+            target = target.Trim();
             if (target.Length == 0)
             {
                 MessageBox.Show(this, "Chưa chọn đích xuất (file hoặc thư mục).", "Tool Oumijia",
@@ -589,7 +1044,7 @@ namespace Oumijia.EplanAddIn.Ui
                 return;
             }
 
-            if (_outputSingle.Checked && !target.EndsWith(".edz", StringComparison.OrdinalIgnoreCase))
+            if (_rbSingle.Checked && !target.EndsWith(".edz", StringComparison.OrdinalIgnoreCase))
             {
                 target += ".edz";
             }
@@ -597,7 +1052,7 @@ namespace Oumijia.EplanAddIn.Ui
             var confirm = MessageBox.Show(this,
                 "Xuất " + selected.Count + " part ra EDZ?\n\n" +
                 "Đích: " + target + "\n" +
-                "Cách xuất: " + (_outputSingle.Checked ? "1 file duy nhất" : "mỗi part 1 file"),
+                "Cách xuất: " + (_rbSingle.Checked ? "1 file duy nhất" : "mỗi part 1 file"),
                 "Tool Oumijia", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
@@ -605,7 +1060,7 @@ namespace Oumijia.EplanAddIn.Ui
             UseWaitCursor = true;
             try
             {
-                if (_outputSingle.Checked)
+                if (_rbSingle.Checked)
                 {
                     var parts = selected.Select(x => x.Part).ToList();
                     Log("Xuất " + parts.Count + " part → " + target);
@@ -659,7 +1114,90 @@ namespace Oumijia.EplanAddIn.Ui
             finally
             {
                 UseWaitCursor = false;
-                _exportButton.Enabled = _checkedIds.Count > 0;
+                UpdateCount();
+            }
+        }
+
+        private void ExportRecordTypes()
+        {
+            var target = (_fileTarget.Text ?? string.Empty).Trim();
+            if (target.Length == 0)
+            {
+                MessageBox.Show(this, "Chưa chọn file EDZ đích.", "Tool Oumijia",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!target.EndsWith(".edz", StringComparison.OrdinalIgnoreCase))
+            {
+                target += ".edz";
+            }
+
+            var checkedNames = new List<string>();
+            if (_cbParts.Checked) checkedNames.Add("Parts");
+            if (_cbAccessoryLists.Checked) checkedNames.Add("Accessory list");
+            if (_cbAccessoryPlacements.Checked) checkedNames.Add("Accessory placement");
+            if (_cbDrilling.Checked) checkedNames.Add("Drilling pattern");
+            if (_cbConnectionPoints.Checked) checkedNames.Add("Connection point pattern");
+            if (_cbAddresses.Checked) checkedNames.Add("Customer/Manufacturer/Supplier");
+
+            if (checkedNames.Count == 0)
+            {
+                MessageBox.Show(this, "Chưa tick loại bản ghi nào để xuất.", "Tool Oumijia",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show(this,
+                "Xuất TOÀN BỘ bản ghi theo loại đã tick?\n\n" +
+                "Loại: " + string.Join(", ", checkedNames) + "\n" +
+                "Đích: " + target + "\n\n" +
+                "Lưu ý: file kèm macro/tài liệu liên quan nên có thể lớn và mất vài phút;\n" +
+                "chế độ này KHÔNG dùng tick chọn trên cây.",
+                "Tool Oumijia", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (confirm != DialogResult.Yes) return;
+
+            _exportButton.Enabled = false;
+            UseWaitCursor = true;
+            try
+            {
+                Log("Xuất theo loại bản ghi: " + string.Join(", ", checkedNames) + " → " + target);
+                var stopwatch = Stopwatch.StartNew();
+
+                // Cờ đã kiểm chứng: xem header file ExportEdzForm.cs
+                _management.ExportParts(target, "IXPartsImportExportEdz", string.Empty,
+                    _cbParts.Checked, null,
+                    _cbAddresses.Checked, null,
+                    _cbDrilling.Checked, null,
+                    _cbConnectionPoints.Checked, null,
+                    _cbAccessoryLists.Checked, null,
+                    _cbAccessoryPlacements.Checked, null);
+
+                stopwatch.Stop();
+                var sizeMb = 0L;
+                try { sizeMb = new FileInfo(target).Length / (1024 * 1024); } catch { }
+
+                Log("Hoàn tất (" + sizeMb + " MB, " + stopwatch.Elapsed.TotalSeconds.ToString("0.0") + " giây).");
+                AddinLog.Write("Export record-types OK: [" + string.Join("; ", checkedNames) +
+                               "] -> " + target + " (" + sizeMb + " MB, " + stopwatch.Elapsed.TotalSeconds.ToString("0.0") + "s)");
+                AddinCsvLog.Append("export", "OK-recordtypes", target, string.Join("|", checkedNames));
+
+                MessageBox.Show(this,
+                    "Đã xuất theo loại bản ghi:\n• " + string.Join("\n• ", checkedNames) +
+                    "\n\nĐích: " + target + "\nKích thước: " + sizeMb + " MB",
+                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Log("LỖI: " + ex.Message);
+                AddinLog.WriteError("Export record-types", ex);
+                AddinCsvLog.Append("export", "ERROR-recordtypes", ex.Message);
+                MessageBox.Show(this, "Xuất thất bại:\n" + ex.Message, "Tool Oumijia",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                UpdateCount();
             }
         }
 
@@ -673,7 +1211,7 @@ namespace Oumijia.EplanAddIn.Ui
             return value;
         }
 
-        // ------------------------------------------------------------------ log
+        // ================================================================ log
 
         private void Log(string message)
         {
@@ -685,30 +1223,6 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 // Không bao giờ để log làm hỏng thao tác.
             }
-        }
-    }
-
-    /// <summary>PlaceholderText chỉ có ở .NET 5+; helper này để dùng an toàn trên net48.</summary>
-    internal static class TextBoxPlaceholderExtensions
-    {
-        public static void PlaceholderTextSafe(this TextBox box, string text)
-        {
-            try
-            {
-                var property = typeof(TextBox).GetProperty("PlaceholderText",
-                    BindingFlags.Instance | BindingFlags.Public);
-                if (property != null)
-                {
-                    property.SetValue(box, text, null);
-                    return;
-                }
-            }
-            catch
-            {
-                // fallthrough
-            }
-
-            // net48: không có PlaceholderText — bỏ qua (giữ UI gọn).
         }
     }
 }

@@ -27,6 +27,26 @@ namespace Oumijia.EplanAddIn.Actions
             var report = new StringBuilder();
             report.AppendLine("=== DIAG PARTS " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===");
 
+            // Kiểm tra construct UI (không show) — bắt lỗi khởi tạo/layout sớm.
+            try
+            {
+                using (var form = new ImportEdzForm()) { }
+                report.AppendLine("UI ImportEdzForm construct: OK");
+            }
+            catch (Exception exUi1)
+            {
+                report.AppendLine("UI ImportEdzForm construct LỖI: " + exUi1);
+            }
+            try
+            {
+                using (var form = new ExportEdzForm()) { }
+                report.AppendLine("UI ExportEdzForm construct: OK");
+            }
+            catch (Exception exUi2)
+            {
+                report.AppendLine("UI ExportEdzForm construct LỖI: " + exUi2);
+            }
+
             MDPartsManagement management = null;
             MDPartsDatabase database = null;
             try
@@ -133,6 +153,17 @@ namespace Oumijia.EplanAddIn.Actions
                         report.AppendLine("SMOKE EXPORT LỖI: " + ex.Message);
                     }
                 }
+
+                // ----- record-type export combos: mỗi lần bật đúng 1 cờ để xác minh
+                // cờ API <-> loại bản ghi (giải nén EDZ đối chiếu).
+                report.AppendLine("--- Record-type export combos ---");
+                TryExportCombo(report, management, "rt-01-parts", true, false, false, false, false, false);
+                TryExportCombo(report, management, "rt-02-addresses", false, true, false, false, false, false);
+                TryExportCombo(report, management, "rt-03-constructions", false, false, true, false, false, false);
+                TryExportCombo(report, management, "rt-04-terminals", false, false, false, true, false, false);
+                TryExportCombo(report, management, "rt-05-accessorylists", false, false, false, false, true, false);
+                TryExportCombo(report, management, "rt-06-accessoryplacements", false, false, false, false, false, true);
+                TryExportCombo(report, management, "rt-07-all", true, true, true, true, true, true);
             }
             catch (Exception ex)
             {
@@ -153,6 +184,44 @@ namespace Oumijia.EplanAddIn.Actions
         public void GetActionProperties(ref ActionProperties actionProperties)
         {
             // EPLAN 2022: ActionProperties không có member public ghi được.
+        }
+
+        // ------------------------------------------------------------------ helpers
+
+        private static void TryExportCombo(StringBuilder report, MDPartsManagement management, string name,
+            bool parts, bool addresses, bool constructions, bool terminals, bool accessoryLists, bool accessoryPlacements)
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "OumijiaDiag");
+            Directory.CreateDirectory(dir);
+            var file = Path.Combine(dir, name + ".edz");
+
+            try { if (File.Exists(file)) File.Delete(file); }
+            catch { /* ignore */ }
+
+            try
+            {
+                try
+                {
+                    management.ExportParts(file, "IXPartsImportExportEdz", string.Empty,
+                        parts, null, addresses, null, constructions, null, terminals, null,
+                        accessoryLists, null, accessoryPlacements, null);
+                }
+                catch (Exception)
+                {
+                    // Một số bản chỉ chấp nhận filter object thay vì null.
+                    management.ExportParts(file, "IXPartsImportExportEdz", string.Empty,
+                        parts, new MDObjectFilter(), addresses, new MDObjectFilter(),
+                        constructions, new MDObjectFilter(), terminals, new MDObjectFilter(),
+                        accessoryLists, new MDObjectFilter(), accessoryPlacements, new MDObjectFilter());
+                }
+
+                var info = new FileInfo(file);
+                report.AppendLine("RT " + name + ": OK (" + (info.Exists ? info.Length : 0) + " bytes)");
+            }
+            catch (Exception ex)
+            {
+                report.AppendLine("RT " + name + ": LỖI: " + ex.Message);
+            }
         }
     }
 }

@@ -9,21 +9,31 @@ using Eplan.EplApi.MasterData;
 
 namespace Oumijia.EplanAddIn.Ui
 {
-    /// <summary>Batch import of EDZ packages into the parts database (MDPartsManagement.ImportParts).</summary>
+    /// <summary>
+    /// Nhập batch gói EDZ vào Parts Database (MDPartsManagement.ImportParts).
+    ///
+    /// Giao diện ĐƠN GIẢN theo yêu cầu người dùng: chọn file/thư mục → NHẬP.
+    /// Các tùy chọn kỹ thuật được cố định ở hậu trường (giá trị hợp lý nhất):
+    ///   - Chế độ nhập      : Cập nhật + thêm mới (UpdateAndAppend)
+    ///   - Nhận dạng part   : Theo mã hàng (PartNumber)
+    ///   - Ngôn ngữ phụ     : không
+    /// </summary>
     internal sealed class ImportEdzForm : Form
     {
+        // ----- mặc định cố định (đơn giản hóa giao diện)
+        private const MDPartsManagement.ImportMode FixedImportMode = MDPartsManagement.ImportMode.UpdateAndAppend;
+        private const MDPartsManagement.ImportIdentifier FixedIdentifier = MDPartsManagement.ImportIdentifier.PartNumber;
+        private const bool FixedAdditionalLanguage = false;
+
         private readonly ListBox _fileList = new ListBox();
-        private readonly ComboBox _modeCombo = new ComboBox();
-        private readonly ComboBox _identifierCombo = new ComboBox();
-        private readonly CheckBox _additionalLanguage = new CheckBox();
         private readonly TextBox _log = new TextBox();
         private readonly Button _startButton = new Button();
 
         public ImportEdzForm()
         {
             Text = "Tool Oumijia — Nhập EDZ vào Parts Database";
-            Width = 800;
-            Height = 620;
+            ClientSize = new Size(880, 620);
+            MinimumSize = new Size(700, 480);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 9F);
             BuildUi();
@@ -31,15 +41,30 @@ namespace Oumijia.EplanAddIn.Ui
 
         private void BuildUi()
         {
-            var top = new Panel { Dock = DockStyle.Top, Height = 106 };
+            // ----- trên: tiêu đề + nút thêm file + ghi chú mặc định
+            var topPanel = new Panel { Dock = DockStyle.Top, Height = 94 };
 
-            var label = new Label { Text = "Các gói EDZ cần nhập:", AutoSize = true, Location = new Point(10, 8) };
+            var label = new Label
+            {
+                Text = "Các gói EDZ cần nhập:",
+                Dock = DockStyle.Top,
+                Height = 24,
+                Padding = new Padding(4, 4, 0, 0)
+            };
 
-            var btnAddFiles = new Button { Text = "Thêm tệp…", Location = new Point(10, 30), Size = new Size(96, 26) };
+            var buttonFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                WrapContents = false,
+                Padding = new Padding(4, 2, 0, 0)
+            };
+
+            var btnAddFiles = new Button { Text = "Thêm tệp…", Width = 96, Height = 26 };
             btnAddFiles.Click += OnAddFilesClicked;
-            var btnAddFolder = new Button { Text = "Thêm thư mục…", Location = new Point(112, 30), Size = new Size(112, 26) };
+            var btnAddFolder = new Button { Text = "Thêm thư mục…", Width = 116, Height = 26 };
             btnAddFolder.Click += OnAddFolderClicked;
-            var btnRemove = new Button { Text = "Xóa mục chọn", Location = new Point(230, 30), Size = new Size(100, 26) };
+            var btnRemove = new Button { Text = "Xóa mục chọn", Width = 100, Height = 26 };
             btnRemove.Click += (s, e) =>
             {
                 foreach (var item in _fileList.SelectedItems.Cast<object>().ToList())
@@ -47,61 +72,44 @@ namespace Oumijia.EplanAddIn.Ui
                     _fileList.Items.Remove(item);
                 }
             };
-            var btnClear = new Button { Text = "Xóa hết", Location = new Point(336, 30), Size = new Size(80, 26) };
+            var btnClear = new Button { Text = "Xóa hết", Width = 80, Height = 26 };
             btnClear.Click += (s, e) => _fileList.Items.Clear();
 
-            var lblMode = new Label { Text = "Chế độ nhập:", AutoSize = true, Location = new Point(10, 70) };
-            _modeCombo.Location = new Point(96, 66);
-            _modeCombo.Width = 220;
-            _modeCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-            _modeCombo.Items.Add("Chỉ thêm mới (AppendNewRecords)");
-            _modeCombo.Items.Add("Chỉ cập nhật (UpdateExistingRecords)");
-            _modeCombo.Items.Add("Cập nhật + thêm mới (UpdateAndAppend)");
-            _modeCombo.SelectedIndex = 0;
-
-            var lblIdent = new Label { Text = "Nhận dạng part:", AutoSize = true, Location = new Point(330, 70) };
-            _identifierCombo.Location = new Point(430, 66);
-            _identifierCombo.Width = 180;
-            _identifierCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-            _identifierCombo.Items.Add("Theo mã hàng (PartNumber)");
-            _identifierCombo.Items.Add("Theo UniqueId");
-            _identifierCombo.Items.Add("UniqueId + mã hàng");
-            _identifierCombo.SelectedIndex = 0;
-
-            _additionalLanguage.Text = "Nhập thêm ngôn ngữ phụ";
-            _additionalLanguage.AutoSize = true;
-            _additionalLanguage.Location = new Point(622, 68);
-
-            top.Controls.Add(label);
-            top.Controls.Add(btnAddFiles);
-            top.Controls.Add(btnAddFolder);
-            top.Controls.Add(btnRemove);
-            top.Controls.Add(btnClear);
-            top.Controls.Add(lblMode);
-            top.Controls.Add(_modeCombo);
-            top.Controls.Add(lblIdent);
-            top.Controls.Add(_identifierCombo);
-            top.Controls.Add(_additionalLanguage);
-
-            var bottom = new Panel { Dock = DockStyle.Bottom, Height = 176 };
-
-            var buttonPanel = new Panel { Dock = DockStyle.Top, Height = 42 };
-            _startButton.Text = "NHẬP VÀO PARTS DATABASE ▸";
-            _startButton.Location = new Point(10, 6);
-            _startButton.Size = new Size(236, 30);
-            _startButton.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            _startButton.Click += OnStartClicked;
+            buttonFlow.Controls.Add(btnAddFiles);
+            buttonFlow.Controls.Add(btnAddFolder);
+            buttonFlow.Controls.Add(btnRemove);
+            buttonFlow.Controls.Add(btnClear);
 
             var hint = new Label
             {
-                Text = "Khuyến nghị: kiểm tra trên database test trước khi nhập vào database chính.",
-                AutoSize = true,
-                Location = new Point(258, 14),
-                ForeColor = Color.DimGray
+                Dock = DockStyle.Top,
+                Height = 32,
+                Padding = new Padding(4, 2, 0, 0),
+                ForeColor = Color.DimGray,
+                Text = "Mặc định khi nhập: cập nhật part đã có + thêm part mới (nhận dạng theo mã hàng).\r\n" +
+                       "Khuyến nghị: thử trên database test trước khi nhập vào database chính."
             };
 
-            buttonPanel.Controls.Add(_startButton);
-            buttonPanel.Controls.Add(hint);
+            topPanel.Controls.Add(hint);
+            topPanel.Controls.Add(buttonFlow);
+            topPanel.Controls.Add(label);
+
+            // ----- đáy: nút nhập + log
+            var bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 220 };
+
+            var actionFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 44,
+                WrapContents = false,
+                Padding = new Padding(4, 6, 0, 0)
+            };
+
+            _startButton.Text = "NHẬP VÀO PARTS DATABASE ▸";
+            _startButton.Size = new Size(220, 30);
+            _startButton.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _startButton.Click += OnStartClicked;
+            actionFlow.Controls.Add(_startButton);
 
             _log.Dock = DockStyle.Fill;
             _log.Multiline = true;
@@ -110,15 +118,15 @@ namespace Oumijia.EplanAddIn.Ui
             _log.WordWrap = false;
             _log.Font = new Font("Consolas", 8.5F);
 
-            bottom.Controls.Add(_log);
-            bottom.Controls.Add(buttonPanel);
+            bottomPanel.Controls.Add(_log);
+            bottomPanel.Controls.Add(actionFlow);
 
             _fileList.Dock = DockStyle.Fill;
             _fileList.SelectionMode = SelectionMode.MultiExtended;
 
             Controls.Add(_fileList);
-            Controls.Add(bottom);
-            Controls.Add(top);
+            Controls.Add(bottomPanel);
+            Controls.Add(topPanel);
         }
 
         private void OnAddFilesClicked(object sender, EventArgs e)
@@ -158,11 +166,18 @@ namespace Oumijia.EplanAddIn.Ui
                 if (item != null) existing.Add(item.ToString());
             }
 
+            var added = 0;
             foreach (var file in files)
             {
                 if (string.IsNullOrWhiteSpace(file)) continue;
-                if (existing.Add(file)) _fileList.Items.Add(file);
+                if (existing.Add(file))
+                {
+                    _fileList.Items.Add(file);
+                    added++;
+                }
             }
+
+            Log("Đã thêm " + added + " gói EDZ (tổng: " + _fileList.Items.Count + ").");
         }
 
         private void OnStartClicked(object sender, EventArgs e)
@@ -174,13 +189,9 @@ namespace Oumijia.EplanAddIn.Ui
                 return;
             }
 
-            var mode = ModeFromCombo();
-            var identifier = IdentifierFromCombo();
-
             var confirm = MessageBox.Show(this,
                 "Nhập " + _fileList.Items.Count + " gói EDZ vào Parts Database?\n\n" +
-                "Chế độ: " + _modeCombo.Text + "\n" +
-                "Nhận dạng: " + _identifierCombo.Text + "\n\n" +
+                "Mặc định: cập nhật part đã có + thêm part mới (theo mã hàng).\n\n" +
                 "Bạn nên kiểm tra trên database test trước khi nhập vào database chính.",
                 "Tool Oumijia", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
@@ -191,15 +202,16 @@ namespace Oumijia.EplanAddIn.Ui
                 var files = new ArrayList();
                 foreach (var item in _fileList.Items) files.Add(item.ToString());
 
-                Log("Bắt đầu nhập " + files.Count + " gói (mode=" + mode + ", identifier=" + identifier + ") …");
-                AddinLog.Write("Import: " + files.Count + " files, mode=" + mode + ", identifier=" + identifier);
+                Log("Bắt đầu nhập " + files.Count + " gói (chế độ cập nhật + thêm mới, theo mã hàng) …");
+                AddinLog.Write("Import: " + files.Count + " files, mode=UpdateAndAppend, identifier=PartNumber");
 
                 var management = new MDPartsManagement();
-                management.ImportParts(files, "IXPartsImportExportEdz", mode, _additionalLanguage.Checked, identifier, null);
+                management.ImportParts(files, "IXPartsImportExportEdz",
+                    FixedImportMode, FixedAdditionalLanguage, FixedIdentifier, null);
 
                 Log("EPLAN đã xử lý xong yêu cầu nhập.");
                 AddinLog.Write("Import finished OK");
-                AddinCsvLog.Append("import", "OK", mode.ToString(), identifier.ToString(), files.Count.ToString());
+                AddinCsvLog.Append("import", "OK", FixedImportMode.ToString(), FixedIdentifier.ToString(), files.Count.ToString());
 
                 MessageBox.Show(this,
                     "Đã gửi yêu cầu nhập " + files.Count + " gói cho EPLAN.\n" +
@@ -210,33 +222,13 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 Log("LỖI: " + ex.Message);
                 AddinLog.WriteError("Import", ex);
-                AddinCsvLog.Append("import", "ERROR", mode.ToString(), ex.Message);
+                AddinCsvLog.Append("import", "ERROR", FixedImportMode.ToString(), ex.Message);
                 MessageBox.Show(this, "Nhập thất bại:\n" + ex.Message, "Tool Oumijia",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
                 _startButton.Enabled = true;
-            }
-        }
-
-        private MDPartsManagement.ImportMode ModeFromCombo()
-        {
-            switch (_modeCombo.SelectedIndex)
-            {
-                case 1: return MDPartsManagement.ImportMode.UpdateExistingRecords;
-                case 2: return MDPartsManagement.ImportMode.UpdateAndAppend;
-                default: return MDPartsManagement.ImportMode.AppendNewRecords;
-            }
-        }
-
-        private MDPartsManagement.ImportIdentifier IdentifierFromCombo()
-        {
-            switch (_identifierCombo.SelectedIndex)
-            {
-                case 1: return MDPartsManagement.ImportIdentifier.UniqueId;
-                case 2: return MDPartsManagement.ImportIdentifier.UniqueIdOptPartNumber;
-                default: return MDPartsManagement.ImportIdentifier.PartNumber;
             }
         }
 
@@ -248,7 +240,7 @@ namespace Oumijia.EplanAddIn.Ui
             }
             catch
             {
-                // Never crash on logging.
+                // Không bao giờ để log làm hỏng thao tác.
             }
         }
     }

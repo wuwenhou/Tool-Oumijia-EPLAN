@@ -2,7 +2,7 @@
 #   output\Tool-Oumijia-AddIn-v<Version>.zip
 #
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.3.0
+#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.4.0
 #
 # Yêu cầu: add-in đã được build (src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll).
 # Gói zip chứa (phẳng, không thư mục con):
@@ -10,7 +10,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$Version = "0.3.0"
+    [string]$Version = "0.4.0"
 )
 
 $ErrorActionPreference = "Stop"
