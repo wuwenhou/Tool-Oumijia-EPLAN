@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Oumijia.Core.Library;
-using Oumijia.Core.Macros;
 
 namespace Oumijia.Tool.Ui;
 
@@ -17,7 +16,6 @@ public sealed class SettingsPanel : UserControl
     private readonly ComboBox _policy = new();
     private readonly CheckBox _move = new();
     private readonly TextBox _fallback = new();
-    private readonly ListBox _macroDirs = new();
     private readonly Label _configPath = new();
 
     public SettingsPanel()
@@ -63,50 +61,26 @@ public sealed class SettingsPanel : UserControl
         _fallback.Location = new Point(200, 245);
         _fallback.Width = 160;
 
-        var lblMacroDirs = new Label { Text = "Thư mục macro EPLAN (bổ sung cho phần dò tự động):", AutoSize = true, Location = new Point(0, 286) };
-        _macroDirs.Location = new Point(0, 306);
-        _macroDirs.Size = new Size(560, 92);
-        _macroDirs.IntegralHeight = false;
-        var btnMacroAdd = new Button { Text = "Thêm…", Location = new Point(568, 306), Size = new Size(90, 24) };
-        btnMacroAdd.Click += OnMacroDirAddClicked;
-        var btnMacroRemove = new Button { Text = "Xóa", Location = new Point(568, 334), Size = new Size(90, 24) };
-        btnMacroRemove.Click += (_, __) =>
-        {
-            var selected = _macroDirs.SelectedItems.Cast<object>().ToList();
-            foreach (var item in selected) _macroDirs.Items.Remove(item);
-        };
-        var btnMacroDetect = new Button { Text = "Dò tìm", Location = new Point(568, 362), Size = new Size(90, 24) };
-        btnMacroDetect.Click += (_, __) =>
-        {
-            foreach (var dir in MacroPathDetector.DetectCandidates())
-            {
-                if (!_macroDirs.Items.Cast<object>().Any(o => string.Equals(o?.ToString(), dir, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _macroDirs.Items.Add(dir);
-                }
-            }
-        };
-
         var btnSave = new Button
         {
             Text = "💾 Lưu cài đặt",
-            Location = new Point(0, 412),
+            Location = new Point(0, 300),
             Size = new Size(150, 32),
             Font = new Font("Segoe UI", 9F, FontStyle.Bold)
         };
         btnSave.Click += OnSaveClicked;
 
-        var btnOpenConfig = new Button { Text = "Mở thư mục cấu hình", Location = new Point(162, 414), Size = new Size(160, 28) };
+        var btnOpenConfig = new Button { Text = "Mở thư mục cấu hình", Location = new Point(162, 302), Size = new Size(160, 28) };
         btnOpenConfig.Click += (_, __) => OpenFolder(App.Paths.BaseDirectory);
 
-        var btnOpenRules = new Button { Text = "Mở rules.json", Location = new Point(334, 414), Size = new Size(130, 28) };
+        var btnOpenRules = new Button { Text = "Mở rules.json", Location = new Point(334, 302), Size = new Size(130, 28) };
         btnOpenRules.Click += (_, __) => OpenFileInExplorer(App.Paths.RulesFile);
 
-        var btnOpenOverrides = new Button { Text = "Mở overrides.json", Location = new Point(476, 414), Size = new Size(150, 28) };
+        var btnOpenOverrides = new Button { Text = "Mở overrides.json", Location = new Point(476, 302), Size = new Size(150, 28) };
         btnOpenOverrides.Click += (_, __) => OpenFileInExplorer(App.Paths.OverridesFile);
 
         _configPath.AutoSize = true;
-        _configPath.Location = new Point(0, 456);
+        _configPath.Location = new Point(0, 346);
         _configPath.ForeColor = Color.DimGray;
 
         Controls.AddRange(new Control[]
@@ -115,7 +89,6 @@ public sealed class SettingsPanel : UserControl
             lblInbox, _inboxList, btnInboxAdd, btnInboxRemove,
             lblPolicy, _policy, _move,
             lblFallback, _fallback,
-            lblMacroDirs, _macroDirs, btnMacroAdd, btnMacroRemove, btnMacroDetect,
             btnSave, btnOpenConfig, btnOpenRules, btnOpenOverrides,
             _configPath
         });
@@ -137,9 +110,6 @@ public sealed class SettingsPanel : UserControl
 
         _move.Checked = App.Config.MoveInsteadOfCopy;
         _fallback.Text = App.Config.FallbackCategory;
-
-        _macroDirs.Items.Clear();
-        foreach (var dir in App.Config.MacroDirectories) _macroDirs.Items.Add(dir);
 
         _configPath.Text = "Cấu hình: " + App.Paths.ConfigFile;
     }
@@ -168,15 +138,6 @@ public sealed class SettingsPanel : UserControl
         foreach (var item in selected) _inboxList.Items.Remove(item);
     }
 
-    private void OnMacroDirAddClicked(object? sender, EventArgs e)
-    {
-        using var dialog = new FolderBrowserDialog { Description = "Chọn thư mục macro EPLAN" };
-        if (dialog.ShowDialog(this) == DialogResult.OK)
-        {
-            _macroDirs.Items.Add(dialog.SelectedPath);
-        }
-    }
-
     private void OnSaveClicked(object? sender, EventArgs e)
     {
         App.Config.LibraryRoot = _libraryRoot.Text.Trim();
@@ -191,8 +152,6 @@ public sealed class SettingsPanel : UserControl
         }
 
         if (!string.IsNullOrWhiteSpace(_fallback.Text)) App.Config.FallbackCategory = _fallback.Text.Trim();
-
-        App.Config.MacroDirectories = _macroDirs.Items.Cast<object>().Select(o => o?.ToString() ?? "").Where(s => s.Length > 0).ToList();
 
         App.Config.Save(App.Paths.ConfigFile);
         App.Reload();

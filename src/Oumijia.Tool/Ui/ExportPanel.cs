@@ -264,7 +264,7 @@ public sealed class ExportPanel : UserControl
             foreach (var file in files)
             {
                 var ext = Path.GetExtension(file);
-                if (!extensions.Any(x => x.Equals(ext, StringComparison.OrdinalIgnoreCase))) continue;
+                if (!string.Equals(ext, ".edz", StringComparison.OrdinalIgnoreCase)) continue;
                 try
                 {
                     results.Add(BuildRow(file));
@@ -301,47 +301,25 @@ public sealed class ExportPanel : UserControl
         };
 
         EdzPackageInfo? info = null;
-        if (ext == ".edz")
+        try
         {
-            try
-            {
-                info = EdzPackageReader.Read(file);
-                row.Status = info.Summary() + " · " + info.ContainerKind;
-            }
-            catch (Exception ex)
-            {
-                row.Status = "Lỗi đọc: " + ex.Message;
-            }
+            info = EdzPackageReader.Read(file);
+            row.Status = info.Summary() + " · " + info.ContainerKind;
         }
-        else if (EdzPackageReader.IsMacroExtension(ext))
+        catch (Exception ex)
         {
-            row.Status = "Tệp macro EPLAN (phân loại thủ công)";
-        }
-        else
-        {
-            row.Status = "Không nhận diện";
+            row.Status = "Lỗi đọc: " + ex.Message;
         }
 
         var classification = App.Classifier.Classify(file, info);
         row.Classification = classification;
         row.Info = info;
 
-        var isMacro = EdzPackageReader.IsMacroExtension(ext);
-        if (isMacro)
-        {
-            row.ManufacturerFolder = "-";
-            row.CategoryFolder = "-";
-        }
-        else
-        {
-            row.ManufacturerFolder = classification.ManufacturerFolder;
-            row.CategoryFolder = classification.CategoryFolder;
-            row.PartNumber = info?.PrimaryPartNumber ?? "";
-        }
+        row.ManufacturerFolder = classification.ManufacturerFolder;
+        row.CategoryFolder = classification.CategoryFolder;
+        row.PartNumber = info?.PrimaryPartNumber ?? "";
 
-        var suggested = isMacro
-            ? "_Macros"
-            : (info != null ? classification.SuggestedRelativeFolder() : App.Config.FallbackCategory);
+        var suggested = info != null ? classification.SuggestedRelativeFolder() : App.Config.FallbackCategory;
 
         var overrideFolder = _overrides.Get(fileName);
         row.SuggestedDestination = suggested;
@@ -361,20 +339,12 @@ public sealed class ExportPanel : UserControl
     {
         foreach (var row in _rows)
         {
-            var isMacro = EdzPackageReader.IsMacroExtension(Path.GetExtension(row.FullPath));
-            if (isMacro)
-            {
-                row.SuggestedDestination = "_Macros";
-            }
-            else
-            {
-                var classification = App.Classifier.Classify(row.FullPath, row.Info);
-                row.ManufacturerFolder = classification.ManufacturerFolder;
-                row.CategoryFolder = classification.CategoryFolder;
-                row.SuggestedDestination = row.Info != null
-                    ? classification.SuggestedRelativeFolder()
-                    : App.Config.FallbackCategory;
-            }
+            var classification = App.Classifier.Classify(row.FullPath, row.Info);
+            row.ManufacturerFolder = classification.ManufacturerFolder;
+            row.CategoryFolder = classification.CategoryFolder;
+            row.SuggestedDestination = row.Info != null
+                ? classification.SuggestedRelativeFolder()
+                : App.Config.FallbackCategory;
 
             var overrideFolder = _overrides.Get(row.FileName);
             row.DestinationFolder = string.IsNullOrWhiteSpace(overrideFolder) ? row.SuggestedDestination : overrideFolder!;
