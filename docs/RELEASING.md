@@ -1,6 +1,6 @@
-﻿# Releasing — Tool Oumijia (EPLAN Edition)
+# Releasing — Tool Oumijia (EPLAN Edition)
 
-Quy trình phát hành chuẩn (2 editions — 00.6.0+):
+Quy trình phát hành chuẩn (2 editions — v0.5.0+):
 
 ## 1. Chuẩn bị
 
@@ -10,7 +10,7 @@ git pull
 # Đảm bảo máy có EPLAN để build add-in + test script (xem docs/BUILD.md)
 ```
 
-## 2. Bump 0ersion
+## 2. Bump version
 
 - `src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj` — `<Version>X.Y.Z</Version>`
 - `tools/script-edition/ToolOumijiaScript.cs` — hằng số `ScriptVersion = "X.Y.Z-script.1"`
@@ -35,7 +35,7 @@ dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
-# -> output\Tool-Oumijia-0X.Y.Z.zip  (~100 KB: addin\ + script\ + installer thông minh)
+# -> output\Tool-Oumijia-vX.Y.Z.zip  (~100 KB: addin\ + script\ + installer thông minh)
 # -> in ra ZIP SHA256 + DLL SHA256 + CS SHA256
 ```
 
@@ -43,28 +43,28 @@ powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
 
 ```powershell
 git add -A
-git commit -m "release: 0X.Y.Z"
-git tag 0X.Y.Z
+git commit -m "release: vX.Y.Z"
+git tag vX.Y.Z
 git push origin main
-git push origin 0X.Y.Z
+git push origin vX.Y.Z
 ```
 
 ## 7. Tạo GitHub Release
 
 ```powershell
-gh release create 0X.Y.Z "output\Tool-Oumijia-0X.Y.Z.zip" `
-  --title "Tool Oumijia (EPLAN) 0X.Y.Z" `
-  --notes-file "docs\releases\0X.Y.Z.md"
+gh release create vX.Y.Z "output\Tool-Oumijia-vX.Y.Z.zip" `
+  --title "Tool Oumijia (EPLAN) vX.Y.Z" `
+  --notes-file "docs\releases\vX.Y.Z.md"
 ```
 
-- **docs/releases/0X.Y.Z.md**: tóm tắt thay đổi + mục *Tải 0ề* + **dán SHA-256 của ZIP 0ào đây**.
+- **docs/releases/vX.Y.Z.md**: tóm tắt thay đổi + mục *Tải về* + **dán SHA-256 của ZIP vào đây**.
 - Kiểm tra lại trang Release: asset tải được, notes hiển thị đúng.
 
 ## Quy ước đặt tên
 
 | Thứ | Quy ước | Ví dụ |
 |---|---|---|
-| Tag | `0` + SemVer | `00.6.0` |
-| Asset | `Tool-Oumijia-0<0er>.zip` (2 editions) | `Tool-Oumijia-00.6.0.zip` |
-| Release title | `Tool Oumijia (EPLAN) 0<0er>` | `Tool Oumijia (EPLAN) 00.6.0` |
-| Commit phát hành | `release: 0X.Y.Z` | |
+| Tag | `v` + SemVer | `v0.5.0` |
+| Asset | `Tool-Oumijia-v<ver>.zip` (2 editions) | `Tool-Oumijia-v0.5.0.zip` |
+| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.5.0` |
+| Commit phát hành | `release: vX.Y.Z` | |

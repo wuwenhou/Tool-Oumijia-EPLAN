@@ -1,4 +1,4 @@
-﻿//#################################################################################################################################################
+//#################################################################################################################################################
 // Tool Oumijia — EPLAN Script Edition (v0.5.0)
 //#################################################################################################################################################
 // Nhập / Xuất gói dữ liệu linh kiện EPLAN (*.edz) trực tiếp trong EPLAN.
@@ -57,7 +57,7 @@ namespace Oumijia.EdzScript
     /// </summary>
     public class ToolOumijiaScript
     {
-        private const string ScriptVersion = "0.6.2-script.1";
+        private const string ScriptVersion = "0.5.1-script.1";
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
         private const string ImportActionName = "OumijiaScriptImportEdz";
@@ -185,7 +185,6 @@ namespace Oumijia.EdzScript
 
                 EnsureCommand(group, "Nhập EDZ…", ImportActionName);
                 EnsureCommand(group, "Xuất EDZ…", ExportActionName);
-                EnsureCommand(group, "Menu bar", "MfToggleMainMenuAction");
 
                 AddinLog.Write("Ribbon ready (" + source + ")");
             }

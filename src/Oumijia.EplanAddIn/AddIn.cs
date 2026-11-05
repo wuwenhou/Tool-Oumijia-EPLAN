@@ -50,7 +50,6 @@ namespace Oumijia.EplanAddIn
 
                 EnsureCommand(group, "Nhập EDZ…", "OumijiaImportEdz");
                 EnsureCommand(group, "Xuất EDZ…", "OumijiaExportEdz");
-                EnsureCommand(group, "Menu bar", "MfToggleMainMenuAction");
 
                 AddinLog.Write("OnInitGui: ribbon ready");
                 return true;

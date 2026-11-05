@@ -1,5 +1,9 @@
 # Lộ trình — Tool Oumijia (EPLAN Edition)
 
+## Mốc hiện tại: v0.5.1
+
+Người dùng chọn quay lại v0.5.1 và lập kế hoạch mới. Các mục dưới đây ghi nhận lịch sử đến v0.5.1; kế hoạch tiếp theo đang chờ người dùng xác định.
+
 ## v0.1.0 — App standalone: phân loại thư viện EDZ ✅ (đã bỏ ở v0.3.0)
 - WinForms: quét `.edz` → phân loại Hãng/Nhóm → xếp thư viện; log CSV
 - *(Đã xóa khỏi repo ở v0.3.0 theo quyết định chỉ giữ add-in — xem git history)*
@@ -27,13 +31,9 @@
 - [x] Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
 - [ ] UAT v0.5.0: máy EPLAN 2026.0.3 (bản script) + máy 2022 (bản add-in)
 
-## v0.6 — Tinh chỉnh & mở rộng
-- [ ] Icon cho 2 nút ribbon (SVG)
-- [ ] Chọn ngôn ngữ hiển thị tên part trong dialog Xuất (hiện en_US)
-- [ ] Tiến trình (progress) cho import/export lô lớn
-- [ ] Sắp xếp/bôi đậm kết quả tìm kiếm trong cây
-- [ ] EDZ writer/editor: tạo gói từ CSV; gắn macro/PDF/STEP; giữ record lạ khi sửa gói
-- [ ] Nghiên cứu tab "Parts Management Extension" (API không chính thức — rủi ro tương thích)
+## v0.5.1 — Checkbox native
+- Cây chọn part trong dialog Xuất EDZ dùng checkbox native của Windows.
+- Áp dụng cho Add-in và Script Edition; đây là mốc phát triển hiện tại.
 
 ## Nguyên tắc xuyên suốt
 - Chỉ API chính thức + dữ liệu factual; không bẻ license, không tái phân phối dữ liệu hãng

@@ -1,56 +1,51 @@
 ================================================================
-  TOOL OUMIJIA (EPLAN EDITION) — hướng dẫn cài đặt
+  TOOL OUMIJIA (EPLAN EDITION) — huong dan cai dat
 ================================================================
 
-Tool Oumijia: nhập/xuất gói dữ liệu linh kiện EPLAN (*.edz) trực tiếp
-trong EPLAN — ribbon "Tool Oumijia" với 3 nút:
-  Nhập EDZ…  ·  Xuất EDZ…  ·  Menu bar
+Tool Oumijia: nhap/xuat goi du lieu linh kien EPLAN (*.edz) truc tiep
+trong EPLAN — ribbon "Tool Oumijia" voi 2 nut: Nhap EDZ... / Xuat EDZ...
 
-Gói này chứa:
+Goi nay chua 2 PHIEN BAN:
 
-  addin\        Bản ADD-IN (DLL):
-               - Dùng cho EPLAN cũ hoặc máy có API license.
-               - Nhanh và đủ tính năng nhất.
-  script\       Bản SCRIPT (EPLAN Scripting):
-               - KHÔNG cần API license.
-               - Dùng cho EPLAN mới (2024+/2026) chặn add-in chưa ký.
-  third-party\  Hai add-in VIET EPLAN (author-permitted):
-               - VEE.EplTableMaker   — tạo bảng kỹ thuật
-               - VEE.ExportConnections — xuất dữ liệu kết nối
-               - Installer tự copy + đăng ký chúng.
+  addin\   Ban ADD-IN (DLL):
+           - Nhanh va day du nhat.
+           - Can EPLAN co API license HOAC ban EPLAN cho phep DLL chua ky
+             (vd EPLAN 2022 tro ve truoc).
+
+  script\  Ban SCRIPT (EPLAN Scripting):
+           - KHONG can API license, KHONG can ky assembly.
+           - Dung cho EPLAN ban moi (2024+/2026) chan add-in chua ky.
 
 ------------------------------------------------------------
-  CÀI KHUYÊN NGHỊ (tự chọn bản phù hợp)
+  CACH CAI KHUYEN NGHI (tu chon ban phu hop)
 ------------------------------------------------------------
-1. Chạy:   Install-Tool-Oumijia.bat
-   -> Tự thử bản ADD-IN trước (đăng ký + self-test).
-   -> Nếu add-in bị vô hiệu hóa (thiếu license) -> gỡ add-in,
-      cài bản SCRIPT và kiểm chứng lại.
-   -> Đồng thời tự cài/đăng ký 2 add-in VEE.
-2. Mở EPLAN:
-   Ribbon "Tool Oumijia" = Nhập EDZ… · Xuất EDZ… · Menu bar.
-   Ribbon "VIET EPLAN ELECTRIC" = lệnh VEE Export/Table Maker.
+1. Chay:   Install-Tool-Oumijia.bat
+   -> Tu thu ban ADD-IN truoc (dang ky + self-test).
+   -> Neu EPLAN vo hieu hoa add-in (thieu license) -> tu dong go add-in
+      va chuyen sang cai ban SCRIPT + kiem chung lai.
+2. Mo EPLAN -> ribbon "Tool Oumijia" xuat hien.
 
 ------------------------------------------------------------
-  CÀI THỦ CÔNG / TÙY CHỌN
+  CAI THU CONG (neu can)
 ------------------------------------------------------------
-- Bản add-in    :  addin\Install-AddIn.bat
-- Bản script    :  script\Install-Script.bat
-- Gỡ cài đặt    :  Uninstall-Tool-Oumijia.bat
-                (gỡ cả Tool và 2 add-in VEE)
+- Ban add-in:   addin\Install-AddIn.bat
+- Ban script:   script\Install-Script.bat
+- Go cai dat:   Uninstall-Tool-Oumijia.bat   (go ca hai ban)
 
 ------------------------------------------------------------
-  YÊU CẦU / GHI CHÚ
+  GO CAI DAT
 ------------------------------------------------------------
-- Windows 10/11 x64; EPLAN Platform 2022 trở lên.
-- Không cần Administrator; không đụng license EPLAN.
-  (Bản script dùng chức năng scripting miễn phí của EPLAN.)
-- Khuyến nghị: nhập thử trên database test trước.
-- Kiểm tra toàn vẹn: xem VERSION.txt (SHA-256 của các file chính).
-- Nhật ký: %APPDATA%\Tool Oumijia\logs\
-  register-script.log        = đăng ký Tool (add-in/script)
-  register-third-party.log   = đăng ký 2 add-in VEE
-  addin.log                  = hoạt động add-in/script
-  import-*.csv / export-*.csv = nhật ký kiểm toán
+Chay:   Uninstall-Tool-Oumijia.bat
+
+------------------------------------------------------------
+  YEU CAU / GHI CHU
+------------------------------------------------------------
+- Windows 10/11 x64; EPLAN Platform 2022 tro len.
+- Khong can quyen Administrator; khong dung gi toi license EPLAN
+  (ban script dung chuc nang scripting mien phi cua EPLAN).
+- Khuyen nghi: thu Nhap EDZ tren database test truoc khi nhap vao
+  database chinh.
+- Kiem tra toan ven: xem VERSION.txt (SHA-256 cua cac file chinh).
+- Nhat ky: %APPDATA%\Tool Oumijia\logs\
 
 Du an: https://github.com/wuwenhou/Tool-Oumijia-EPLAN

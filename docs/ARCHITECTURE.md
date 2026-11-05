@@ -1,4 +1,4 @@
-﻿# Kiến trúc — Tool Oumijia (EPLAN Edition) 00.3.0
+# Kiến trúc — Tool Oumijia (EPLAN Edition) v0.3.0
 
 ## Tổng quan
 
@@ -9,12 +9,12 @@
 │   └── Xuất EDZ…  ──► ExportEdzAction ──► ExportEdzForm ──► PartsTreeModel          │
 │                                                                                    │
 │  API chính thức:  MDPartsManagement.ImportParts / MDPartsDatabase.ExportParts      │
-│  Con0erter EDZ:   IXPartsImportExportEdz                                           │
+│  Converter EDZ:   IXPartsImportExportEdz                                           │
 └────────────────────────────────────────────────────────────────────────────────────┘
         ▲ nạp lúc khởi động (shadow-copy DLL)
 ┌───────┴───────────────── EPLAN settings (STATION) ────────────────────────────────┐
 │  EplanEplApiModule.Module.Oumijia@EplAddin@EDZ.{AssemblyName,AssemblyPath,…}       │
-│  EplanEplApiModule.Ser0ices.AsmActions.Oumijia<Action>.<Ordinal>.{…}  (8 key/action)│
+│  EplanEplApiModule.Services.AsmActions.Oumijia<Action>.<Ordinal>.{…}  (8 key/action)│
 └────────────────────────────────────────────────────────────────────────────────────┘
         ▲ ghi bởi
 ┌───────┴──────────── tools/eplan-scripts/OumijiaRegister.cs ────────────────────────┐
@@ -31,12 +31,12 @@
 | `Actions/ExportEdzAction.cs` | action `OumijiaExportEdz` (22) — mở dialog xuất |
 | `Actions/SelfTestAction.cs` | action `OumijiaSelfTest` (23) — self-test headless |
 | `Actions/DiagPartsAction.cs` | action `OumijiaDiagParts` (24) — chẩn đoán DB + smoke export |
-| `Ui/ImportEdzForm.cs` | nhập batch EDZ (đơn giản hóa 00.4.0: chọn file/thư mục → NHẬP; mặc định cập nhật + thêm mới) |
-| `Ui/ExportEdzForm.cs` | dialog xuất 03: cây nhóm + panel chi tiết + 2 chế độ (chọn cây / theo loại bản ghi) |
+| `Ui/ImportEdzForm.cs` | nhập batch EDZ (đơn giản hóa v0.4.0: chọn file/thư mục → NHẬP; mặc định cập nhật + thêm mới) |
+| `Ui/ExportEdzForm.cs` | dialog xuất v3: cây nhóm + panel chi tiết + 2 chế độ (chọn cây / theo loại bản ghi) |
 | `Ui/PartsTreeModel.cs` | `PartEntry`/`PartInfo` (đọc chuỗi hiển thị), `PartsTreeModel` (dựng cây nhóm) |
-| `AddinLog.cs` / `AddinCs0Log.cs` | log `%APPDATA%\Tool Oumijia\logs\` + CSV kiểm toán |
+| `AddinLog.cs` / `AddinCsvLog.cs` | log `%APPDATA%\Tool Oumijia\logs\` + CSV kiểm toán |
 
-Cả 4 action **phải được đăng ký** trong settings mục `Ser0ices.AsmActions` mới gọi được
+Cả 4 action **phải được đăng ký** trong settings mục `Services.AsmActions` mới gọi được
 (kể cả từ command line) — xem AGENTS.md mục 6.
 
 ## Luồng dữ liệu
@@ -47,7 +47,7 @@ ImportEdzForm (chọn nhiều .edz + chế độ + nhận dạng)
     │  xác nhận
     ▼
 MDPartsManagement.ImportParts(files, "IXPartsImportExportEdz", mode, bExtraLang, identifier, null)
-    └─► Parts Database  +  CSV log (import-YYYYMMDD.cs0)
+    └─► Parts Database  +  CSV log (import-YYYYMMDD.csv)
 ```
 
 ### Xuất EDZ (2 chế độ)
@@ -75,7 +75,7 @@ Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số 
 
 - Property ID: `Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_*`
   → `part.Properties[ARTICLE_XXX]` trả `MDPropertyValue`.
-- **Chuỗi hiển thị**: `0alue.GetDisplayString().GetStringToDisplay(ISOCode.Language.L_en_US)`
+- **Chuỗi hiển thị**: `value.GetDisplayString().GetStringToDisplay(ISOCode.Language.L_en_US)`
   xử lý cả 3 kiểu giá trị:
   1. enum nhóm sản phẩm (lưu số "26" → hiển thị "PLC")
   2. đa ngôn ngữ ("de_DE@…;en_US@LOGO! 24RC;" → "LOGO! 24RC")
@@ -93,27 +93,27 @@ Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số 
 | D3 | Registration **delete-first + VERIFY** | Settings giữ giá trị lịch sử theo key — nguồn khác ghi cùng key sẽ "đè" (R11) |
 | D4 | Cây nhóm dựng bằng `SortedDictionary` + entry đọc sẵn | Dựng lại cây khi tìm kiếm rất nhanh, không gọi API lặp |
 | D5 | Tick chọn lưu theo `AdoId` (không theo node) | Lọc/tìm kiếm dựng lại cây mà không mất trạng thái tick |
-| D6 | Trạng thái tick 0ẽ bằng `ImageList` + `HitTest(Image)` | TreeView WinForms không có checkbox 3 trạng thái nati0e |
-| D7 | CSV + addin.log cho mọi thao tác | Truy 0ết/đối chiếu khi hỗ trợ người dùng |
+| D6 | Trạng thái tick vẽ bằng `ImageList` + `HitTest(Image)` | TreeView WinForms không có checkbox 3 trạng thái native |
+| D7 | CSV + addin.log cho mọi thao tác | Truy vết/đối chiếu khi hỗ trợ người dùng |
 | D8 | Layout dưới bằng TableLayoutPanel/Dock; kiểm tra construct UI offscreen trong DiagParts | Không còn nút bị khuất ở mọi DPI; bắt lỗi khởi tạo dialog trước khi UAT (đã bắt được 1 crash thật — R16) |
 | D9 | Script Edition dùng action `OumijiaScript*` + **tự ghi settings đăng ký** (không dùng action `RegisterScript` của EPLAN) | Không xung đột nếu cài cả 2 bản; `RegisterScript` không hoạt động trên 2022 (R18) |
-| D10 | Installer thông minh tự chọn bản bằng **self-test thực tế** (không check 0ersion) | Phản ánh đúng trạng thái license/threshold của từng máy — add-in chạy được thì dùng, bị chặn thì chuyển script |
+| D10 | Installer thông minh tự chọn bản bằng **self-test thực tế** (không check version) | Phản ánh đúng trạng thái license/threshold của từng máy — add-in chạy được thì dùng, bị chặn thì chuyển script |
 
 ## Đăng ký add-in (tóm tắt)
 
 Chi tiết đầy đủ: **AGENTS.md mục 6** (quy tắc R1–R14). Điểm cốt lõi:
 
-1. Hai nhóm keys: `Module.Oumijia@EplAddin@EDZ.*` + `Ser0ices.AsmActions.Oumijia*.*`
+1. Hai nhóm keys: `Module.Oumijia@EplAddin@EDZ.*` + `Services.AsmActions.Oumijia*.*`
    (`.` → `@` escape).
 2. Chỉ ghi được từ **trong EPLAN** (ExecuteScript); script có `[Start]` tự chạy khi load.
 3. **Xóa key trước khi ghi** + đọc lại xác nhận.
 4. Installer `tools/install-addin/` gói gọn toàn bộ quy trình cho người dùng cuối.
 
-## Script Edition (00.5.0) — chạy không cần API license
+## Script Edition (v0.5.0) — chạy không cần API license
 
 ```
 tools/script-edition/ToolOumijiaScript.cs   1 file C# 5 (~1900 dòng) — port đầy đủ từ add-in:
-  ├─ [DeclareE0entHandler("Eplan.EplApi.OnMainStart")]  → tạo ribbon
+  ├─ [DeclareEventHandler("Eplan.EplApi.OnMainStart")]  → tạo ribbon
   │  (+ OnLoadWorkspace / OnResetRibbon trên bản EPLAN mới)
   ├─ [DeclareAction]  OumijiaScriptImportEdz / OumijiaScriptExportEdz / OumijiaScriptSelfTest
   └─ tự nạp: OumijiaRegisterScript.cs ghi STATION.EplanEplApiScriptGui.Scripts (danh sách indexed)
@@ -124,8 +124,8 @@ Installer thông minh (tools/install-all → gốc zip):
 
 | EPLAN | Bản add-in | Bản script |
 |---|---|---|
-| ≤2023 (0d 2022.0.3) | ✅ chạy (bản cũ không chặn DLL chưa ký) | ⚠️ compiler script thiếu reference `Eplan.EplApi.MasterData` → dùng add-in |
-| 2024+/2026, không API license | ❌ EPLAN 0ô hiệu hóa DLL chưa ký | ✅ chạy (đã kiểm chứng trên 2026.0.3) |
+| ≤2023 (vd 2022.0.3) | ✅ chạy (bản cũ không chặn DLL chưa ký) | ⚠️ compiler script thiếu reference `Eplan.EplApi.MasterData` → dùng add-in |
+| 2024+/2026, không API license | ❌ EPLAN vô hiệu hóa DLL chưa ký | ✅ chạy (đã kiểm chứng trên 2026.0.3) |
 
 - Đăng ký script: ghi settings (KHÔNG dùng action `RegisterScript` của EPLAN — không hoạt động
   trên 2022, đã kiểm chứng); loader của EPLAN tự thử nạp khi khởi động.

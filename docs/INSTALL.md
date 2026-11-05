@@ -1,19 +1,16 @@
-﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.6.2
+﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.5.1
 
-> Gói phát hành chứa **2 phiên bản Tool**, **Installer thông minh** và **2 add-in VEE của tác giả** (đã được cấp phép phân phối).
+> Gói phát hành chứa **2 phiên bản** (add-in & script) + **installer thông minh** tự chọn bản phù hợp.
 
 ## Cách cài (1 bước — khuyến nghị)
 
 1. Vào **[Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)**, tải
-   `Tool-Oumijia-v0.6.2.zip`
+   `Tool-Oumijia-v0.5.1.zip` (~100 KB)
 2. **Giải nén** ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`**
    - Installer tự thử bản **add-in** trước (đăng ký + self-test headless)
    - Nếu EPLAN **vô hiệu hóa add-in** (máy không có API license trên EPLAN bản mới):
      tự gỡ add-in → **chuyển cài bản script** → kiểm chứng lại rồi mới báo thành công
-   - Đồng thời tự cài và đăng ký **VEE.EplTableMaker** + **VEE.ExportConnections**;
-     không cần dùng hộp "API modules (assemblies) > Load"
-3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 3 nút: **Nhập EDZ… / Xuất EDZ… / Menu bar**.
-   Sẽ có thêm tab **VIET EPLAN ELECTRIC** nếu hai add-in VEE đăng ký thành công.
+3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
 
 ## Hai phiên bản — khi nào dùng bản nào
 
@@ -22,7 +19,7 @@
 | Công nghệ | DLL add-in (net48) | EPLAN Scripting (C# 5) |
 | Yêu cầu | EPLAN có **API license**, HOẶC bản EPLAN cho phép DLL chưa ký (vd 2022) | **Không cần license** (scripting miễn phí) |
 | Phù hợp | EPLAN 2022–2023 | **EPLAN mới (2024+/2026)** chặn add-in chưa ký |
-| Tính năng | Như nhau (Nhập/Xuất EDZ + Menu bar) | Như nhau |
+| Tính năng | Như nhau (Nhập/Xuất EDZ đầy đủ) | Như nhau |
 
 **Cài thủ công** (nếu không dùng installer thông minh):
 
@@ -43,7 +40,7 @@
 Mỗi release kèm mã **SHA-256** của file ZIP. Đối chiếu nhanh:
 
 ```powershell
-Get-FileHash .\Tool-Oumijia-v0.6.2.zip -Algorithm SHA256
+Get-FileHash .\Tool-Oumijia-v0.5.1.zip -Algorithm SHA256
 ```
 
 (`VERSION.txt` trong gói ghi hash của DLL add-in và file script chính.)
@@ -61,8 +58,6 @@ Chạy **`Uninstall-Tool-Oumijia.bat`** — gỡ cả 2 bản (nếu có), xóa 
   rồi trong EPLAN: **File → Extras → Interfaces → Scripts → Run…** chọn `addin\OumijiaRegister.cs`.
 - **Bản script**: copy `script\ToolOumijiaScript.cs` + `script\OumijiaRegisterScript.cs` vào
   `%APPDATA%\Tool Oumijia\Script\`, rồi chạy `OumijiaRegisterScript.cs` qua Scripts → Run… như trên.
-- **2 add-in VEE**: chạy installer ở gốc, hoặc chạy `third-party\OumijiaRegisterThirdParty.cs`
-  qua Scripts → Run… như trên.
 - Khởi động lại EPLAN sau khi đăng ký.
 
 ## Sử dụng với EPLAN Education

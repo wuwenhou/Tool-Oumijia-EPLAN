@@ -2,6 +2,8 @@
 
 **Add-in EPLAN: nhập/xuất gói dữ liệu linh kiện (`.edz`) trực tiếp trong EPLAN Electric P8 — batch import vào Parts Database, và export theo cây nhóm như navigator.**
 
+> **Mốc phát triển hiện tại: v0.5.1.** Source đã được khôi phục về v0.5.1 theo yêu cầu người dùng; kế hoạch tiếp theo đang chờ người dùng xác định.
+
 [![Release](https://img.shields.io/github/v/release/wuwenhou/Tool-Oumijia-EPLAN)](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)
@@ -22,7 +24,7 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 
 ---
 
-## Tính năng (v0.6.2)
+## Tính năng (v0.5.1)
 
 ### 📥 Nhập EDZ… (Import) — đơn giản
 - Chọn **nhiều file hoặc cả thư mục** `.edz` (quét cả thư mục con) → bấm **NHẬP**
@@ -47,23 +49,17 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 - Log CSV từng part / từng đợt xuất
 
 ### ⚙️ Khác
-- **Ribbon Tool Oumijia v0.6.2**: chỉ **Quản lý EDZ | Nhập EDZ… | Xuất EDZ… | Menu bar**
-  (tối giản theo phản hồi, không còn các tab/nhóm phụ); nút **Menu bar** gọi action chính thức
-  `MfToggleMainMenuAction` của EPLAN
-- **Kèm sẵn VEE Table Maker + VEE Export Connections**: hai add-in của VIET EPLAN & ELECTRIC
-  được phân phối cùng gói theo sự đồng ý của tác giả; installer tự copy/đăng ký/gỡ chúng
 - **Cài đặt 1 click** với **installer thông minh** — `Install-Tool-Oumijia.bat` tự chọn bản
-  add-in hay script phù hợp với máy; không cần Administrator
-- Gỡ cài đặt 1 click (`Uninstall-Tool-Oumijia.bat`) — gỡ cả Tool và 2 add-in VEE
+  add-in hay script phù hợp với máy; không cần Administrator, không đụng license EPLAN
+- Gỡ cài đặt 1 click (`Uninstall-Tool-Oumijia.bat`)
 - Mọi hoạt động có log tại `%APPDATA%\Tool Oumijia\logs\`
 - Đã kiểm chứng end-to-end trên **EPLAN Platform 2022.0.3** (add-in) và **2026.0.3** (script)
 
 ## 🚀 Bắt đầu nhanh
 
-1. Tải **`Tool-Oumijia-v0.6.2.zip`** tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
+1. Tải [**`Tool-Oumijia-v0.5.1.zip`**](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/download/v0.5.1/Tool-Oumijia-v0.5.1.zip).
 2. Giải nén ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`** (tự chọn bản phù hợp)
-3. Mở EPLAN → ribbon **“Tool Oumijia”** xuất hiện với **Nhập EDZ… / Xuất EDZ… / Menu bar**.
-   Ngoài ra, ribbon/tab **VIET EPLAN ELECTRIC** cũng sẽ có VEE Export connections và VEE Table Maker.
+3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
 
 > 💡 Khuyến nghị: thử nhập trên **database test** trước khi nhập vào database chính
 > (Parts Management → chọn/tạo database test).
@@ -77,8 +73,8 @@ Chi tiết: [docs/INSTALL.md](docs/INSTALL.md) · [docs/USER-GUIDE-vi.md](docs/U
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
   -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
 
-# Đóng gói zip phát hành (2 editions + third-party copy theo license)
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.2
+# Đóng gói Add-in và Script Edition
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.5.1
 ```
 
 Hướng dẫn đầy đủ (đăng ký add-in, test headless): [docs/BUILD.md](docs/BUILD.md).
@@ -89,15 +85,14 @@ Hướng dẫn đầy đủ (đăng ký add-in, test headless): [docs/BUILD.md](
 Tool-Oumijia-EPLAN/
 ├─ src/Oumijia.EplanAddIn/       # bản add-in (net48, x64)
 │  ├─ AddIn.cs                   # IEplAddIn — ribbon "Tool Oumijia"
-│  ├─ Actions/                   # Nhập/Xuất EDZ, SelfTest + DiagParts
-│  └─ Ui/                        # ImportEdzForm, ExportEdzForm, PartsTreeModel
+│  ├─ Actions/                   # Nhập/Xuất EDZ + SelfTest + DiagParts
+│  └─ Ui/                        # ImportEdzForm, ExportEdzForm (cây nhóm), PartsTreeModel
 ├─ tools/
 │  ├─ script-edition/            # bản SCRIPT (ToolOumijiaScript.cs, C#5) + installer + probe
 │  ├─ install-all/               # installer thông minh (tự chọn bản)
 │  ├─ install-addin/             # installer bản add-in
 │  ├─ eplan-scripts/             # OumijiaRegister.cs (+ script chẩn đoán)
 │  └─ pack.ps1                   # đóng gói zip 2 bản
-├─ third-party/                  # 2 add-in VEE được tác giả cho phép, kèm notices + registration script
 └─ docs/                         # kế hoạch, kiến trúc, build, cài đặt, hướng dẫn, lộ trình
 ```
 
@@ -106,8 +101,8 @@ Tool-Oumijia-EPLAN/
 - **v0.3.0** ✅ — Add-in duy nhất: nhập/xuất EDZ với cây chọn part như EPLAN; bỏ app exe
 - **v0.4.0** ✅ — Panel chi tiết + xuất theo loại bản ghi (như EPLAN) + fix toàn bộ lỗi UAT
 - **v0.5.0** ✅ — **Script Edition** (không cần API license) + installer thông minh + fix scheme nhập & đích xuất
-- **v0.6.2** ✅ — **Giao diện tối giản + Menu bar**; **thêm sẵn 2 add-in VIET EPLAN (VEE)** với installer tự đăng ký
-- **v0.7** — Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer — xem [docs/ROADMAP.md](docs/ROADMAP.md)
+- **v0.5.1** — Mốc hiện tại: checkbox native cho cây chọn part trong dialog Xuất EDZ.
+- **Tiếp theo** — Chờ kế hoạch mới từ người dùng; xem [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## ⚖️ Ghi chú pháp lý
 

@@ -7,48 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
-- Icon ribbon; tiến trình cho lô lớn; EDZ writer
-
-## [0.6.2] - 2026-11-05 — "Bộ gọn + add-ins VEE sẵn sàng dùng"
-
 ### Changed
-- **Giao diện quay về tối giản** theo phản hồi v0.6.x:
-  - `Nhập EDZ…`
-  - `Xuất EDZ…`
-  - `Menu bar`
-  - form `EPLAN Classic` và các nút VEE/GIRD bên ngoài đã được gỡ khỏi UI.
-- Nút **Menu bar** gọi action chính thức `MfToggleMainMenuAction` của EPLAN.
-
-### Added
-- 🆕 Gói phát hành kèm hai add-in VIET EPLAN & ELECTRIC (được tác giả cho phép phân phối):
-  - `VEE.EplTableMaker.dll` v1.2.0.0 — action `VEECreateEplanTable`
-  - `VEE.ExportConnections.dll` v1.0.0.0 — action `VE_E_ExportConnections`
-- 🆕 Installer v0.6.2 tự:
-  - copy 2 DLL vào `%APPDATA%\Tool Oumijia\ThirdParty\`,
-  - đăng ký module + action trong EPLAN,
-  - gỡ đăng ký khi Uninstall.
-- 🆕 `third-party\THIRD-PARTY-NOTICES.txt` nêu rõ tác giả, điều khoản phân phối và quyền sở hữu;
-  các DLL không bị sửa/không chứa mã nguồn Tool Oumijia.
-- 🆕 `third-party\README.txt` hướng dẫn cài chung.
-
-## [0.6.0] - 2026-11-05 — "Classic & Ecosystem"
-
-### Added
-- 🆕 **EPLAN Classic**: cửa sổ tìm kiếm/danh sách lệnh cho 12 nhóm menu cũ
-  (Project, Page, Layout space, Edit, View, Insert, Project data, Find, Options, Utilities, Window, Help).
-  Chỉ các action đã có trong phiên EPLAN mới chạy; lệnh chưa xác thực được khóa và ghi rõ lý do.
-- 🆕 Ribbon Tool Oumijia được bố trí thành bốn nhóm:
-  **Quản lý EDZ | EPLAN Classic | VEE | GIRD**.
-- 🆕 **VEE launcher (phương án A)**: phát hiện/gọi action của **VEE Export connections** và
-  **VEE Table Maker** đã được người dùng tự cài; nếu chưa cài, hiện hướng dẫn tải chính thức của tác giả.
-  Tool **không bundle/redistribute DLL** của tác giả.
-- 🆕 Nút **Menu bar** gọi action chính thức của EPLAN `MfToggleMainMenuAction`
-  (bật/tắt thanh menu chính).
-- 🆕 Nhóm **GIRD**: Snap/Object snap/Grid visibility/Design mode/Align on grid
-  chỉ gọi các action đã được kiểm tra và có điều kiện EPLAN cho phép; action không có sẽ được báo/khóa.
-- 🆕 Tài liệu `docs/THIRD-PARTY-ADDINS.md` — nguồn, giới hạn license và cách tích hợp VIA cài đặt riêng của người dùng.
-- 🆕 Trang hướng dẫn sử dụng cho v0.6.0 (README/INSTALL/USER-GUIDE) cập nhật.
+- Khôi phục source về v0.5.1 theo yêu cầu người dùng; dọn các Release/tag, nhánh và gói local sau v0.5.1.
+- Chờ kế hoạch phát triển mới từ người dùng.
 
 ## [0.5.1] - 2026-11-05 — "Native tick chọn part"
 
@@ -202,9 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.6.2...HEAD
-[0.6.2]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.2
-[0.6.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.0
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.1
 [0.5.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.0
 [0.4.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.4.0
