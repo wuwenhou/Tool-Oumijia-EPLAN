@@ -5,7 +5,7 @@
 Add-in "Tool Oumijia" cho EPLAN Electric P8: nhap/xuat goi du lieu
 linh kien EDZ (file .edz) truc tiep trong EPLAN — khong can app ngoai.
 
-TINH NANG (ribbon "Tool Oumijia" — 2 nut):
+TINH NANG (ribbon "Tool Oumijia" — 3 nut):
   - "Nhap EDZ..."  : chon file/thu muc .edz -> NHAP HANG LOAT vao
                      Parts Database (API chinh thuc EPLAN; 3 che do:
                      chi them moi / chi cap nhat / cap nhat + them moi;
@@ -13,6 +13,8 @@ TINH NANG (ribbon "Tool Oumijia" — 2 nut):
   - "Xuat EDZ..."  : chon part bang CAY NHOM kieu navigator EPLAN,
                      tick chon tung part/nhom, tim kiem nhanh;
                      xuat 1 file .edz hoac moi part 1 file.
+  - "Menu bar"     : bat/tat thanh menu chinh cua EPLAN
+                     (MfToggleMainMenuAction).
 
 --- CACH CAI (1 buoc) ---
 1. Dam bao EPLAN da TAT (khong bat buoc, nhung nen tat).

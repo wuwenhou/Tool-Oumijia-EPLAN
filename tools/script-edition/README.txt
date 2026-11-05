@@ -6,10 +6,11 @@ Ban SCRIPT cua Tool Oumijia — dung cho may KHONG co EPLAN API license
 (va/hoac EPLAN ban moi chan add-in chua ky). Chay bang EPLAN Scripting
 nen khong can license, khong can cai .NET, khong can Administrator.
 
-TINH NANG: giong ban add-in (cung ribbon "Tool Oumijia"):
+TINH NANG: giong ban add-in (cung ribbon "Tool Oumijia" — 3 nut):
   - "Nhap EDZ..."  : batch nhieu goi .edz vao Parts Database
   - "Xuat EDZ..."  : chon part bang cay nhom (nhu navigator EPLAN)
                      hoac xuat theo loai ban ghi (nhu EPLAN)
+  - "Menu bar"     : bat/tat thanh menu chinh cua EPLAN
 
 --- CACH CAI (1 buoc) ---
 1. Chay:   Install-Script.bat

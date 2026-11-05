@@ -84,15 +84,6 @@ public class OumijiaRegister
                 DeleteAction(settings, "OumijiaExportEdz", 22);
                 DeleteAction(settings, "OumijiaSelfTest", 23);
                 DeleteAction(settings, "OumijiaDiagParts", 24);
-                DeleteAction(settings, "OumijiaEplanClassic", 25);
-                DeleteAction(settings, "OumijiaVeeExportConnections", 26);
-                DeleteAction(settings, "OumijiaVeeTableMaker", 27);
-                DeleteAction(settings, "OumijiaToggleMenuBar", 28);
-                DeleteAction(settings, "OumijiaToggleGridSnap", 29);
-                DeleteAction(settings, "OumijiaToggleObjectSnap", 30);
-                DeleteAction(settings, "OumijiaToggleGridVisibility", 31);
-                DeleteAction(settings, "OumijiaToggleCursorDesign", 32);
-                DeleteAction(settings, "OumijiaArrangeOnGrid", 33);
 
                 WriteAction(settings, "OumijiaImportEdz", 21,
                     "Oumijia.EplanAddIn.Actions.ImportEdzAction", dllPath, assemblyFullName, logPath);
@@ -102,24 +93,6 @@ public class OumijiaRegister
                     "Oumijia.EplanAddIn.Actions.SelfTestAction", dllPath, assemblyFullName, logPath);
                 WriteAction(settings, "OumijiaDiagParts", 24,
                     "Oumijia.EplanAddIn.Actions.DiagPartsAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaEplanClassic", 25,
-                    "Oumijia.EplanAddIn.Actions.EplanClassicAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaVeeExportConnections", 26,
-                    "Oumijia.EplanAddIn.Actions.VeeExportConnectionsAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaVeeTableMaker", 27,
-                    "Oumijia.EplanAddIn.Actions.VeeTableMakerAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaToggleMenuBar", 28,
-                    "Oumijia.EplanAddIn.Actions.ToggleMainMenuAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaToggleGridSnap", 29,
-                    "Oumijia.EplanAddIn.Actions.ToggleGridSnapAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaToggleObjectSnap", 30,
-                    "Oumijia.EplanAddIn.Actions.ToggleObjectSnapAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaToggleGridVisibility", 31,
-                    "Oumijia.EplanAddIn.Actions.ToggleGridVisibilityAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaToggleCursorDesign", 32,
-                    "Oumijia.EplanAddIn.Actions.ToggleCursorDesignAction", dllPath, assemblyFullName, logPath);
-                WriteAction(settings, "OumijiaArrangeOnGrid", 33,
-                    "Oumijia.EplanAddIn.Actions.ArrangeOnGridAction", dllPath, assemblyFullName, logPath);
 
                 // Đọc lại để tự xác nhận giá trị EPLAN sẽ dùng khi khởi động.
                 try
@@ -167,15 +140,6 @@ public class OumijiaRegister
                 DeleteAction(settings, "OumijiaExportEdz", 22);
                 DeleteAction(settings, "OumijiaSelfTest", 23);
                 DeleteAction(settings, "OumijiaDiagParts", 24);
-                DeleteAction(settings, "OumijiaEplanClassic", 25);
-                DeleteAction(settings, "OumijiaVeeExportConnections", 26);
-                DeleteAction(settings, "OumijiaVeeTableMaker", 27);
-                DeleteAction(settings, "OumijiaToggleMenuBar", 28);
-                DeleteAction(settings, "OumijiaToggleGridSnap", 29);
-                DeleteAction(settings, "OumijiaToggleObjectSnap", 30);
-                DeleteAction(settings, "OumijiaToggleGridVisibility", 31);
-                DeleteAction(settings, "OumijiaToggleCursorDesign", 32);
-                DeleteAction(settings, "OumijiaArrangeOnGrid", 33);
             }
             finally
             {

@@ -24,7 +24,7 @@ bằng add-in này*.
 - Tool **chỉ xử lý `.edz`** — EMA/EMP/EMS không còn trong phạm vi.
 - Kế hoạch xa hơn (EDZ writer, QElectroTech, AutoCAD) — xem `docs/ROADMAP.md`.
 
-## 2. Trạng thái hiện tại (v0.6.0)
+## 2. Trạng thái hiện tại (v0.6.2)
 
 ✅ **Chạy được & đã kiểm chứng:**
 - **Bản ADD-IN** (cho EPLAN ≤2023 / máy có API license): verified trên EPLAN Platform 2022.0.3 —
@@ -34,14 +34,14 @@ bằng add-in này*.
 - Fix **nhập EDZ** (field-mapping scheme) — `IMPORT SMOKE OK (scheme='Standardvorgabe EPLAN')`
 - Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
 - **Native checkbox** cho cây chọn part (v0.5.1) — tick hiển thị ổn định trên Windows TreeView
-- **Ribbon Classic** (v0.6.0): bốn nhóm **Quản lý EDZ | EPLAN Classic | VEE | GIRD**;
-  `EPLAN Classic` lọc/tìm kiếm lệnh menu cũ và chỉ chạy action đã có; VEE gọi add-in đã cài riêng;
-  `Menu bar` gọi action chính thức của EPLAN (`MfToggleMainMenuAction`)
-- **Installer thông minh** tự chọn bản phù hợp + gỡ cài 1 lệnh
+- **v0.6.2**: Tool quay về tối giản (`Nhập EDZ…` · `Xuất EDZ…` · `Menu bar`);
+  **2 add-in VIET EPLAN** (`VEE.EplTableMaker`, `VEE.ExportConnections`) được phép phân phối và
+  được smart installer tự copy/đăng ký/gỡ.
+- **Installer thông minh** tự chọn bản phù hợp + tự cài 2 add-in VEE + gỡ cài 1 lệnh
 
 ⚠️ **Cần làm:**
-- UAT v0.6.0: máy EPLAN 2026.0.3 (script + tab mới) và máy 2022 (add-in + EPLAN Classic)
-- Icon ribbon chuyên nghiệp; tiến trình lô lớn; EDZ writer
+- UAT v0.6.2: máy EPLAN 2026.0.3 (script + VIET EPLAN ELECTRIC tab) và máy 2022 (add-in + 2 VEE add-ins)
+- Icon ribbon; tiến trình lô lớn; EDZ writer
 
 ## 3. Bản đồ repo
 
@@ -53,12 +53,9 @@ src/Oumijia.EplanAddIn/           net48, x64 — ZERO dependency ngoài EPLAN AP
     ExportEdzAction.cs            "OumijiaExportEdz"  (22) — mở ExportEdzForm
     SelfTestAction.cs             "OumijiaSelfTest"   (23) — ghi SELFTEST OK vào addin.log
     DiagPartsAction.cs            "OumijiaDiagParts"  (24) — chẩn đoán headless DB + smoke export
-    ToolIntegrationActions.cs       (25–33) — EPLAN Classic / VEE / MenuBar / GIRD wrappers
   Ui/
     ImportEdzForm.cs              chọn file/thư mục + chế độ nhập + log
     ExportEdzForm.cs              dialog xuất: cây nhóm + tick native + tìm kiếm + xuất
-    EplanClassicForm.cs           danh sách lệnh menu cũ + tìm kiếm + kiểm tra action có sẵn
-    VeeIntegration.cs             kiểm tra/gọi VEE đã cài riêng (không phân phối DLL)
     PartsTreeModel.cs             PartEntry/PartInfo (đọc chuỗi hiển thị) + PartsTreeModel (dựng cây)
   AddinLog.cs / AddinCsvLog.cs    log %APPDATA%\Tool Oumijia\logs\
 tools/
@@ -70,7 +67,8 @@ tools/
     probe/                        script chẩn đoán (load test / đọc settings / dọn danh sách)
   install-addin/                  installer bản add-in (nguồn cho gói zip)
   install-all/                    installer THÔNG MINH (tự chọn bản) — entry point của zip
-  pack.ps1                        đóng gói zip 2 bản (addin\ + script\)
+  third-party/                    ⭐ 2 add-in VEE (tác giả cho phép) + OumijiaRegisterThirdParty.cs
+  pack.ps1                        đóng gói zip 2 bản + third-party
 docs/                             PLAN-v0.3.0, BUILD, INSTALL, USER-GUIDE-vi, ARCHITECTURE, ROADMAP, RELEASING
 ```
 
@@ -173,9 +171,9 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 | **R17** | ⭐ **Script Edition & license**: EPLAN mới (2024+/2026) **vô hiệu hóa DLL add-in chưa ký** khi máy không có API license ("The assembly … is deactivated") — không phải lỗi code. Bản SCRIPT (EPLAN Scripting) **không cần license**. Compiler script của EPLAN reference **theo phiên bản**: 2022.0.3 thiếu `Eplan.EplApi.MasterData` (script dùng MasterData không compile được → dùng add-in); 2026.0.3 có (đã kiểm chứng bởi người dùng). Coverage chuẩn: EPLAN cũ → add-in; EPLAN mới + no license → script. |
 | **R18** | ⭐ **Đăng ký "script tự nạp"**: action `RegisterScript` của EPLAN 2022 chạy không lỗi nhưng **KHÔNG ghi gì** (bẫy!). Cách đã kiểm chứng: script chạy trong EPLAN tự ghi danh sách indexed `STATION.EplanEplApiScriptGui.Scripts` (`SetStringSetting(path, value, index)`; gỡ = đọc lại toàn bộ + `RemoveAllIndexedSetting` + ghi lại các entry giữ). EPLAN **tự thử nạp** các script trong danh sách ở mỗi lần khởi động (xác nhận qua log). Script phải compile được bằng **compiler của EPLAN** (khác csc ngoài!) — lỗi chi tiết nằm trong **`C:\Users\Public\EPLAN\Electric P8\EplLog.eldb`** (mã S046006/S046007 + chi tiết CSxxxx). Attributes `[DeclareRegister]`/`[DeclareUnregister]`/`[DeclareEventHandler]` đều có trên 2022. |
 
-| **R19** | ⭐ **Tool không phân phối/sao chép add-in bên thứ ba.** VIET EPLAN & ELECTRIC tools hoạt động độc lập; Tool Oumijia chỉ tìm action (`ActionManager.FindAction`) và gọi nếu người dùng đã tự cài. Nếu thiếu, hiển thị hướng dẫn tải chính thức. Không bundle DLL/tệp nguồn/logo; không dùng tên tác giả để tạo giả lập. |
-| **R20** | ⭐ **Command mapping không được đoán:** mọi lệnh phải lấy từ cấu hình EPLAN/hành động đã có + log/test. EPLAN Classic khóa lệnh chưa xác minh; không chạy action chưa biết rõ có tham số gì. GIRD/nút menu gọi các action `XGed…`/`Mf…` đã ghi nhận, vẫn luôn kiểm tra availability. |
-| **R21** | ⭐ **Đồng bộ hai editions:** mọi thay đổi UI/logic chung phải áp dụng cho cả add-in C# 7+ và Script C#5. Khi sửa `src/Oumijia.EplanAddIn/Ui/EplanClassicForm.cs` hoặc `VeeIntegration.cs`, phải đồng bộ vùng `//#region Oumijia.EdzScript shared UI` trong `tools/script-edition/ToolOumijiaScript.cs`; re-run csc C#5 sau đó. |
+| **R19** | ⭐ **Third-party add-ins are shipped only with the author's permission.** VIET EPLAN & ELECTRIC DLLs are distributed unmodified with THIRD-PARTY-NOTICES + hashes; never alter/recompile/patch them or claim ownership. Registration is done by our `OumijiaRegisterThirdParty.cs`; uninstall must remove their module/action settings too. |
+| **R20** | ⭐ **Command mapping must be verified against EPLAN configuration** (e.g. `MfToggleMainMenuAction`, GIRD actions, or `regPlatform.xml` action lists) and checked with `ActionManager`/headless e2e tests. Do not add buttons for undocumented or guessed IDs. |
+| **R21** | ⭐ **Đồng bộ hai editions:** mọi thay đổi UI/logic chung phải áp dụng cho cả add-in C# 7+ và Script C#5. Khi sửa giao diện/shared actions, giữ `tools/script-edition/ToolOumijiaScript.cs` tương ứng và luôn chạy csc C#5 sau cùng. |
 
 ## 7. Quy ước kỹ thuật
 
@@ -203,16 +201,15 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 
 ## 9. Việc tiếp theo (ưu tiên gợi ý)
 
-**P1 — UAT v0.6.0 với người dùng:**
-- Máy **EPLAN 2026.0.3** (không API license): chạy `Install-Tool-Oumijia.bat` → kiểm tra ribbon
-  có bốn nhóm, gọi **EPLAN Classic…**, thử **Menu bar** (`MfToggleMainMenuAction`) và VEE nếu đã cài;
-  thử nhập/xuất EDZ.
-- Máy **2022**: installer chọn bản add-in; kiểm tra các action EPLAN Classic và GIRD hợp lệ;
-  thử các lệnh vị trí chưa xuất hiện trong 12 nhóm — nếu chưa có, vẫn bị khóa.
+**P1 — UAT v0.6.2 với người dùng:**
+- Máy **EPLAN 2026.0.3** (không API license): chạy `Install-Tool-Oumijia.bat` → kiểm tra:
+  ribbon Tool gồm 3 nút (Nhập/Xuất/Menu bar), Việt EPLAN tab có VEE actions, nhập/xuất EDZ OK.
+- Máy **2022**: installer chọn bản add-in; kiểm tra hai add-in VEE được đăng ký và gọi được;
+  Menu bar bật/tắt từ nút; nhập/xuất EDZ OK.
 
 **P2 — chất lượng & usability:**
-- Icon chuyên nghiệp cho các nút ribbon; bôi màu nhóm; tiến trình cho lô lớn;
-  chọn ngôn ngữ/localization cho EPLAN Classic.
+- Icon chuyên nghiệp cho các nút ribbon; thêm dòng/tooltip và kiểm tra DPI ở nhiều mức;
+- bổ sung trạng thái/đăng ký cho 2 add-in VEE (ví dụ nút kiểm tra hoặc bài viết hướng dẫn).
 
 **P3 — mở rộng (xem docs/ROADMAP.md):**
 - EDZ writer/editor; nghiên cứu tab "Parts Management Extension".
@@ -220,7 +217,7 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 ## 10. Phát hành
 
 Xem `docs/RELEASING.md`. Tóm tắt: bump version csproj + CHANGELOG → build add-in + csc C#5 script →
-`tools/pack.ps1 -Version X.Y.Z` (zip 2 editions) → `git tag vX.Y.Z` → push →
+`tools/pack.ps1 -Version X.Y.Z` (zip 2 editions + third-party theo license) → `git tag vX.Y.Z` → push →
 `gh release create vX.Y.Z <zip> --notes-file docs/releases/vX.Y.Z.md` → dán SHA-256 vào notes.
 
 ## 11. Tham chiếu kỹ thuật chính

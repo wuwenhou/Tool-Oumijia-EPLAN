@@ -15,9 +15,6 @@ namespace Oumijia.EplanAddIn
     {
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
-        private const string ClassicCommandGroupName = "EPLAN Classic";
-        private const string VeeCommandGroupName = "VEE";
-        private const string GridCommandGroupName = "GIRD";
 
         public bool OnRegister(ref bool bLoadOnStart)
         {
@@ -48,24 +45,12 @@ namespace Oumijia.EplanAddIn
                 var tab = ribbon.GetTab(RibbonTabName);
                 if (tab == null) tab = ribbon.AddTab(RibbonTabName);
 
-                var group = GetOrAddCommandGroup(tab, CommandGroupName);
+                var group = tab.GetCommandGroup(CommandGroupName);
+                if (group == null) group = tab.AddCommandGroup(CommandGroupName);
+
                 EnsureCommand(group, "Nhập EDZ…", "OumijiaImportEdz");
                 EnsureCommand(group, "Xuất EDZ…", "OumijiaExportEdz");
-
-                var classicGroup = GetOrAddCommandGroup(tab, ClassicCommandGroupName);
-                EnsureCommand(classicGroup, "EPLAN Classic…", "OumijiaEplanClassic");
-
-                var veeGroup = GetOrAddCommandGroup(tab, VeeCommandGroupName);
-                EnsureCommand(veeGroup, "VEE Export connections…", "OumijiaVeeExportConnections");
-                EnsureCommand(veeGroup, "VEE Table Maker…", "OumijiaVeeTableMaker");
-
-                var gridGroup = GetOrAddCommandGroup(tab, GridCommandGroupName);
-                EnsureCommand(gridGroup, "Menu bar", "OumijiaToggleMenuBar");
-                EnsureCommand(gridGroup, "Grid snap", "OumijiaToggleGridSnap");
-                EnsureCommand(gridGroup, "Object snap", "OumijiaToggleObjectSnap");
-                EnsureCommand(gridGroup, "Grid view", "OumijiaToggleGridVisibility");
-                EnsureCommand(gridGroup, "Design mode", "OumijiaToggleCursorDesign");
-                EnsureCommand(gridGroup, "Align on grid", "OumijiaArrangeOnGrid");
+                EnsureCommand(group, "Menu bar", "MfToggleMainMenuAction");
 
                 AddinLog.Write("OnInitGui: ribbon ready");
                 return true;
@@ -81,12 +66,6 @@ namespace Oumijia.EplanAddIn
         {
             AddinLog.Write("OnExit");
             return true;
-        }
-
-        private static RibbonCommandGroup GetOrAddCommandGroup(RibbonTab tab, string name)
-        {
-            var group = tab.GetCommandGroup(name);
-            return group ?? tab.AddCommandGroup(name);
         }
 
         private static void EnsureCommand(RibbonCommandGroup group, string buttonText, string actionName)

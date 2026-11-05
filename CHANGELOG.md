@@ -8,7 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Icon cho các nút ribbon; tiến trình cho lô lớn; EDZ writer
+- Icon ribbon; tiến trình cho lô lớn; EDZ writer
+
+## [0.6.2] - 2026-11-05 — "Bộ gọn + add-ins VEE sẵn sàng dùng"
+
+### Changed
+- **Giao diện quay về tối giản** theo phản hồi v0.6.x:
+  - `Nhập EDZ…`
+  - `Xuất EDZ…`
+  - `Menu bar`
+  - form `EPLAN Classic` và các nút VEE/GIRD bên ngoài đã được gỡ khỏi UI.
+- Nút **Menu bar** gọi action chính thức `MfToggleMainMenuAction` của EPLAN.
+
+### Added
+- 🆕 Gói phát hành kèm hai add-in VIET EPLAN & ELECTRIC (được tác giả cho phép phân phối):
+  - `VEE.EplTableMaker.dll` v1.2.0.0 — action `VEECreateEplanTable`
+  - `VEE.ExportConnections.dll` v1.0.0.0 — action `VE_E_ExportConnections`
+- 🆕 Installer v0.6.2 tự:
+  - copy 2 DLL vào `%APPDATA%\Tool Oumijia\ThirdParty\`,
+  - đăng ký module + action trong EPLAN,
+  - gỡ đăng ký khi Uninstall.
+- 🆕 `third-party\THIRD-PARTY-NOTICES.txt` nêu rõ tác giả, điều khoản phân phối và quyền sở hữu;
+  các DLL không bị sửa/không chứa mã nguồn Tool Oumijia.
+- 🆕 `third-party\README.txt` hướng dẫn cài chung.
 
 ## [0.6.0] - 2026-11-05 — "Classic & Ecosystem"
 
@@ -180,7 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.2
 [0.6.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.0
 [0.5.1]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.1
 [0.5.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.0

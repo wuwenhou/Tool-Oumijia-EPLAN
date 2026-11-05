@@ -6,6 +6,11 @@ $ErrorActionPreference = "Stop"
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+$thirdPartyDir = Join-Path $here "third-party"
+if (-not (Test-Path (Join-Path $thirdPartyDir "OumijiaRegisterThirdParty.cs"))) {
+    $thirdPartyDir = Join-Path $here "..\..\third-party"
+}
+
 $addinDir = Join-Path $here "addin"
 if (-not (Test-Path (Join-Path $addinDir "OumijiaRegister.cs"))) {
     $addinDir = Join-Path $here "..\install-addin"
@@ -17,10 +22,13 @@ if (-not (Test-Path (Join-Path $scriptDir "OumijiaRegisterScript.cs"))) {
 
 $appData = Join-Path $env:APPDATA "Tool Oumijia"
 $registerLog = Join-Path $appData "logs\register-script.log"
+$thirdPartyLog = Join-Path $appData "logs\register-third-party.log"
 $addinHome = Join-Path $appData "AddIn"
 $scriptHome = Join-Path $appData "Script"
+$thirdPartyHome = Join-Path $appData "ThirdParty"
 $addinUnregisterFlag = Join-Path $appData "unregister.flag"
 $scriptUnregisterFlag = Join-Path $appData "script-unregister.flag"
+$thirdPartyUnregisterFlag = Join-Path $appData "third-party-unregister.flag"
 
 function Find-W3u {
     $roots = @(
@@ -52,10 +60,43 @@ Write-Host ""
 
 $w3u = Find-W3u
 
-# ------------------------------------------------------------------ 1) go add-in
+# ------------------------------------------------------------------ 1) go add-ins VEE
+$destThirdPartyRegister = Join-Path $thirdPartyHome "OumijiaRegisterThirdParty.cs"
+if (-not (Test-Path $destThirdPartyRegister)) { $destThirdPartyRegister = Join-Path $thirdPartyDir "OumijiaRegisterThirdParty.cs" }
+
+if ((Test-Path $destThirdPartyRegister) -and $w3u) {
+    Write-Host "[1/3] Go dang ky add-ins VEE..."
+    Set-Content -Path $thirdPartyUnregisterFlag -Value "unregister" -Encoding ASCII
+    $before3 = Get-LogLength $thirdPartyLog
+    Start-Process -FilePath $w3u -ArgumentList @(
+        '/Auto','/Quiet','/NoSplash','/NoLicenseDialog','/NoUserRightsDialog',
+        '/NoLoadWorkspace','ExecuteScript', ('/ScriptFile:"' + $destThirdPartyRegister + '"')
+    ) | Out-Null
+
+    $deadline3 = (Get-Date).AddSeconds(300)
+    while ((Get-Date) -lt $deadline3) {
+        if ((Test-Path $thirdPartyLog) -and ((Get-Item $thirdPartyLog).Length -gt $before3)) {
+            $content = Get-Content $thirdPartyLog -Raw -ErrorAction SilentlyContinue
+            if ($content.Substring($before3) -match 'unregistered VEE@EplTableMaker' -and
+                $content.Substring($before3) -match 'unregistered VE_E_ConnectionExport') {
+                break
+            }
+        }
+        Start-Sleep -Seconds 5
+    }
+} else {
+    Write-Host "[1/3] (khong thay bo third-party / EPLAN - bo qua)"
+}
+
+if (Test-Path $thirdPartyHome) {
+    Remove-Item $thirdPartyHome -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "[+] Da xoa thu muc third-party."
+}
+
+# ------------------------------------------------------------------ 2) go add-in
 $addinRegister = Join-Path $addinDir "OumijiaRegister.cs"
 if ((Test-Path $addinRegister) -and $w3u) {
-    Write-Host "[1/2] Go dang ky add-in..."
+    Write-Host "[2/3] Go dang ky add-in..."
     Set-Content -Path $addinUnregisterFlag -Value "unregister" -Encoding ASCII
     $before = Get-LogLength $registerLog
     Start-Process -FilePath $w3u -ArgumentList @(
@@ -76,7 +117,7 @@ if ((Test-Path $addinRegister) -and $w3u) {
         Write-Host "[+] Da xoa thu muc add-in."
     }
 } else {
-    Write-Host "[1/2] (khong thay bo add-in / EPLAN - bo qua)"
+    Write-Host "[2/3] (khong thay bo add-in / EPLAN - bo qua)"
 }
 
 # ------------------------------------------------------------------ 2) go script edition
@@ -84,7 +125,7 @@ $destRegister = Join-Path $scriptHome "OumijiaRegisterScript.cs"
 if (-not (Test-Path $destRegister)) { $destRegister = Join-Path $scriptDir "OumijiaRegisterScript.cs" }
 
 if ((Test-Path $destRegister) -and $w3u) {
-    Write-Host "[2/2] Go dang ky script..."
+    Write-Host "[3/3] Go dang ky script..."
     Set-Content -Path $scriptUnregisterFlag -Value "unregister" -Encoding ASCII
     $before2 = Get-LogLength $registerLog
     Start-Process -FilePath $w3u -ArgumentList @(
@@ -105,7 +146,7 @@ if ((Test-Path $destRegister) -and $w3u) {
         Write-Host "[+] Da xoa thu muc script."
     }
 } else {
-    Write-Host "[2/2] (khong thay bo script / EPLAN - bo qua)"
+    Write-Host "[3/3] (khong thay bo script / EPLAN - bo qua)"
 }
 
 Write-Host ""

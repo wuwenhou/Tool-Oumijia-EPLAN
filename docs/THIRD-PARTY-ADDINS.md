@@ -1,41 +1,39 @@
-# Third-party EPLAN add-ins — nguồn tham khảo, không phân phối lại
+# Third-party add-ins — chính sách đóng gói v0.6.2+
 
-Tool Oumijia **không đóng gói / không bán kèm / không sao chép** các add-in của tác giả khác.
-Tài liệu này chỉ liệt kê nguồn chính thức và cách gọi có điều kiện từ EPLAN.
+**Trạng thái hiện tại:** hai add-in VIET EPLAN & ELECTRIC được **phân phối cùng Tool Oumijia** theo quyền từ tác giả.
 
-Mọi tên sản phẩm, logo, tệp tin và quyền sở hữu thuộc về tác giả/hãng tương ứng.
+Tool Oumijia **không sửa/không biên dịch lại/không sao chép mã nguồn** các add-in này.
+Các file được copy nguyên bản và đăng ký qua registry `STATION.EplanEplApiModule` của EPLAN.
 
-## Hiện đã đăng ký vào Tool Oumijia
+## Được đóng gói và tự đăng ký
 
-| Add-in | Tác giả / nguồn | Tool sẽ làm gì |
-|---|---|---|
-| **VEE Export connections data** | VIET EPLAN & ELECTRIC; video: <https://www.youtube.com/watch?v=a8u1O2i7Wxs>; link tác giả: `https://t.me/EPLAN4UCHAT/13646` | Tìm action `VE_E_ExportConnections`. Nếu có, nút gọi nó; nếu không, hiển thị thông báo chưa cài và mở link của tác giả. Không phân phối DLL. |
-| **VEE Table Maker** | VIET EPLAN & ELECTRIC; video: <https://www.youtube.com/watch?v=ACp_sD4vdAw>; link tác giả: `https://t.me/EPLAN4U/12788` | Tìm action `VEECreateEplanTable`. Nếu có, nút gọi nó; nếu không, hiển thị thông báo chưa cài và mở link của tác giả. Không phân phối DLL. |
-| **Show Menu Bar** | VIET EPLAN & ELECTRIC; video: <https://www.youtube.com/watch?v=SXERO8SbehA>; link tác giả: `https://t.me/EPLAN4U/12797` | Tool **không phân phối và không tự cài**. Nút **Menu bar** trong Tool gọi action EPLAN chính thức `MfToggleMainMenuAction`; add-in của tác giả không bắt buộc. |
+| Add-in | File | Action | Module type |
+|---|---|---|---|
+| **VEE Table Maker** | `VEE.EplTableMaker.dll` (v1.2.0.0) | `VEECreateEplanTable` | `VEE.EplTableMaker.AddInModule` |
+| **VEE Export Connections** | `VEE.ExportConnections.dll` (v1.0.0.0) | `VE_E_ExportConnections` | `VE_E_ConnectionExport.AddInModule` |
 
-## Chưa phát hành / không có đủ căn cứ để tích hợp
+Thông tin tác giả: `third-party/THIRD-PARTY-NOTICES.txt`.
 
-| Add-in | Tình trạng | Quyết định |
-|---|---|---|
-| **Auto Update Report, Export PDF & Backup in One Click** | Theo mô tả video `snyfriYe9KM`, công cụ đang hoàn thiện và sẽ phát hành sau | Không nút/không link gọi chính thức cho đến khi tác giả phát hành |
-| **VEE EDZ Killer** | Add-in thu thập/chuẩn hóa dữ liệu Part Data; chưa có link tải công khai trong mô tả video `d7DVz9nddeA` | Không đưa vào release cho đến khi có nguồn chính thức |
-| **VEE Tank Game 1** | Game giải trí, không phải công cụ kỹ thuật | Ngoài phạm vi Tool Oumijia |
+## Cách cài
 
-## EPLAN Data Portal và nguồn .edz chính thức
+1. Giải nén release zip.
+2. Chạy **`Install-Tool-Oumijia.bat`**.
+3. Installer copy 2 DLL tới `%APPDATA%\Tool Oumijia\ThirdParty\` và đăng ký module/action.
+4. Mở lại EPLAN.
 
-Tool Oumijia chỉ import/export file người dùng đã có quyền sử dụng.
+## Cách gỡ
 
-- EPLAN Data Portal: `https://dataportal.eplan.com/`
-- Các nguồn .edz của hãng: Phoenix Contact, Delta, Omron, Siemens, Eaton, Lenze, Weidmüller, ifm, WAGO…
-- Không bypass đăng nhập, license, điều khoản sử dụng hoặc quyền truy cập của hãng.
-- Không commit/redistribute .edz của hãng vào repository này.
+Chạy **`Uninstall-Tool-Oumijia.bat`** — gỡ Tool và cả 2 add-in VEE.
 
-## Điều kiện để thêm add-in bên ngoài vào release
+## Điều chắc chắn
 
-Chỉ xem xét khi **tất cả** các điều sau được thỏa mãn:
+- **Không** vượt license hoặc bypass registration.
+- **Không** dùng 2 DLL để xây dựng bản clone độc lập.
+- **Không** cam kết chúng chạy trên mọi build EPLAN/2026; xem log
+  `%APPDATA%\Tool Oumijia\logs\register-third-party.log` nếu thất bại.
+- **Không** tự động cập nhật 2 add-in theo bản mới; chỉ cài bản kèm theo release của Tool.
 
-1. Tác giả cung cấp license cho việc phân phối/đi kèm, hoặc
-2. Có thỏa thuận hợp tác bằng văn bản, hoặc
-3. Tool chỉ gọi add-in độc lập đã được cài đặt bởi người dùng và không chứa/copy mã nguồn/tài nguyên của add-in đó.
+## License
 
-Nếu không đủ điều kiện: chỉ cập nhật tài liệu hướng dẫn, **không** nhúng Binary/DLL/tài nguyên hay icon của add-in bên ngoài vào gói release.
+Tác giả đã cho phép mang chúng vào release công khai cho người dùng.
+Nếu quyền này thay đổi, các bản release sau sẽ cần điều chỉnh lại hoặc gỡ chúng khỏi gói.

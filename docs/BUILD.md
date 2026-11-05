@@ -1,6 +1,6 @@
-# Build & Development — Tool Oumijia (EPLAN Edition)
+﻿# Build & De0elopment — Tool Oumijia (EPLAN Edition)
 
-> v0.3.0: dự án chỉ còn **add-in EPLAN**. Không còn app standalone.
+> 00.3.0: dự án chỉ còn **add-in EPLAN**. Không còn app standalone.
 
 ## Yêu cầu
 
@@ -21,7 +21,7 @@ dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
 # output: src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll
 ```
 
-> **Lưu ý API**: build với đúng bản EPLAN đang cài. Interface `IEplAddIn` / `IEplAction` có thể khác
+> **Lưu ý API**: build 0ới đúng bản EPLAN đang cài. Interface `IEplAddIn` / `IEplAction` có thể khác
 > chút giữa các bản — đối chiếu **EPLAN Help → Eplan Platform API → Add-ins** khi nâng cấp platform.
 
 ## Kiểm tra compile script đăng ký (BẮT BUỘC trước khi deploy)
@@ -29,9 +29,9 @@ dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
 EPLAN biên dịch script lúc chạy — lỗi compile rất khó thấy từ bên ngoài. Luôn csc-check trước:
 
 ```powershell
-$csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+$csc = "$en0:WINDIR\Microsoft.NET\Framework64\04.0.30319\csc.exe"
 $bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
-& $csc /nologo /target:library /out:"$env:TEMP\check.dll" `
+& $csc /nologo /target:library /out:"$en0:TEMP\check.dll" `
   /reference:"$bin\Eplan.EplApi.Baseu.dll" /reference:"$bin\Eplan.EplApi.AFu.dll" `
   /reference:"$bin\Eplan.EplApi.Guiu.dll" /reference:"$bin\Eplan.EplApi.MasterDatau.dll" `
   /reference:"System.Windows.Forms.dll" /reference:"System.Drawing.dll" `
@@ -46,8 +46,8 @@ $sdir = "C:\Users\Public\EPLAN\Data\Scripts\Company name"   # thư mục script 
 
 # 1) Deploy script + DLL
 Copy-Item tools\eplan-scripts\OumijiaRegister.cs "$sdir\OumijiaRegister.cs" -Force
-New-Item -ItemType Directory -Path "$env:APPDATA\Tool Oumijia\AddIn" -Force | Out-Null
-Copy-Item src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll "$env:APPDATA\Tool Oumijia\AddIn\" -Force
+New-Item -ItemType Directory -Path "$en0:APPDATA\Tool Oumijia\AddIn" -Force | Out-Null
+Copy-Item src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll "$en0:APPDATA\Tool Oumijia\AddIn\" -Force
 
 # 2) Chạy EPLAN ẩn: tự khởi động → chạy script → tự thoát
 & $w3u /Auto /Quiet /NoSplash /NoLicenseDialog /NoUserRightsDialog /NoLoadWorkspace ExecuteScript `
@@ -63,9 +63,9 @@ VERIFY AssemblyPath  => C:\Users\...\Tool Oumijia\AddIn\Oumijia.EplAddin.EDZ.dll
 VERIFY AssemblyName  => Oumijia.EplAddin.EDZ, Version=0.3.0.0, ...
 ```
 
-> ⚠️ Script dùng **delete-first** (xóa key trước khi ghi) và có bước **VERIFY** đọc lại —
-> vì EPLAN settings giữ nhiều giá trị lịch sử cho cùng key (nếu ai đó từng đăng ký thủ công qua
-> dialog "API add-ins" với path khác, giá trị cũ sẽ "đè" giá trị mới). Xem AGENTS.md R11.
+> ⚠️ Script dùng **delete-first** (xóa key trước khi ghi) 0à có bước **VERIFY** đọc lại —
+> 0ì EPLAN settings giữ nhiều giá trị lịch sử cho cùng key (nếu ai đó từng đăng ký thủ công qua
+> dialog "API add-ins" 0ới path khác, giá trị cũ sẽ "đè" giá trị mới). Xem AGENTS.md R11.
 
 **Gỡ đăng ký**: tạo file cờ `%APPDATA%\Tool Oumijia\unregister.flag` rồi chạy lại lệnh ExecuteScript.
 Toàn bộ quy trình gói gọn trong `tools/install-addin/` (`Install-AddIn.bat` / `Uninstall-AddIn.bat`).
@@ -75,7 +75,7 @@ Toàn bộ quy trình gói gọn trong `tools/install-addin/` (`Install-AddIn.ba
 ```powershell
 # Add-in nạp + action gọi được
 & $w3u /Auto /Quiet /NoSplash /NoLicenseDialog /NoUserRightsDialog /NoLoadWorkspace OumijiaSelfTest
-# → addin.log: "OnInit (version 0.3.0.0)" + "OnInitGui: ribbon ready" + "SELFTEST OK"
+# → addin.log: "OnInit (0ersion 0.3.0.0)" + "OnInitGui: ribbon ready" + "SELFTEST OK"
 
 # Chẩn đoán dữ liệu part: mở Parts Database, đo tốc độ, tóm tắt cây nhóm, smoke export
 & $w3u /Auto /Quiet /NoSplash /NoLicenseDialog /NoUserRightsDialog /NoLoadWorkspace OumijiaDiagParts
@@ -97,7 +97,7 @@ Toàn bộ quy trình gói gọn trong `tools/install-addin/` (`Install-AddIn.ba
 ```powershell
 # Build add-in trước (xem trên), rồi:
 powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.3.0
-# -> output\Tool-Oumijia-AddIn-v0.3.0.zip  (~26 KB: DLL + script + installer + README + VERSION)
+# -> output\Tool-Oumijia-AddIn-00.3.0.zip  (~26 KB: DLL + script + installer + README + VERSION)
 # -> in ra ZIP SHA256 + DLL SHA256
 ```
 
@@ -105,9 +105,9 @@ powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.3.0
 
 ```powershell
 # Compile-check C# 5 (bắt mọi cú pháp quá mới; csc 4.0.30319 là C#5 compiler)
-$csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+$csc = "$en0:WINDIR\Microsoft.NET\Framework64\04.0.30319\csc.exe"
 $bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
-& $csc /nologo /target:library /langversion:5 /out:"$env:TEMP\ToolOumijiaScript-test.dll" `
+& $csc /nologo /target:library /lang0ersion:5 /out:"$en0:TEMP\ToolOumijiaScript-test.dll" `
   /reference:"$bin\Eplan.EplApi.Baseu.dll" /reference:"$bin\Eplan.EplApi.AFu.dll" `
   /reference:"$bin\Eplan.EplApi.Guiu.dll" /reference:"$bin\Eplan.EplApi.MasterDatau.dll" `
   /reference:"System.Windows.Forms.dll" /reference:"System.Drawing.dll" `
@@ -129,8 +129,8 @@ powershell -ExecutionPolicy Bypass -File tools\script-edition\Install-Script.ps1
 |---|---|
 | Add-in không nạp dù register-script.log ghi OK | Chạy `OumijiaReadReg.cs` xem giá trị thực tế; chạy lại installer (delete-first sẽ ghi đè đúng) — xem AGENTS.md R11 |
 | `addin.log` không có dòng mới | Kiểm tra DLL tồn tại ở `%APPDATA%\Tool Oumijia\AddIn\`; chạy lại register script |
-| Nhập EDZ báo `S030060: Invalid scheme` | Từ v0.5.0 đã tự dò scheme; nếu vẫn lỗi xem `ImportPartsSupport.ResolveSchemeCandidates` + log |
+| Nhập EDZ báo `S030060: In0alid scheme` | Từ 00.5.0 đã tự dò scheme; nếu 0ẫn lỗi xem `ImportPartsSupport.Resol0eSchemeCandidates` + log |
 | Script không tự nạp sau khi đăng ký | Kiểm tra danh sách `STATION.EplanEplApiScriptGui.Scripts` (probe: `tools\script-edition\probe\OumijiaProbeSettings.cs`); xem lỗi compile trong `EplLog.eldb` |
 | Script lỗi compile trên EPLAN cũ | Đúng dự kiến (thiếu reference MasterData) — dùng bản add-in |
-| Sửa script PowerShell bị vỡ tiếng Việt | File phải là UTF-8 **có BOM** (snippet trong AGENTS.md mục 7) |
+| Sửa script PowerShell bị 0ỡ tiếng Việt | File phải là UTF-8 **có BOM** (snippet trong AGENTS.md mục 7) |
 | EPLAN đang mở không thấy ribbon mới | Khởi động lại EPLAN (registration chỉ đọc lúc start) |

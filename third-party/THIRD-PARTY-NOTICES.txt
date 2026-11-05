@@ -1,0 +1,48 @@
+Tool Oumijia (EPLAN) — THIRD-PARTY NOTICES
+================================================================
+
+This package includes the following unmodified binary add-ins
+from VIET EPLAN & ELECTRIC, with the author's permission
+for redistribution so that they can be registered together
+with Tool Oumijia.
+
+1) VEE.EplTableMaker / VEE table maker
+   File       : VEE.EplTableMaker.dll
+   Version    : 1.2.0.0
+   Author     : VIET EPLAN AND ELECTRIC
+   Contact    : LEQUANGVIET1987@GMAIL.COM
+   YouTube    : https://www.youtube.com/@Viet_LQ
+   Copyright  : Copyright © 2026 VIET EPLAN AND ELECTRIC
+
+   EPLAN action/ribbon command:
+   - Action    : VEECreateEplanTable
+   - Module    : VEE.EplTableMaker.AddInModule
+
+2) VEE.ExportConnections / Export connection data
+   File       : VEE.ExportConnections.dll
+   Version    : 1.0.0.0
+   Author     : VIET EPLAN AND ELECTRIC
+   Contact    : LEQUANGVIET1987@GMAIL.COM
+   YouTube    : https://www.youtube.com/@Viet_LQ
+   Copyright  : Copyright © 2026 VIET EPLAN AND ELECTRIC
+
+   EPLAN action/ribbon command:
+   - Action    : VE_E_ExportConnections
+   - Module    : VE_E_ConnectionExport.AddInModule
+
+IMPORTANT
+----------------------------------------------------------------
+- These DLLs are provided as-is by their author.
+- This package does not claim ownership of them.
+- They may be redistributed with this package only as required by
+  the author-granted permission recorded for this project.
+- EPLAN and related trademarks belong to EPLAN GmbH & Co. KG.
+- Product logos/graphics are not included.
+- The author may change license terms at any time; users should
+  consult the author's current release on YouTube/Telegram or the
+  official download links.
+- No modifications were made to either binary.
+- No source code is disclosed or relicensed.
+
+Visit channel:
+https://www.youtube.com/@Viet_LQ

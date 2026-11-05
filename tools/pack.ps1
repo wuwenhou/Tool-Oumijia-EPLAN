@@ -1,20 +1,21 @@
-﻿# Builds the Tool Oumijia release zip (both editions):
+﻿# Packs the Tool Oumijia release zip:
 #   output\Tool-Oumijia-v<Version>.zip
 #
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.5.0
+#   powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.2
 #
 # Noi dung zip (2 editions + installer thong minh):
 #   README.txt + VERSION.txt
-#   Install-Tool-Oumijia.bat/.ps1 + Uninstall-Tool-Oumijia.bat/.ps1   (tu chon ban)
-#   addin\  : Oumijia.EplAddin.EDZ.dll + OumijiaRegister.cs + Install/Uninstall + README
-#   script\ : ToolOumijiaScript.cs + OumijiaRegisterScript.cs + Install/Uninstall + README
+#   Install-Tool-Oumijia.bat/.ps1 + Uninstall-Tool-Oumijia.bat/.ps1
+#   addin\        : Oumijia.EplAddin.EDZ.dll + OumijiaRegister.cs + Install/Uninstall + README
+#   script\       : ToolOumijiaScript.cs + OumijiaRegisterScript.cs + Install/Uninstall + README
+#   third-party\  : VEE.EplTableMaker.dll + VEE.ExportConnections.dll + metadata + notice
 #
 # Yeu cau: add-in da duoc build (src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll).
 
 [CmdletBinding()]
 param(
-    [string]$Version = "0.6.0"
+    [string]$Version = "0.6.2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,6 +51,23 @@ foreach ($f in @("ToolOumijiaScript.cs", "OumijiaRegisterScript.cs",
     Copy-Item (Join-Path $root "tools\script-edition\$f") $scriptStage -Force
 }
 
+# --- third-party\ ---
+$thirdPartyStage = Join-Path $stageDir "third-party"
+New-Item -ItemType Directory -Path $thirdPartyStage -Force | Out-Null
+foreach ($folder in @("VEE.EplTableMaker", "VEE.ExportConnections")) {
+    $source = Join-Path $root "third-party\$folder"
+    if (-not (Test-Path $source)) {
+        throw "Thieu bo add-in ben thu ba: $source"
+    }
+    $destination = Join-Path $thirdPartyStage $folder
+    New-Item -ItemType Directory -Path $destination -Force | Out-Null
+    Copy-Item (Join-Path $source "*.dll") $destination -Force
+}
+foreach ($file in @("THIRD-PARTY-NOTICES.txt", "README.txt")) {
+    Copy-Item (Join-Path $root "third-party\$file") $thirdPartyStage -Force
+}
+Copy-Item (Join-Path $root "tools\third-party\OumijiaRegisterThirdParty.cs") $thirdPartyStage -Force
+
 # --- root: installer thong minh + README ---
 foreach ($f in @("Install-Tool-Oumijia.ps1", "Install-Tool-Oumijia.bat",
                  "Uninstall-Tool-Oumijia.ps1", "Uninstall-Tool-Oumijia.bat", "README.txt")) {
@@ -61,6 +79,9 @@ $stageDll = Join-Path $addinStage "Oumijia.EplAddin.EDZ.dll"
 $dllHash = (Get-FileHash $stageDll -Algorithm SHA256).Hash
 $dllVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageDll).FileVersion
 $scriptHash = (Get-FileHash (Join-Path $scriptStage "ToolOumijiaScript.cs") -Algorithm SHA256).Hash
+$tableDllHash = (Get-FileHash (Join-Path $thirdPartyStage "VEE.EplTableMaker\VEE.EplTableMaker.dll") -Algorithm SHA256).Hash
+$exportDllHash = (Get-FileHash (Join-Path $thirdPartyStage "VEE.ExportConnections\VEE.ExportConnections.dll") -Algorithm SHA256).Hash
+$thirdPartyRegisterHash = (Get-FileHash (Join-Path $thirdPartyStage "OumijiaRegisterThirdParty.cs") -Algorithm SHA256).Hash
 @(
     "Tool Oumijia (EPLAN Edition) v$Version"
     "Build date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
@@ -71,6 +92,15 @@ $scriptHash = (Get-FileHash (Join-Path $scriptStage "ToolOumijiaScript.cs") -Alg
     ""
     "ToolOumijiaScript.cs SHA256:"
     $scriptHash
+    ""
+    "VEE.EplTableMaker.dll SHA256:"
+    $tableDllHash
+    ""
+    "VEE.ExportConnections.dll SHA256:"
+    $exportDllHash
+    ""
+    "OumijiaRegisterThirdParty.cs SHA256:"
+    $thirdPartyRegisterHash
 ) | Set-Content -Path (Join-Path $stageDir "VERSION.txt") -Encoding UTF8
 
 # --- zip ---
@@ -86,3 +116,6 @@ Write-Host "[OK] Package    : $zipPath" -ForegroundColor Green
 Write-Host "[OK] ZIP SHA256 : $zipHash" -ForegroundColor Green
 Write-Host "[OK] DLL SHA256 : $dllHash" -ForegroundColor Green
 Write-Host "[OK] CS  SHA256 : $scriptHash" -ForegroundColor Green
+Write-Host "[OK] VEE Table  : $tableDllHash" -ForegroundColor Green
+Write-Host "[OK] VEE Export : $exportDllHash" -ForegroundColor Green
+Write-Host "[OK] TP Reg CS : $thirdPartyRegisterHash" -ForegroundColor Green

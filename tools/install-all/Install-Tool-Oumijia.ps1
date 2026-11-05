@@ -22,14 +22,21 @@ $scriptDir = Join-Path $here "script"
 if (-not (Test-Path (Join-Path $scriptDir "ToolOumijiaScript.cs"))) {
     $scriptDir = Join-Path $here "..\script-edition"
 }
+$thirdPartyDir = Join-Path $here "third-party"
+if (-not (Test-Path (Join-Path $thirdPartyDir "THIRD-PARTY-NOTICES.txt"))) {
+    $thirdPartyDir = Join-Path $here "..\..\third-party"
+}
 
 $appData = Join-Path $env:APPDATA "Tool Oumijia"
 $registerLog = Join-Path $appData "logs\register-script.log"
+$thirdPartyLog = Join-Path $appData "logs\register-third-party.log"
 $addinLog = Join-Path $appData "logs\addin.log"
 $addinHome = Join-Path $appData "AddIn"
 $scriptHome = Join-Path $appData "Script"
+$thirdPartyHome = Join-Path $appData "ThirdParty"
 $addinUnregisterFlag = Join-Path $appData "unregister.flag"
 $scriptUnregisterFlag = Join-Path $appData "script-unregister.flag"
+$thirdPartyUnregisterFlag = Join-Path $appData "third-party-unregister.flag"
 
 function Find-W3u {
     $roots = @(
@@ -72,6 +79,68 @@ function Get-LogLength {
     return 0
 }
 
+function Wait-ForThirdPartySuccess {
+    param([string]$File, [long]$Before, [int]$TimeoutSeconds)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if ((Test-Path $File) -and ((Get-Item $File).Length -gt $Before)) {
+            $content = Get-Content $File -Raw -ErrorAction SilentlyContinue
+            $fresh = $content.Substring($Before)
+            if ($fresh -match 'registered VEE@EplTableMaker' -and
+                $fresh -match 'registered VE_E_ConnectionExport') {
+                return $true
+            }
+        }
+        Start-Sleep -Seconds 5
+    }
+    return $false
+}
+
+function Install-ThirdPartyPlugins {
+    param([string]$W3u)
+
+    $tableDll = Join-Path $thirdPartyDir 'VEE.EplTableMaker\VEE.EplTableMaker.dll'
+    $exportDll = Join-Path $thirdPartyDir 'VEE.ExportConnections\VEE.ExportConnections.dll'
+    $registerScript = Join-Path $thirdPartyDir 'OumijiaRegisterThirdParty.cs'
+    $notice = Join-Path $thirdPartyDir 'THIRD-PARTY-NOTICES.txt'
+
+    if (-not (Test-Path $tableDll) -or -not (Test-Path $exportDll) -or
+        -not (Test-Path $registerScript) -or -not (Test-Path $notice)) {
+        Write-Host "[!] Khong tim thay day du bo add-in VEE trong goi - bo qua."
+        return $false
+    }
+
+    Write-Host "[*] Dang cai 2 add-in VEE (cho phep phan phoi boi tac gia)..."
+    $tableHome = Join-Path $thirdPartyHome 'VEE.EplTableMaker'
+    $exportHome = Join-Path $thirdPartyHome 'VEE.ExportConnections'
+    New-Item -ItemType Directory -Path $tableHome -Force | Out-Null
+    New-Item -ItemType Directory -Path $exportHome -Force | Out-Null
+
+    Copy-Item $tableDll (Join-Path $tableHome 'VEE.EplTableMaker.dll') -Force
+    Copy-Item $exportDll (Join-Path $exportHome 'VEE.ExportConnections.dll') -Force
+    Copy-Item $registerScript (Join-Path $thirdPartyHome 'OumijiaRegisterThirdParty.cs') -Force
+    Copy-Item $notice (Join-Path $thirdPartyHome 'THIRD-PARTY-NOTICES.txt') -Force
+
+    Remove-Item $thirdPartyUnregisterFlag -ErrorAction SilentlyContinue
+    $destRegister = Join-Path $thirdPartyHome 'OumijiaRegisterThirdParty.cs'
+    $before = Get-LogLength $thirdPartyLog
+
+    Start-Process -FilePath $W3u -ArgumentList @(
+        '/Auto','/Quiet','/NoSplash','/NoLicenseDialog','/NoUserRightsDialog',
+        '/NoLoadWorkspace','ExecuteScript', ('/ScriptFile:"' + $destRegister + '"')
+    ) | Out-Null
+
+    if (Wait-ForThirdPartySuccess -File $thirdPartyLog -Before $before -TimeoutSeconds 300) {
+        Write-Host "[+] Da dang ky VEE Table Maker va VEE Export Connections."
+        return $true
+    }
+
+    Write-Host ""
+    Write-Host "[!] Khong xac nhan duoc dang ky 2 add-in VEE."
+    Write-Host "    Kiem tra log: $thirdPartyLog"
+    return $false
+}
+
 Write-Host "=================================================="
 Write-Host "  TOOL OUMIJIA - CAI DAT (tu chon ban phu hop)"
 Write-Host "=================================================="
@@ -83,6 +152,9 @@ if (-not $w3u) {
     exit 1
 }
 Write-Host "[+] EPLAN: $w3u"
+Write-Host ""
+
+$thirdPartyOk = Install-ThirdPartyPlugins $w3u
 Write-Host ""
 
 # ------------------------------------------------------------------ BUOC 1: thu ban ADD-IN
@@ -108,7 +180,8 @@ if ((Test-Path $addinDll) -and (Test-Path $addinRegister)) {
         if ($addinWorks) {
             Write-Host ""
             Write-Host "[OK] BAN ADD-IN DA HOAT DONG!"
-            Write-Host "     Mo EPLAN lai -> ribbon 'Tool Oumijia' se xuat hien."
+            if ($thirdPartyOk) { Write-Host "[OK] Add-ins VEE da cai va dang ky." }
+            Write-Host "     Mo EPLAN lai -> ribbon 'Tool Oumijia' va 'VIET EPLAN ELECTRIC' se xuat hien."
             exit 0
         }
     }
@@ -163,7 +236,8 @@ $scriptWorks = Wait-ForFreshLogMatch -File $addinLog -Before $beforeScript -Patt
 Write-Host ""
 if ($scriptWorks) {
     Write-Host "[OK] BAN SCRIPT EDITION DA HOAT DONG!"
-    Write-Host "     Mo EPLAN lai -> ribbon 'Tool Oumijia' se xuat hien."
+    if ($thirdPartyOk) { Write-Host "[OK] Add-ins VEE da cai va dang ky." }
+    Write-Host "     Mo EPLAN lai -> ribbon 'Tool Oumijia' va 'VIET EPLAN ELECTRIC' se xuat hien."
 } else {
     Write-Host "[!] Da dang ky nhung chua xac nhan duoc script chay tren ban EPLAN nay."
     Write-Host "    Kiem tra log: $addinLog"
