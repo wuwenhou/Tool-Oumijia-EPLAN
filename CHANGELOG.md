@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Icon cho 2 nút ribbon; chọn ngôn ngữ hiển thị tên part (hiện dùng en_US)
-- Thanh tiến trình cho import/export lô lớn
-- EDZ writer: create/repack packages
-- Nghiên cứu tab "Parts Management Extension" (API không chính thức)
+- v0.6.0: redesigned Tool Oumijia ribbon, EPLAN Classic command center, optional VEE launcher
+- Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer
+
+## [0.5.1] - 2026-11-05 — "Native tick chọn part"
+
+### Fixed
+- **Ô tick trong dialog Xuất EDZ không hiện dấu ✓** trên các máy người dùng.
+  Tick tự vẽ bị TreeView Windows bỏ qua/cập nhật không ổn định; cây giờ dùng
+  **checkbox gốc của TreeView** (`CheckBoxes = true`), luôn hiển thị rõ.
+- Chọn/bỏ chọn theo nhóm vẫn áp dụng cho cả nhánh; dòng đã chọn in đậm.
+- Áp dụng cho cả add-in và Script Edition.
 
 ## [0.5.0] - 2026-11-04 — "Script Edition (cho máy không có API license)"
 
@@ -156,7 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.1
 [0.5.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.0
 [0.4.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.4.0
 [0.3.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.3.0

@@ -57,7 +57,7 @@ namespace Oumijia.EdzScript
     /// </summary>
     public class ToolOumijiaScript
     {
-        private const string ScriptVersion = "0.5.0-script.1";
+        private const string ScriptVersion = "0.5.1-script.1";
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
         private const string ImportActionName = "OumijiaScriptImportEdz";
@@ -943,13 +943,10 @@ namespace Oumijia.EdzScript
     /// </summary>
     internal sealed class ExportEdzForm : Form
     {
-        private const int ImageUnchecked = 0;
-        private const int ImageChecked = 1;
-        private const int ImageMixed = 2;
         private const string PartsDefaultFileName = "parts.edz";
 
-        private readonly ImageList _stateImages = CreateStateImages();
         private readonly Font _boldFont = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private bool _updatingChecks;
 
         // ----- hàng trên
         private readonly Label _dbLabel = new Label();
@@ -1069,9 +1066,9 @@ namespace Oumijia.EdzScript
             _tree.HideSelection = false;
             _tree.ShowLines = true;
             _tree.ShowRootLines = true;
-            _tree.ItemHeight = 20;
-            _tree.ImageList = _stateImages;
-            _tree.MouseDown += OnTreeMouseDown;
+            _tree.ItemHeight = 22;
+            _tree.CheckBoxes = true;
+            _tree.AfterCheck += OnTreeAfterCheck;
             _tree.AfterSelect += delegate(object s, TreeViewEventArgs e) { ShowDetails(e.Node); };
             EnableDoubleBuffering(_tree);
 
@@ -1302,56 +1299,10 @@ namespace Oumijia.EdzScript
         {
             if (disposing)
             {
-                _stateImages.Dispose();
                 _boldFont.Dispose();
                 _searchTimer.Dispose();
             }
             base.Dispose(disposing);
-        }
-
-        private static ImageList CreateStateImages()
-        {
-            ImageList list = new ImageList { ImageSize = new Size(16, 16), ColorDepth = ColorDepth.Depth32Bit };
-            list.Images.Add(DrawStateImage(0)); // unchecked
-            list.Images.Add(DrawStateImage(1)); // checked
-            list.Images.Add(DrawStateImage(2)); // mixed
-            return list;
-        }
-
-        private static Bitmap DrawStateImage(int kind)
-        {
-            Bitmap bitmap = new Bitmap(16, 16);
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.Transparent);
-                using (SolidBrush fill = new SolidBrush(Color.White))
-                using (Pen border = new Pen(Color.FromArgb(120, 120, 120)))
-                {
-                    g.FillRectangle(fill, 2, 2, 11, 11);
-                    g.DrawRectangle(border, 2, 2, 11, 11);
-                }
-
-                if (kind == 1)
-                {
-                    using (Pen pen = new Pen(Color.FromArgb(0, 120, 60), 2f))
-                    {
-                        g.DrawLines(pen, new Point[]
-                        {
-                            new Point(4, 8),
-                            new Point(7, 11),
-                            new Point(12, 5)
-                        });
-                    }
-                }
-                else if (kind == 2)
-                {
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(0, 120, 60)))
-                    {
-                        g.FillRectangle(brush, 4, 6, 7, 3);
-                    }
-                }
-            }
-            return bitmap;
         }
 
         private static void EnableDoubleBuffering(Control control)
@@ -1558,37 +1509,44 @@ namespace Oumijia.EdzScript
             return treeNode;
         }
 
-        /// <summary>Tính lại trạng thái (ảnh tick + in đậm) của một node — gọi theo thứ tự lá → gốc.</summary>
+        /// <summary>Đồng bộ checkbox và in đậm sau khi cấu hình/tạo cây.</summary>
         private void RefreshNodeState(TreeNode node)
+        {
+            _updatingChecks = true;
+            try
+            {
+                ApplyCheckedStateToSubtree(node);
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+        }
+
+        private void ApplyCheckedStateToSubtree(TreeNode node)
         {
             PartEntry entry = node.Tag as PartEntry;
             if (entry != null)
             {
-                bool isChecked = _checkedIds.Contains(entry.Part.AdoId);
-                node.ImageIndex = isChecked ? ImageChecked : ImageUnchecked;
-                node.NodeFont = isChecked ? _boldFont : null;
+                node.Checked = _checkedIds.Contains(entry.Part.AdoId);
+                node.NodeFont = node.Checked ? _boldFont : null;
                 return;
             }
 
-            int total = node.Nodes.Count;
             int checkedCount = 0;
             foreach (TreeNode child in node.Nodes)
             {
-                if (child.ImageIndex == ImageChecked) checkedCount++;
+                ApplyCheckedStateToSubtree(child);
+                if (child.Checked) checkedCount++;
             }
 
-            node.ImageIndex = checkedCount == 0
-                ? ImageUnchecked
-                : (checkedCount == total ? ImageChecked : ImageMixed);
+            // Windows checkbox không có Mixed; nhánh chỉ tick khi đủ toàn bộ con.
+            node.Checked = node.Nodes.Count > 0 && checkedCount == node.Nodes.Count;
             node.NodeFont = null;
         }
 
         private void RefreshTreeStatesDeep(TreeNode node)
         {
-            foreach (TreeNode child in node.Nodes)
-            {
-                RefreshTreeStatesDeep(child);
-            }
             RefreshNodeState(node);
         }
 
@@ -1597,12 +1555,41 @@ namespace Oumijia.EdzScript
             TreeNode parent = node.Parent;
             while (parent != null)
             {
-                RefreshNodeState(parent);
+                _updatingChecks = true;
+                try
+                {
+                    int checkedCount = 0;
+                    foreach (TreeNode child in parent.Nodes)
+                    {
+                        if (child.Checked) checkedCount++;
+                    }
+                    parent.Checked = parent.Nodes.Count > 0 && checkedCount == parent.Nodes.Count;
+                    parent.NodeFont = null;
+                }
+                finally
+                {
+                    _updatingChecks = false;
+                }
                 parent = parent.Parent;
             }
         }
 
         private void SetCheckedForSubtree(TreeNode node, bool value)
+        {
+            _updatingChecks = true;
+            try
+            {
+                ApplyCheckedValue(node, value);
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+
+            RefreshAncestors(node);
+        }
+
+        private void ApplyCheckedValue(TreeNode node, bool value)
         {
             PartEntry entry = node.Tag as PartEntry;
             if (entry != null)
@@ -1611,34 +1598,35 @@ namespace Oumijia.EdzScript
                 else _checkedIds.Remove(entry.Part.AdoId);
             }
 
+            node.Checked = value;
+            node.NodeFont = value && entry != null ? _boldFont : null;
+
             foreach (TreeNode child in node.Nodes)
             {
-                SetCheckedForSubtree(child, value);
+                ApplyCheckedValue(child, value);
             }
-
-            RefreshNodeState(node);
         }
 
-        private void ForceTreeRepaint()
+        private void OnTreeAfterCheck(object sender, TreeViewEventArgs e)
         {
-            // Windows TreeView có thể không vẽ lại ô tick khi đổi hình trạng thái.
-            _tree.Invalidate();
-            _tree.Update();
-        }
+            if (_updatingChecks) return;
 
-        private void OnTreeMouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left) return;
+            TreeNode node = e.Node;
+            bool isChecked = node.Checked;
 
-            TreeViewHitTestInfo hit = _tree.HitTest(e.Location);
-            if (hit.Node == null) return;
-
-            // Chỉ toggle khi bấm đúng vào ô vuông (ảnh trạng thái); bấm chữ chỉ chọn dòng.
-            if (hit.Location != TreeViewHitTestLocations.Image) return;
-
-            // Chế độ theo loại bản ghi không dùng tick trên cây.
+            // Ở chế độ theo loại bản ghi, cây không quyết định xuất — hoàn tác.
             if (_rbRecords.Checked)
             {
+                _updatingChecks = true;
+                try
+                {
+                    node.Checked = !isChecked;
+                }
+                finally
+                {
+                    _updatingChecks = false;
+                }
+
                 MessageBox.Show(this,
                     "Đang ở chế độ \"Theo loại bản ghi\" — tick trên cây không được dùng.\n" +
                     "Chuyển về \"Part đã chọn trên cây\" nếu muốn chọn từng part.",
@@ -1646,21 +1634,7 @@ namespace Oumijia.EdzScript
                 return;
             }
 
-            TreeNode node = hit.Node;
-            bool turnOn;
-            PartEntry entry = node.Tag as PartEntry;
-            if (entry != null)
-            {
-                turnOn = !_checkedIds.Contains(entry.Part.AdoId);
-            }
-            else
-            {
-                turnOn = node.ImageIndex != ImageChecked;
-            }
-
-            SetCheckedForSubtree(node, turnOn);
-            RefreshAncestors(node);
-            ForceTreeRepaint();
+            SetCheckedForSubtree(node, isChecked);
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
         }
@@ -1672,7 +1646,6 @@ namespace Oumijia.EdzScript
             {
                 SetCheckedForSubtree(top, true);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Đã chọn tất cả part đang hiển thị.");
@@ -1686,7 +1659,6 @@ namespace Oumijia.EdzScript
             {
                 RefreshTreeStatesDeep(top);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Đã bỏ chọn tất cả.");
@@ -1715,7 +1687,6 @@ namespace Oumijia.EdzScript
             {
                 RefreshTreeStatesDeep(top);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Lấy " + added + " part từ Parts Management (tổng đã chọn: " + _checkedIds.Count + ").");

@@ -28,13 +28,10 @@ namespace Oumijia.EplanAddIn.Ui
     /// </summary>
     internal sealed class ExportEdzForm : Form
     {
-        private const int ImageUnchecked = 0;
-        private const int ImageChecked = 1;
-        private const int ImageMixed = 2;
         private const string PartsDefaultFileName = "parts.edz";
 
-        private readonly ImageList _stateImages = CreateStateImages();
         private readonly Font _boldFont = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private bool _updatingChecks;
 
         // ----- hàng trên
         private readonly Label _dbLabel = new Label();
@@ -154,9 +151,9 @@ namespace Oumijia.EplanAddIn.Ui
             _tree.HideSelection = false;
             _tree.ShowLines = true;
             _tree.ShowRootLines = true;
-            _tree.ItemHeight = 20;
-            _tree.ImageList = _stateImages;
-            _tree.MouseDown += OnTreeMouseDown;
+            _tree.ItemHeight = 22;
+            _tree.CheckBoxes = true;
+            _tree.AfterCheck += OnTreeAfterCheck;
             _tree.AfterSelect += (s, e) => ShowDetails(e.Node);
             EnableDoubleBuffering(_tree);
 
@@ -389,56 +386,10 @@ namespace Oumijia.EplanAddIn.Ui
         {
             if (disposing)
             {
-                _stateImages.Dispose();
                 _boldFont.Dispose();
                 _searchTimer.Dispose();
             }
             base.Dispose(disposing);
-        }
-
-        private static ImageList CreateStateImages()
-        {
-            var list = new ImageList { ImageSize = new Size(16, 16), ColorDepth = ColorDepth.Depth32Bit };
-            list.Images.Add(DrawStateImage(0)); // unchecked
-            list.Images.Add(DrawStateImage(1)); // checked
-            list.Images.Add(DrawStateImage(2)); // mixed
-            return list;
-        }
-
-        private static Bitmap DrawStateImage(int kind)
-        {
-            var bitmap = new Bitmap(16, 16);
-            using (var g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.Transparent);
-                using (var fill = new SolidBrush(Color.White))
-                using (var border = new Pen(Color.FromArgb(120, 120, 120)))
-                {
-                    g.FillRectangle(fill, 2, 2, 11, 11);
-                    g.DrawRectangle(border, 2, 2, 11, 11);
-                }
-
-                if (kind == 1)
-                {
-                    using (var pen = new Pen(Color.FromArgb(0, 120, 60), 2f))
-                    {
-                        g.DrawLines(pen, new[]
-                        {
-                            new Point(4, 8),
-                            new Point(7, 11),
-                            new Point(12, 5)
-                        });
-                    }
-                }
-                else if (kind == 2)
-                {
-                    using (var brush = new SolidBrush(Color.FromArgb(0, 120, 60)))
-                    {
-                        g.FillRectangle(brush, 4, 6, 7, 3);
-                    }
-                }
-            }
-            return bitmap;
         }
 
         private static void EnableDoubleBuffering(Control control)
@@ -643,36 +594,43 @@ namespace Oumijia.EplanAddIn.Ui
             return treeNode;
         }
 
-        /// <summary>Tính lại trạng thái (ảnh tick + in đậm) của một node — gọi theo thứ tự lá → gốc.</summary>
+        /// <summary>Đồng bộ checkbox và in đậm sau khi cấu hình/tạo cây (không dùng AddReference thủ công).</summary>
         private void RefreshNodeState(TreeNode node)
+        {
+            _updatingChecks = true;
+            try
+            {
+                ApplyCheckedStateToSubtree(node);
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+        }
+
+        private void ApplyCheckedStateToSubtree(TreeNode node)
         {
             if (node.Tag is PartEntry entry)
             {
-                var isChecked = _checkedIds.Contains(entry.Part.AdoId);
-                node.ImageIndex = isChecked ? ImageChecked : ImageUnchecked;
-                node.NodeFont = isChecked ? _boldFont : null;
+                node.Checked = _checkedIds.Contains(entry.Part.AdoId);
+                node.NodeFont = node.Checked ? _boldFont : null;
                 return;
             }
 
-            var total = node.Nodes.Count;
-            var checkedCount = 0;
+            int checkedCount = 0;
             foreach (TreeNode child in node.Nodes)
             {
-                if (child.ImageIndex == ImageChecked) checkedCount++;
+                ApplyCheckedStateToSubtree(child);
+                if (child.Checked) checkedCount++;
             }
 
-            node.ImageIndex = checkedCount == 0
-                ? ImageUnchecked
-                : (checkedCount == total ? ImageChecked : ImageMixed);
+            // Windows không có checkbox ba trạng thái — nhánh chỉ tick khi đủ toàn bộ con.
+            node.Checked = node.Nodes.Count > 0 && checkedCount == node.Nodes.Count;
             node.NodeFont = null;
         }
 
         private void RefreshTreeStatesDeep(TreeNode node)
         {
-            foreach (TreeNode child in node.Nodes)
-            {
-                RefreshTreeStatesDeep(child);
-            }
             RefreshNodeState(node);
         }
 
@@ -681,12 +639,41 @@ namespace Oumijia.EplanAddIn.Ui
             var parent = node.Parent;
             while (parent != null)
             {
-                RefreshNodeState(parent);
+                _updatingChecks = true;
+                try
+                {
+                    var checkedCount = 0;
+                    foreach (TreeNode child in parent.Nodes)
+                    {
+                        if (child.Checked) checkedCount++;
+                    }
+                    parent.Checked = parent.Nodes.Count > 0 && checkedCount == parent.Nodes.Count;
+                    parent.NodeFont = null;
+                }
+                finally
+                {
+                    _updatingChecks = false;
+                }
                 parent = parent.Parent;
             }
         }
 
         private void SetCheckedForSubtree(TreeNode node, bool value)
+        {
+            _updatingChecks = true;
+            try
+            {
+                ApplyCheckedValue(node, value);
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+
+            RefreshAncestors(node);
+        }
+
+        private void ApplyCheckedValue(TreeNode node, bool value)
         {
             if (node.Tag is PartEntry entry)
             {
@@ -694,35 +681,35 @@ namespace Oumijia.EplanAddIn.Ui
                 else _checkedIds.Remove(entry.Part.AdoId);
             }
 
+            node.Checked = value;
+            node.NodeFont = value && node.Tag is PartEntry ? _boldFont : null;
+
             foreach (TreeNode child in node.Nodes)
             {
-                SetCheckedForSubtree(child, value);
+                ApplyCheckedValue(child, value);
             }
-
-            RefreshNodeState(node);
         }
 
-        private void ForceTreeRepaint()
+        private void OnTreeAfterCheck(object sender, TreeViewEventArgs e)
         {
-            // Windows TreeView có thể không vẽ lại ô tick khi đổi hình trạng thái —
-            // buộc vẽ lại để dấu ✓ hiện ngay.
-            _tree.Invalidate();
-            _tree.Update();
-        }
+            if (_updatingChecks) return;
 
-        private void OnTreeMouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left) return;
+            var node = e.Node;
+            var isChecked = node.Checked;
 
-            var hit = _tree.HitTest(e.Location);
-            if (hit.Node == null) return;
-
-            // Chỉ toggle khi bấm đúng vào ô vuông (ảnh trạng thái); bấm chữ chỉ chọn dòng.
-            if (hit.Location != TreeViewHitTestLocations.Image) return;
-
-            // Chế độ theo loại bản ghi không dùng tick trên cây.
+            // Ở chế độ theo loại bản ghi, cây không quyết định xuất — hoàn tác.
             if (_rbRecords.Checked)
             {
+                _updatingChecks = true;
+                try
+                {
+                    node.Checked = !isChecked;
+                }
+                finally
+                {
+                    _updatingChecks = false;
+                }
+
                 MessageBox.Show(this,
                     "Đang ở chế độ \"Theo loại bản ghi\" — tick trên cây không được dùng.\n" +
                     "Chuyển về \"Part đã chọn trên cây\" nếu muốn chọn từng part.",
@@ -730,20 +717,7 @@ namespace Oumijia.EplanAddIn.Ui
                 return;
             }
 
-            var node = hit.Node;
-            bool turnOn;
-            if (node.Tag is PartEntry entry)
-            {
-                turnOn = !_checkedIds.Contains(entry.Part.AdoId);
-            }
-            else
-            {
-                turnOn = node.ImageIndex != ImageChecked;
-            }
-
-            SetCheckedForSubtree(node, turnOn);
-            RefreshAncestors(node);
-            ForceTreeRepaint();
+            SetCheckedForSubtree(node, isChecked);
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
         }
@@ -755,7 +729,6 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 SetCheckedForSubtree(top, true);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Đã chọn tất cả part đang hiển thị.");
@@ -769,7 +742,6 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 RefreshTreeStatesDeep(top);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Đã bỏ chọn tất cả.");
@@ -798,7 +770,6 @@ namespace Oumijia.EplanAddIn.Ui
             {
                 RefreshTreeStatesDeep(top);
             }
-            ForceTreeRepaint();
             UpdateCount();
             ShowDetails(_tree.SelectedNode);
             Log("Lấy " + added + " part từ Parts Management (tổng đã chọn: " + _checkedIds.Count + ").");

@@ -1,4 +1,4 @@
-# Tool Oumijia — EPLAN Edition
+﻿# Tool Oumijia — EPLAN Edition
 
 **Add-in EPLAN: nhập/xuất gói dữ liệu linh kiện (`.edz`) trực tiếp trong EPLAN Electric P8 — batch import vào Parts Database, và export theo cây nhóm như navigator.**
 
@@ -22,7 +22,7 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 
 ---
 
-## Tính năng (v0.5.0)
+## Tính năng (v0.5.1)
 
 ### 📥 Nhập EDZ… (Import) — đơn giản
 - Chọn **nhiều file hoặc cả thư mục** `.edz` (quét cả thư mục con) → bấm **NHẬP**
@@ -55,7 +55,7 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 
 ## 🚀 Bắt đầu nhanh
 
-1. Tải **`Tool-Oumijia-v0.5.0.zip`** tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
+1. Tải **`Tool-Oumijia-v0.5.1.zip`** tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
 2. Giải nén ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`** (tự chọn bản phù hợp)
 3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
 
@@ -98,7 +98,7 @@ Tool-Oumijia-EPLAN/
 
 - **v0.3.0** ✅ — Add-in duy nhất: nhập/xuất EDZ với cây chọn part như EPLAN; bỏ app exe
 - **v0.4.0** ✅ — Panel chi tiết + xuất theo loại bản ghi (như EPLAN) + fix toàn bộ lỗi UAT
-- **v0.5.0** ✅ — **Script Edition** (không cần API license) + installer thông minh + fix scheme nhập & đích xuất
+- **v0.5.1** ✅ — **Script Edition** (không cần API license) + installer thông minh + fix scheme nhập & đích xuất
 - **v0.6** — Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer — xem [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ## ⚖️ Ghi chú pháp lý
