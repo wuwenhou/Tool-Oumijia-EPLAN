@@ -1,6 +1,6 @@
 # Releasing — Tool Oumijia (EPLAN Edition)
 
-Quy trình phát hành chuẩn (2 editions — v0.5.0+):
+Quy trình phát hành chuẩn (2 editions — v0.6.0+):
 
 ## 1. Chuẩn bị
 
@@ -64,7 +64,7 @@ gh release create vX.Y.Z "output\Tool-Oumijia-vX.Y.Z.zip" `
 
 | Thứ | Quy ước | Ví dụ |
 |---|---|---|
-| Tag | `v` + SemVer | `v0.5.0` |
-| Asset | `Tool-Oumijia-v<ver>.zip` (2 editions) | `Tool-Oumijia-v0.5.0.zip` |
-| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.5.0` |
+| Tag | `v` + SemVer | `v0.6.0` |
+| Asset | `Tool-Oumijia-v<ver>.zip` (2 editions) | `Tool-Oumijia-v0.6.0.zip` |
+| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.6.0` |
 | Commit phát hành | `release: vX.Y.Z` | |

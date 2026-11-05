@@ -8,8 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- v0.6.0: redesigned Tool Oumijia ribbon, EPLAN Classic command center, optional VEE launcher
-- Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer
+- Icon cho các nút ribbon; tiến trình cho lô lớn; EDZ writer
+
+## [0.6.0] - 2026-11-05 — "Classic & Ecosystem"
+
+### Added
+- 🆕 **EPLAN Classic**: cửa sổ tìm kiếm/danh sách lệnh cho 12 nhóm menu cũ
+  (Project, Page, Layout space, Edit, View, Insert, Project data, Find, Options, Utilities, Window, Help).
+  Chỉ các action đã có trong phiên EPLAN mới chạy; lệnh chưa xác thực được khóa và ghi rõ lý do.
+- 🆕 Ribbon Tool Oumijia được bố trí thành bốn nhóm:
+  **Quản lý EDZ | EPLAN Classic | VEE | GIRD**.
+- 🆕 **VEE launcher (phương án A)**: phát hiện/gọi action của **VEE Export connections** và
+  **VEE Table Maker** đã được người dùng tự cài; nếu chưa cài, hiện hướng dẫn tải chính thức của tác giả.
+  Tool **không bundle/redistribute DLL** của tác giả.
+- 🆕 Nút **Menu bar** gọi action chính thức của EPLAN `MfToggleMainMenuAction`
+  (bật/tắt thanh menu chính).
+- 🆕 Nhóm **GIRD**: Snap/Object snap/Grid visibility/Design mode/Align on grid
+  chỉ gọi các action đã được kiểm tra và có điều kiện EPLAN cho phép; action không có sẽ được báo/khóa.
+- 🆕 Tài liệu `docs/THIRD-PARTY-ADDINS.md` — nguồn, giới hạn license và cách tích hợp VIA cài đặt riêng của người dùng.
+- 🆕 Trang hướng dẫn sử dụng cho v0.6.0 (README/INSTALL/USER-GUIDE) cập nhật.
 
 ## [0.5.1] - 2026-11-05 — "Native tick chọn part"
 
@@ -163,7 +180,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.0
 [0.5.1]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.1
 [0.5.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.0
 [0.4.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.4.0

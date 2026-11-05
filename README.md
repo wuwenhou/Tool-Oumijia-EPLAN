@@ -22,7 +22,7 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 
 ---
 
-## Tính năng (v0.5.1)
+## Tính năng (v0.6.0)
 
 ### 📥 Nhập EDZ… (Import) — đơn giản
 - Chọn **nhiều file hoặc cả thư mục** `.edz` (quét cả thư mục con) → bấm **NHẬP**
@@ -47,6 +47,11 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 - Log CSV từng part / từng đợt xuất
 
 ### ⚙️ Khác
+- **Ribbon Tool Oumijia v0.6.0**: bốn nhóm **Quản lý EDZ | EPLAN Classic | VEE | GIRD**;
+  cửa sổ **EPLAN Classic** tìm/chia nhóm lệnh menu cũ và chỉ chạy các action đã có;
+  nút **Menu bar** gọi `MfToggleMainMenuAction` chính thức của EPLAN
+- **VEE launcher (tự cài riêng)**: gọi `VEE Export connections` / `VEE Table Maker` nếu đã cài;
+  nếu chưa cài sẽ mở hướng dẫn tải chính thức của tác giả. **Tool không phân phối DLL/tài nguyên bên thứ ba.**
 - **Cài đặt 1 click** với **installer thông minh** — `Install-Tool-Oumijia.bat` tự chọn bản
   add-in hay script phù hợp với máy; không cần Administrator, không đụng license EPLAN
 - Gỡ cài đặt 1 click (`Uninstall-Tool-Oumijia.bat`)
@@ -55,9 +60,11 @@ vô hiệu hóa DLL (thiếu license) thì tự chuyển sang cài bản script 
 
 ## 🚀 Bắt đầu nhanh
 
-1. Tải **`Tool-Oumijia-v0.5.1.zip`** tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
+1. Tải **`Tool-Oumijia-v0.6.0.zip`** tại [Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)
 2. Giải nén ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`** (tự chọn bản phù hợp)
-3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
+3. Mở EPLAN → ribbon **“Tool Oumijia”**: nhánh **Quản lý EDZ** với **Nhập EDZ… / Xuất EDZ…**;
+   **EPLAN Classic…** để tìm kiếm nhóm lệnh menu cũ; **VEE** để gọi/add-in hướng dẫn của tác giả;
+   **GIRD** cho grid/snap (nếu phiên EPLAN cho phép).
 
 > 💡 Khuyến nghị: thử nhập trên **database test** trước khi nhập vào database chính
 > (Parts Management → chọn/tạo database test).
@@ -71,8 +78,8 @@ Chi tiết: [docs/INSTALL.md](docs/INSTALL.md) · [docs/USER-GUIDE-vi.md](docs/U
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
   -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
 
-# Đóng gói zip phát hành (add-in only)
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.3.0
+# Đóng gói zip phát hành (2 editions)
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0
 ```
 
 Hướng dẫn đầy đủ (đăng ký add-in, test headless): [docs/BUILD.md](docs/BUILD.md).
@@ -83,8 +90,8 @@ Hướng dẫn đầy đủ (đăng ký add-in, test headless): [docs/BUILD.md](
 Tool-Oumijia-EPLAN/
 ├─ src/Oumijia.EplanAddIn/       # bản add-in (net48, x64)
 │  ├─ AddIn.cs                   # IEplAddIn — ribbon "Tool Oumijia"
-│  ├─ Actions/                   # Nhập/Xuất EDZ + SelfTest + DiagParts
-│  └─ Ui/                        # ImportEdzForm, ExportEdzForm (cây nhóm), PartsTreeModel
+│  ├─ Actions/                   # Nhập/Xuất EDZ, Classic, VEE/menu, SelfTest + DiagParts
+│  └─ Ui/                        # ImportEdzForm, ExportEdzForm, EplanClassicForm, VeeIntegration, PartsTreeModel
 ├─ tools/
 │  ├─ script-edition/            # bản SCRIPT (ToolOumijiaScript.cs, C#5) + installer + probe
 │  ├─ install-all/               # installer thông minh (tự chọn bản)
@@ -98,7 +105,7 @@ Tool-Oumijia-EPLAN/
 
 - **v0.3.0** ✅ — Add-in duy nhất: nhập/xuất EDZ với cây chọn part như EPLAN; bỏ app exe
 - **v0.4.0** ✅ — Panel chi tiết + xuất theo loại bản ghi (như EPLAN) + fix toàn bộ lỗi UAT
-- **v0.5.1** ✅ — **Script Edition** (không cần API license) + installer thông minh + fix scheme nhập & đích xuất
+- **v0.6.0** ✅ — **Script Edition** (không cần API license) + installer thông minh + fix scheme nhập & đích xuất
 - **v0.6** — Icon ribbon; chọn ngôn ngữ hiển thị part; tiến trình lô lớn; EDZ writer — xem [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ## ⚖️ Ghi chú pháp lý

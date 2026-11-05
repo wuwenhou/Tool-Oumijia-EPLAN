@@ -1,11 +1,11 @@
-﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.5.1
+﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.6.0
 
 > Gói phát hành chứa **2 phiên bản** (add-in & script) + **installer thông minh** tự chọn bản phù hợp.
 
 ## Cách cài (1 bước — khuyến nghị)
 
 1. Vào **[Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)**, tải
-   `Tool-Oumijia-v0.5.1.zip` (~100 KB)
+   `Tool-Oumijia-v0.6.0.zip` (~100 KB)
 2. **Giải nén** ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`**
    - Installer tự thử bản **add-in** trước (đăng ký + self-test headless)
    - Nếu EPLAN **vô hiệu hóa add-in** (máy không có API license trên EPLAN bản mới):
@@ -40,7 +40,7 @@
 Mỗi release kèm mã **SHA-256** của file ZIP. Đối chiếu nhanh:
 
 ```powershell
-Get-FileHash .\Tool-Oumijia-v0.5.1.zip -Algorithm SHA256
+Get-FileHash .\Tool-Oumijia-v0.6.0.zip -Algorithm SHA256
 ```
 
 (`VERSION.txt` trong gói ghi hash của DLL add-in và file script chính.)

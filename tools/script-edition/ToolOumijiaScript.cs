@@ -1,4 +1,4 @@
-//#################################################################################################################################################
+﻿//#################################################################################################################################################
 // Tool Oumijia — EPLAN Script Edition (v0.5.0)
 //#################################################################################################################################################
 // Nhập / Xuất gói dữ liệu linh kiện EPLAN (*.edz) trực tiếp trong EPLAN.
@@ -57,11 +57,23 @@ namespace Oumijia.EdzScript
     /// </summary>
     public class ToolOumijiaScript
     {
-        private const string ScriptVersion = "0.5.1-script.1";
+        private const string ScriptVersion = "0.6.0-script.1";
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
+        private const string ClassicCommandGroupName = "EPLAN Classic";
+        private const string VeeCommandGroupName = "VEE";
+        private const string GridCommandGroupName = "GIRD";
         private const string ImportActionName = "OumijiaScriptImportEdz";
         private const string ExportActionName = "OumijiaScriptExportEdz";
+        private const string ClassicActionName = "OumijiaScriptEplanClassic";
+        private const string VeeExportActionName = "OumijiaScriptVeeExportConnections";
+        private const string VeeTableMakerActionName = "OumijiaScriptVeeTableMaker";
+        private const string MenuBarActionName = "OumijiaScriptToggleMenuBar";
+        private const string GridSnapActionName = "OumijiaScriptToggleGridSnap";
+        private const string ObjectSnapActionName = "OumijiaScriptToggleObjectSnap";
+        private const string GridVisibilityActionName = "OumijiaScriptToggleGridVisibility";
+        private const string CursorDesignActionName = "OumijiaScriptToggleCursorDesign";
+        private const string ArrangeOnGridActionName = "OumijiaScriptArrangeOnGrid";
 
         // ------------------------------------------------------------------ vòng đời script
 
@@ -149,6 +161,71 @@ namespace Oumijia.EdzScript
             }
         }
 
+        /// <summary>Mở cửa sổ EPLAN Classic (menu cũ).</summary>
+        [DeclareAction("OumijiaScriptEplanClassic")]
+        public void EplanClassic()
+        {
+            AddinLog.Write("Action " + ClassicActionName);
+            if (!EplanClassicLauncher.Open())
+            {
+                MessageBox.Show(
+                    "Không mở được EPLAN Classic. Chi tiết xem addin.log.",
+                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>Gọi VEE Export connections nếu đã cài; nếu chưa cài thì hướng dẫn.</summary>
+        [DeclareAction("OumijiaScriptVeeExportConnections")]
+        public void VeeExportConnections()
+        {
+            AddinLog.Write("Action " + VeeExportActionName);
+            VeeIntegration.OpenExportConnections();
+        }
+
+        /// <summary>Gọi VEE Table Maker nếu đã cài; nếu chưa cài thì hướng dẫn.</summary>
+        [DeclareAction("OumijiaScriptVeeTableMaker")]
+        public void VeeTableMaker()
+        {
+            AddinLog.Write("Action " + VeeTableMakerActionName);
+            VeeIntegration.OpenTableMaker();
+        }
+
+        [DeclareAction("OumijiaScriptToggleMenuBar")]
+        public void ToggleMenuBar()
+        {
+            InvokeBuiltIn(MenuBarActionName, "MfToggleMainMenuAction", "Main menu bar");
+        }
+
+        [DeclareAction("OumijiaScriptToggleGridSnap")]
+        public void ToggleGridSnap()
+        {
+            InvokeBuiltIn(GridSnapActionName, "XGedToggleGridSnapAction", "Grid snap");
+        }
+
+        [DeclareAction("OumijiaScriptToggleObjectSnap")]
+        public void ToggleObjectSnap()
+        {
+            InvokeBuiltIn(ObjectSnapActionName, "XGedToggleObjectSnapAction", "Object snap");
+        }
+
+        [DeclareAction("OumijiaScriptToggleGridVisibility")]
+        public void ToggleGridVisibility()
+        {
+            InvokeBuiltIn(GridVisibilityActionName, "XGedToggleGridVisibilityAction", "Grid visibility");
+        }
+
+        [DeclareAction("OumijiaScriptToggleCursorDesign")]
+        public void ToggleCursorDesign()
+        {
+            InvokeBuiltIn(CursorDesignActionName, "XGedToggleCursorDesignAction", "Design mode");
+        }
+
+        [DeclareAction("OumijiaScriptArrangeOnGrid")]
+        public void ArrangeOnGrid()
+        {
+            InvokeBuiltIn(ArrangeOnGridActionName, "XGedIaArrangeOnGrid", "Align on grid");
+        }
+
         /// <summary>Dùng để kiểm tra script đã nạp và action gọi được (chạy từ command line).</summary>
         [DeclareAction("OumijiaScriptSelfTest")]
         public void SelfTest()
@@ -177,20 +254,63 @@ namespace Oumijia.EdzScript
                     tab = ribbon.AddTab(RibbonTabName);
                 }
 
-                RibbonCommandGroup group = tab.GetCommandGroup(CommandGroupName);
-                if (group == null)
-                {
-                    group = tab.AddCommandGroup(CommandGroupName);
-                }
-
+                RibbonCommandGroup group = GetOrAddCommandGroup(tab, CommandGroupName);
                 EnsureCommand(group, "Nhập EDZ…", ImportActionName);
                 EnsureCommand(group, "Xuất EDZ…", ExportActionName);
+
+                RibbonCommandGroup classicGroup = GetOrAddCommandGroup(tab, ClassicCommandGroupName);
+                EnsureCommand(classicGroup, "EPLAN Classic…", ClassicActionName);
+
+                RibbonCommandGroup veeGroup = GetOrAddCommandGroup(tab, VeeCommandGroupName);
+                EnsureCommand(veeGroup, "VEE Export connections…", VeeExportActionName);
+                EnsureCommand(veeGroup, "VEE Table Maker…", VeeTableMakerActionName);
+
+                RibbonCommandGroup gridGroup = GetOrAddCommandGroup(tab, GridCommandGroupName);
+                EnsureCommand(gridGroup, "Menu bar", MenuBarActionName);
+                EnsureCommand(gridGroup, "Grid snap", GridSnapActionName);
+                EnsureCommand(gridGroup, "Object snap", ObjectSnapActionName);
+                EnsureCommand(gridGroup, "Grid view", GridVisibilityActionName);
+                EnsureCommand(gridGroup, "Design mode", CursorDesignActionName);
+                EnsureCommand(gridGroup, "Align on grid", ArrangeOnGridActionName);
 
                 AddinLog.Write("Ribbon ready (" + source + ")");
             }
             catch (Exception ex)
             {
                 AddinLog.WriteError("EnsureRibbon(" + source + ")", ex);
+            }
+        }
+
+        private static RibbonCommandGroup GetOrAddCommandGroup(RibbonTab tab, string name)
+        {
+            RibbonCommandGroup group = tab.GetCommandGroup(name);
+            if (group == null)
+            {
+                group = tab.AddCommandGroup(name);
+            }
+            return group;
+        }
+
+        private static bool InvokeBuiltIn(string actionName, string builtInAction, string displayName)
+        {
+            try
+            {
+                ActionManager manager = new ActionManager();
+                Eplan.EplApi.ApplicationFramework.Action action = manager.FindAction(builtInAction);
+                if (action == null)
+                {
+                    AddinLog.Write(actionName + ": action not found: " + builtInAction);
+                    return false;
+                }
+
+                bool ok = action.Execute(new ActionCallingContext());
+                AddinLog.Write(actionName + ": invoked " + displayName + " (" + builtInAction + ", ok=" + ok + ")");
+                return ok;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError(actionName + " -> " + builtInAction, ex);
+                return false;
             }
         }
 
@@ -2274,4 +2394,504 @@ namespace Oumijia.EdzScript
             }
         }
     }
+
+
+        //#region Oumijia.EdzScript shared UI (auto-generated from src/Oumijia.EplanAddIn/Ui; do not edit here)
+
+    /// <summary>
+    /// Cá»­a sá»• "EPLAN Classic": danh má»¥c cĂ¡c lá»‡nh quen thuá»™c trong menu cÅ©,
+    /// cĂ³ thá»ƒ tĂ¬m kiáº¿m vĂ  gá»i action EPLAN Ä‘Ă£ Ä‘Æ°á»£c xĂ¡c nháº­n lĂ  cĂ³ máº·t.
+    /// </summary>
+    internal sealed class EplanClassicForm : Form
+    {
+        private const string HelpUrl = "https://github.com/wuwenhou/Tool-Oumijia-EPLAN/blob/main/docs/THIRD-PARTY-ADDINS.md";
+
+        private readonly ListBox _categoryList = new ListBox();
+        private readonly TextBox _searchBox = new TextBox();
+        private readonly ListView _commands = new ListView();
+        private readonly Label _statusLabel = new Label();
+        private readonly Button _runButton = new Button();
+        private readonly Button _helpButton = new Button();
+
+        private readonly List<ClassicCommand> _catalog = ClassicCommand.BuildCatalog();
+        private List<ClassicCommand> _filtered = new List<ClassicCommand>();
+
+        public EplanClassicForm()
+        {
+            Text = "Tool Oumijia â€” EPLAN Classic";
+            ClientSize = new Size(980, 560);
+            MinimumSize = new Size(760, 420);
+            StartPosition = FormStartPosition.CenterParent;
+            Font = new Font("Segoe UI", 9F);
+
+            BuildUi();
+            PopulateCategories();
+            ShowCategory(0);
+        }
+
+        private void BuildUi()
+        {
+            var leftPanel = new Panel { Dock = DockStyle.Left, Width = 185 };
+            var separator = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = Color.FromArgb(190, 190, 190) };
+            var mainPanel = new Panel { Dock = DockStyle.Fill };
+
+            var sourceLabel = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                Text = "Danh má»¥c",
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Padding = new Padding(6, 7, 0, 0)
+            };
+
+            _categoryList.Dock = DockStyle.Fill;
+            _categoryList.IntegralHeight = false;
+            _categoryList.SelectionMode = SelectionMode.One;
+            _categoryList.SelectedIndexChanged += CategorySelectionChanged;
+            leftPanel.Controls.Add(_categoryList);
+            leftPanel.Controls.Add(sourceLabel);
+
+            var searchPanel = new Panel { Dock = DockStyle.Top, Height = 38, Padding = new Padding(8, 7, 8, 5) };
+            var searchLabel = new Label
+            {
+                Dock = DockStyle.Left,
+                Width = 30,
+                Text = "TĂ¬m:",
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoSize = false
+            };
+            _searchBox.Dock = DockStyle.Fill;
+            _searchBox.KeyDown += SearchBoxKeyDown;
+            searchPanel.Controls.Add(_searchBox);
+            searchPanel.Controls.Add(searchLabel);
+
+            var listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8, 0, 8, 0) };
+            _commands.Dock = DockStyle.Fill;
+            _commands.View = View.Details;
+            _commands.FullRowSelect = true;
+            _commands.HideSelection = false;
+            _commands.GridLines = true;
+            _commands.MultiSelect = false;
+            _commands.Columns.Add("Lá»‡nh", 330);
+            _commands.Columns.Add("Action", 230);
+            _commands.Columns.Add("Tráº¡ng thĂ¡i", 180);
+            _commands.DoubleClick += OnCommandsDoubleClick;
+            _commands.SelectedIndexChanged += UpdateSelection;
+            listPanel.Controls.Add(_commands);
+
+            var bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 52, Padding = new Padding(8, 8, 8, 8) };
+            _statusLabel.Dock = DockStyle.Left;
+            _statusLabel.Width = 540;
+            _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
+            _statusLabel.ForeColor = Color.DimGray;
+
+            _helpButton.Dock = DockStyle.Right;
+            _helpButton.Width = 92;
+            _helpButton.Text = "Help";
+            _helpButton.Click += OnHelpClicked;
+
+            _runButton.Dock = DockStyle.Right;
+            _runButton.Width = 110;
+            _runButton.Text = "Cháº¡y lá»‡nh â–¸";
+            _runButton.Enabled = false;
+            _runButton.Click += OnRunClicked;
+
+            bottomPanel.Controls.Add(_statusLabel);
+            bottomPanel.Controls.Add(_runButton);
+            bottomPanel.Controls.Add(_helpButton);
+
+            mainPanel.Controls.Add(listPanel);
+            mainPanel.Controls.Add(searchPanel);
+            mainPanel.Controls.Add(bottomPanel);
+
+            Controls.Add(mainPanel);
+            Controls.Add(separator);
+            Controls.Add(leftPanel);
+        }
+
+        private void PopulateCategories()
+        {
+            foreach (var category in _catalog.Select(x => x.Category).Distinct())
+            {
+                _categoryList.Items.Add(category);
+            }
+
+            // LuĂ´n hiá»ƒn thá»‹ Ä‘Ăºng 12 nhĂ³m cá»§a menu cá»• Ä‘iá»ƒn, ká»ƒ cáº£ khi nhĂ³m chÆ°a cĂ³ action usable.
+            foreach (string category in ClassicCommand.MenuCategories)
+            {
+                if (!_categoryList.Items.Contains(category))
+                {
+                    _categoryList.Items.Add(category);
+                }
+            }
+
+            if (_categoryList.Items.Count > 0)
+            {
+                _categoryList.SelectedIndex = 0;
+            }
+        }
+
+        private void CategorySelectionChanged(object sender, EventArgs e)
+        {
+            ShowCategory(_categoryList.SelectedIndex);
+        }
+
+        private void ShowCategory(int index)
+        {
+            if (index < 0) return;
+            string category = _categoryList.Items[index].ToString();
+            ApplyFilter(_searchBox.Text, category);
+        }
+
+        private void SearchBoxKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.SuppressKeyPress = true;
+            string category = CurrentCategory();
+            ApplyFilter(_searchBox.Text, category);
+        }
+
+        private void ApplyFilter(string query, string category)
+        {
+            query = (query ?? string.Empty).Trim().ToLowerInvariant();
+            _filtered = _catalog
+                .Where(x => x.Category == category)
+                .Where(x => query.Length == 0
+                    || x.Name.ToLowerInvariant().Contains(query)
+                    || x.ActionId.ToLowerInvariant().Contains(query)
+                    || (x.Source ?? string.Empty).ToLowerInvariant().Contains(query))
+                .OrderBy(x => x.MenuIndex)
+                .ToList();
+
+            _commands.BeginUpdate();
+            try
+            {
+                _commands.Items.Clear();
+                foreach (ClassicCommand command in _filtered)
+                {
+                    bool available = command.IsAvailable();
+                    ListViewItem item = new ListViewItem(command.Name);
+                    item.SubItems.Add(command.ActionId);
+                    item.SubItems.Add(available ? "Sáºµn sĂ ng" : "KhĂ´ng cĂ³ trong phiĂªn nĂ y");
+                    item.Tag = command;
+                    item.BackColor = available ? Color.White : Color.FromArgb(245, 245, 245);
+                    item.ForeColor = available ? Color.Black : Color.DimGray;
+                    _commands.Items.Add(item);
+                }
+            }
+            finally
+            {
+                _commands.EndUpdate();
+            }
+
+            if (_filtered.Count == 0)
+            {
+                _statusLabel.Text = query.Length == 0
+                    ? "ChÆ°a xĂ¡c Ä‘á»‹nh Ä‘Æ°á»£c lá»‡nh cá»§a nhĂ³m nĂ y trĂªn phiĂªn EPLAN hiá»‡n táº¡i."
+                    : "KhĂ´ng tĂ¬m tháº¥y lá»‡nh phĂ¹ há»£p trong nhĂ³m nĂ y.";
+            }
+            else
+            {
+                _statusLabel.Text = _filtered.Count + " lá»‡nh; hĂ nh Ä‘á»™ng khĂ´ng sáºµn sĂ ng sáº½ bá»‹ khĂ³a.";
+            }
+
+            UpdateSelection(this, EventArgs.Empty);
+        }
+
+        private void UpdateSelection(object sender, EventArgs e)
+        {
+            ClassicCommand selection = SelectedCommand();
+            _runButton.Enabled = selection != null && selection.IsAvailable();
+            _statusLabel.Text = selection == null
+                ? "Chá»n má»™t lá»‡nh Ä‘á»ƒ xem tráº¡ng thĂ¡i."
+                : (selection.IsAvailable() ? "Sáºµn sĂ ng cháº¡y: " + selection.ActionId : "KhĂ´ng sáºµn sĂ ng: " + selection.Note);
+        }
+
+        private ClassicCommand SelectedCommand()
+        {
+            if (_commands.SelectedItems.Count == 0) return null;
+            return _commands.SelectedItems[0].Tag as ClassicCommand;
+        }
+
+        private string CurrentCategory()
+        {
+            return _categoryList.SelectedIndex < 0 ? ClassicCommand.MenuCategories[0] : _categoryList.Items[_categoryList.SelectedIndex].ToString();
+        }
+
+        private void OnCommandsDoubleClick(object sender, EventArgs e)
+        {
+            RunSelected();
+        }
+
+        private void OnRunClicked(object sender, EventArgs e)
+        {
+            RunSelected();
+        }
+
+        private void RunSelected()
+        {
+            ClassicCommand command = SelectedCommand();
+            if (command == null) return;
+
+            if (!command.IsAvailable())
+            {
+                MessageBox.Show(this,
+                    "Lá»‡nh chÆ°a sáºµn sĂ ng:\n" + command.Note,
+                    "Tool Oumijia â€” EPLAN Classic",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                bool ok = command.Run();
+                _statusLabel.Text = ok ? "ÄĂ£ cháº¡y: " + command.ActionId : "Action tráº£ vá» lá»—i: " + command.ActionId;
+                AddinLog.Write("EPLAN Classic: ran " + command.ActionId + " (ok=" + ok + ")");
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("EPLAN Classic run " + command.ActionId, ex);
+                MessageBox.Show(this,
+                    "KhĂ´ng cháº¡y Ä‘Æ°á»£c lá»‡nh:\n" + ex.Message,
+                    "Tool Oumijia â€” EPLAN Classic",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OnHelpClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(HelpUrl);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    "KhĂ´ng má»Ÿ Ä‘Æ°á»£c help:\n" + ex.Message,
+                    "Tool Oumijia â€” EPLAN Classic",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Action dĂ¹ng cho ribbon/script khi EPLAN Classic cáº§n má»Ÿ cá»­a sá»• tá»« ngoĂ i.
+    /// </summary>
+    internal static class EplanClassicLauncher
+    {
+        public static bool Open()
+        {
+            try
+            {
+                using (var form = new EplanClassicForm())
+                {
+                    form.ShowDialog();
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("EPLAN Classic open", ex);
+                return false;
+            }
+        }
+    }
+
+    internal sealed class ClassicCommand
+    {
+        public static readonly string[] MenuCategories =
+        {
+            "Project", "Page", "Layout space", "Edit", "View", "Insert",
+            "Project data", "Find", "Options", "Utilities", "Window", "Help"
+        };
+
+        public readonly string Category;
+        public readonly string Name;
+        public readonly string ActionId;
+        public readonly string Note;
+        public readonly string Source;
+        public readonly int MenuIndex;
+
+        private ClassicCommand(string category, string name, string actionId, string source, string note, int menuIndex)
+        {
+            Category = category;
+            Name = name;
+            ActionId = actionId;
+            Source = source;
+            Note = note;
+            MenuIndex = menuIndex;
+        }
+
+        public static List<ClassicCommand> BuildCatalog()
+        {
+            var result = new List<ClassicCommand>();
+            Add(result, "Project", "Má»Ÿ project", "ProjectOpen", "regPlatform.xml", "Action má»Ÿ há»™p chá»n project", 0);
+            Add(result, "Project", "So sĂ¡nh project", "PrjManagementGUIIGfWindPrjCompareProject", "regPlatform.xml", "Má»Ÿ so sĂ¡nh project", 1);
+            Add(result, "Project", "Backup project", "BackupProjectDialogShow", "regPlatform.xml", "Má»Ÿ há»™p Backup project", 2);
+            Add(result, "Project", "NĂ©n project", "CompressProjectDialogShow", "regPlatform.xml", "Má»Ÿ há»™p nĂ©n project", 3);
+            Add(result, "Project", "ÄĂ³ng project hiá»‡n táº¡i", "PrjManagementGUIIGfWindPrjCloseProject", "regPlatform.xml", "ÄĂ³ng project hiá»‡n táº¡i", 4);
+
+            Add(result, "Page", "ThĂªm trang", "XPageNewDialogShow", "regPlatform.xml", "Má»Ÿ há»™p thĂªm trang", 0);
+            Add(result, "Page", "Trang káº¿ tiáº¿p", "XGedNextPageAction", "regPlatform.xml", "Chuyá»ƒn sang trang káº¿ tiáº¿p", 1);
+            Add(result, "Page", "Trang trÆ°á»›c", "XGedPrevPageAction", "regPlatform.xml", "Chuyá»ƒn sang trang trÆ°á»›c", 2);
+            Add(result, "Page", "ÄĂ³ng trang", "XGedClosePage", "regPlatform.xml", "ÄĂ³ng trang hiá»‡n táº¡i", 3);
+            Add(result, "Page", "Thuá»™c tĂ­nh trang", "XPagePropertyDialogShow", "regPlatform.xml", "Má»Ÿ thuá»™c tĂ­nh trang", 4);
+
+            Add(result, "Edit", "CÄƒn lá» ngang", "XGedIaAlignHorizontally", "regPlatform.xml", "CÄƒn lá» theo chiá»u ngang", 0);
+            Add(result, "Edit", "CÄƒn lá» dá»c", "XGedIaAlignVertically", "regPlatform.xml", "CÄƒn lá» theo chiá»u dá»c", 1);
+            Add(result, "Edit", "CÄƒn Ä‘áº·t lĂªn lÆ°á»›i", "XGedIaArrangeOnGrid", "regPlatform.xml", "Cáº§n selection phĂ¹ há»£p; EPLAN kiá»ƒm tra Ä‘iá»u kiá»‡n", 2);
+            Add(result, "Edit", "TĂ¬m pháº§n tá»­ khĂ´ng cĂ³ property", "XKBeFindDmObjectsWithoutProperties", "regPlatform.xml", "Danh sĂ¡ch pháº§n tá»­ thiáº¿u property", 3);
+
+            Add(result, "View", "Báº­t/Táº¯t Menu Bar", "MfToggleMainMenuAction", "regPlatform.xml", "Toggle thanh menu chĂ­nh cá»§a EPLAN (MF)", 0);
+            Add(result, "View", "Báº­t/Táº¯t báº¯t dĂ­nh lÆ°á»›i", "XGedToggleGridSnapAction", "regPlatform.xml", "Chá»‰ Ă¡p dá»¥ng khi cá»­a sá»• váº½ EPLAN Ä‘ang má»Ÿ", 1);
+            Add(result, "View", "Báº­t/Táº¯t báº¯t dĂ­nh Ä‘á»‘i tÆ°á»£ng", "XGedToggleObjectSnapAction", "regPlatform.xml", "Chá»‰ Ă¡p dá»¥ng khi cá»­a sá»• váº½ EPLAN Ä‘ang má»Ÿ", 2);
+            Add(result, "View", "Báº­t/Táº¯t Design mode", "XGedToggleCursorDesignAction", "regPlatform.xml", "Cursor placement cho special interactions", 3);
+            Add(result, "View", "Báº­t/Táº¯t hiá»ƒn thá»‹ lÆ°á»›i", "XGedToggleGridVisibilityAction", "regPlatform.xml", "Chá»‰ Ă¡p dá»¥ng khi cĂ³ cá»­a sá»• EPLAN", 4);
+
+            Add(result, "Project data", "Nháº­p Parts List", "ImportPartslistAction", "regPlatform.xml", "Nháº­p parts list theo converter EPLAN", 0);
+            Add(result, "Project data", "Xuáº¥t Parts List", "ExportPartslistAction", "regPlatform.xml", "Xuáº¥t parts list theo converter EPLAN", 1);
+            Add(result, "Project data", "Nháº­p Parts quáº£n lĂ½ báº±ng GUI", "PrjManagementGUIIGfWindImportProject", "regPlatform.xml", "Nháº­p project theo thao tĂ¡c EPLAN", 2);
+            Add(result, "Project data", "Xuáº¥t project", "PrjManagementGUIIGfWindPrjExportProject", "regPlatform.xml", "Má»Ÿ thao tĂ¡c xuáº¥t project", 3);
+
+            Add(result, "Find", "TĂ¬m trong EPLAN", "XSGedFindAction", "regPlatform.xml", "TĂ¬m Ä‘á»‘i tÆ°á»£ng/dá»¯ liá»‡u trong dá»± Ă¡n", 0);
+            Add(result, "Find", "TĂ¬m connection point ngoĂ i lÆ°á»›i", "XSGedFindConnectionPointsOutOfRasterAction", "regPlatform.xml", "TĂ¬m connection point náº±m ngoĂ i raster", 1);
+
+            Add(result, "Options", "Import settings", "AfImportSettingsAction", "regPlatform.xml", "Nháº­p settings tá»« file EPLAN", 0);
+            Add(result, "Options", "Export settings", "AfExportSettingsAction", "regPlatform.xml", "Xuáº¥t settings ra file EPLAN", 1);
+            Add(result, "Options", "Thiáº¿t láº­p hiá»ƒn thá»‹ lÆ°á»›i", "XGedToggleGridVisibilityAction", "regPlatform.xml", "Toggle hiá»ƒn thá»‹ lÆ°á»›i", 2);
+
+            Add(result, "Utilities", "Dá»‹ch database", "translate", "regPlatform.xml", "Cháº¡y thao tĂ¡c dá»‹ch cá»§a EPLAN (kiá»ƒm tra trÆ°á»›c khi cháº¡y hĂ ng loáº¡t)", 0);
+            Add(result, "Utilities", "Backup project", "BackupProjectDialogShow", "regPlatform.xml", "Má»Ÿ há»™p Backup project", 1);
+
+            return result;
+        }
+
+        private static void Add(List<ClassicCommand> list, string category, string name, string actionId, string source, string note, int menuIndex)
+        {
+            list.Add(new ClassicCommand(category, name, actionId, source, note, menuIndex));
+        }
+
+        public bool IsAvailable()
+        {
+            if (string.IsNullOrWhiteSpace(ActionId)) return false;
+            try
+            {
+                var manager = new ActionManager();
+                var action = manager.FindAction(ActionId);
+                return action != null;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("ClassicCommand IsAvailable " + ActionId, ex);
+                return false;
+            }
+        }
+
+        public bool Run()
+        {
+            if (!IsAvailable()) return false;
+
+            var manager = new ActionManager();
+            var action = manager.FindAction(ActionId);
+            if (action == null) return false;
+
+            var context = new ActionCallingContext();
+            return action.Execute(context);
+        }
+    }
+
+
+    internal static class VeeIntegration
+    {
+        private const string ExportConnectionsAction = "VE_E_ExportConnections";
+        private const string TableMakerAction = "VEECreateEplanTable";
+
+        public static bool IsAvailable(string actionName)
+        {
+            try
+            {
+                var manager = new ActionManager();
+                return manager.FindAction(actionName) != null;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("VEE availability " + actionName, ex);
+                return false;
+            }
+        }
+
+        public static bool OpenExportConnections()
+        {
+            return OpenOrReport(null, ExportConnectionsAction, "VEE Export connections data",
+                "https://t.me/EPLAN4UCHAT/13646",
+                "TĂ­nh nÄƒng nĂ y hÆ°á»›ng dáº«n EPLAN Platform 2022+ / .NET Framework 4.8+.\n" +
+                "Báº£n cĂ i Ä‘áº·t & báº£n quyá»n thuá»™c VIET EPLAN & ELECTRIC; Tool Oumijia khĂ´ng phĂ¢n phá»‘i láº¡i DLL.\n\n" +
+                "Sau khi cĂ i, restart EPLAN vĂ  báº¥m nĂºt nĂ y láº§n ná»¯a.");
+        }
+
+        public static void OpenExportConnections(IWin32Window owner)
+        {
+            OpenExportConnections();
+        }
+
+        public static bool OpenTableMaker()
+        {
+            return OpenOrReport(null, TableMakerAction, "VEE Table Maker",
+                "https://t.me/EPLAN4U/12788",
+                "Táº¡o technical tables trá»±c tiáº¿p trĂªn trang EPLAN.\n" +
+                "Báº£n cĂ i Ä‘áº·t & báº£n quyá»n thuá»™c VIET EPLAN & ELECTRIC; Tool Oumijia khĂ´ng phĂ¢n phá»‘i láº¡i DLL.\n\n" +
+                "Sau khi cĂ i, restart EPLAN vĂ  báº¥m nĂºt nĂ y láº§n ná»¯a.");
+        }
+
+        public static void OpenTableMaker(IWin32Window owner)
+        {
+            OpenTableMaker();
+        }
+
+        private static bool OpenOrReport(IWin32Window owner, string actionName, string displayName, string downloadUrl, string helpText)
+        {
+            try
+            {
+                var manager = new ActionManager();
+                var action = manager.FindAction(actionName);
+                if (action != null)
+                {
+                    bool ok = action.Execute(new ActionCallingContext());
+                    AddinLog.Write("VEE: invoked " + actionName + " (ok=" + ok + ")");
+                    return ok;
+                }
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("VEE invoke " + actionName, ex);
+                MessageBox.Show(owner,
+                    "KhĂ´ng cháº¡y Ä‘Æ°á»£c " + displayName + ":\n" + ex.Message,
+                    "Tool Oumijia â€” VEE",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            var choice = MessageBox.Show(owner,
+                displayName + " chÆ°a Ä‘Æ°á»£c Ä‘Äƒng kĂ½/cĂ i Ä‘áº·t trĂªn mĂ¡y nĂ y.\n\n" + helpText,
+                "Tool Oumijia â€” VEE",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information);
+
+            if (choice == DialogResult.Yes)
+            {
+                try { Process.Start(downloadUrl); }
+                catch (Exception ex)
+                {
+                    AddinLog.WriteError("Open VEE link", ex);
+                    MessageBox.Show(owner,
+                        "KhĂ´ng má»Ÿ Ä‘Æ°á»£c link. Sao chĂ©p:\n" + downloadUrl,
+                        "Tool Oumijia â€” VEE",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+
+            return false;
+        }
+    }
+        //#endregion
 }
