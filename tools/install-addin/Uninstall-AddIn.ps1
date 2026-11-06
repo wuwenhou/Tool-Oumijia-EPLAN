@@ -69,6 +69,12 @@ if (Test-Path $addinDir) {
     Write-Host "[+] Da xoa thu muc add-in."
 }
 
+$portalHome = Join-Path $env:APPDATA "Tool Oumijia\Portal"
+if (Test-Path $portalHome) {
+    Remove-Item $portalHome -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "[+] Da xoa shared runtime."
+}
+
 if ($ok) {
     Write-Host "[OK] Da go dang ky add-in."
 } else {

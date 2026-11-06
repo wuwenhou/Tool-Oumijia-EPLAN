@@ -64,6 +64,24 @@ Copy-Item $scriptSource $destScript -Force
 Copy-Item $registerScriptSource $destRegister -Force
 Write-Host "[+] Script: $destScript"
 
+# ------------------------------------------------------------------ Shared Portal/UI/EDZ runtime
+$portalSource = Join-Path $here "portal"
+if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll"))) {
+    $portalSource = Join-Path $here "..\..\src\Oumijia.PortalHost\bin\Release\net48"
+}
+$portalHome = Join-Path $env:APPDATA "Tool Oumijia\Portal"
+if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll"))) {
+    Write-Host "[LOI] Thieu shared runtime (Oumijia.PortalHost.dll). Hay build lai Add-in/PortalHost truoc."
+    exit 1
+}
+New-Item -ItemType Directory -Path $portalHome -Force | Out-Null
+Get-ChildItem -LiteralPath $portalSource -Filter '*.dll' -File |
+    Copy-Item -Destination $portalHome -Force
+if (Test-Path -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll')) {
+    Copy-Item -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll') -Destination $portalHome -Force
+}
+Write-Host "[+] Shared runtime: $portalHome"
+
 Remove-Item $flagFile -ErrorAction SilentlyContinue
 
 # ------------------------------------------------------------------ 1) dang ky

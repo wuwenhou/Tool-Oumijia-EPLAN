@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Eplan.EplApi.MasterData;
 
-namespace Oumijia.EplanAddIn.Ui
+namespace Oumijia.EplanUi
 {
     /// <summary>
     /// Xuất EDZ — v3:
@@ -26,7 +26,7 @@ namespace Oumijia.EplanAddIn.Ui
     ///   bExportAccessoryLists      → *.accessorylist*.xml (Accessory list)
     ///   bExportAccessoryPlacements → *.accessoryplacementlist.xml (Accessory placement)
     /// </summary>
-    internal sealed class ExportEdzForm : Form
+    public sealed class ExportEdzForm : Form
     {
         private const string PartsDefaultFileName = "parts.edz";
 

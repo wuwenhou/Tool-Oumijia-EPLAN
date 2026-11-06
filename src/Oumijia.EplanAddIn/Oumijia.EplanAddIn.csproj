@@ -23,7 +23,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>Oumijia.EplanAddIn</RootNamespace>
     <AssemblyName>Oumijia.EplAddin.EDZ</AssemblyName>
-    <Version>0.5.1</Version>
+    <Version>0.5.2</Version>
     <Authors>wuwenhou</Authors>
     <Company>Tool Oumijia</Company>
     <Product>Tool Oumijia (EPLAN)</Product>
@@ -60,6 +60,11 @@
       <HintPath>$(EplanApiDir)\Eplan.EplApi.MasterDatau.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oumijia.EplanUi\Oumijia.EplanUi.csproj" />
+    <ProjectReference Include="..\Oumijia.PortalHost\Oumijia.PortalHost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

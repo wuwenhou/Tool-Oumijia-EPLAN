@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Oumijia.EplanAddIn
+namespace Oumijia.EplanUi
 {
     /// <summary>
     /// Tiny CSV audit log for add-in operations (import/export).
     /// File: %APPDATA%\Tool Oumijia\logs\{operation}-yyyyMMdd.csv
     /// </summary>
-    internal static class AddinCsvLog
+    public static class AddinCsvLog
     {
         private static readonly object Gate = new object();
 

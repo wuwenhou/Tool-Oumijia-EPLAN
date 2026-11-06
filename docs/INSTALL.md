@@ -1,84 +1,84 @@
-﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.5.1
+﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.5.2
 
-> Gói phát hành chứa **2 phiên bản** (add-in & script) + **installer thông minh** tự chọn bản phù hợp.
+> Gói gồm Add-in và Script Edition, component dùng chung và installer thông minh tự chọn bản phù hợp.
 
-## Cách cài (1 bước — khuyến nghị)
+## Cài đặt nhanh
 
-1. Vào **[Releases](https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/latest)**, tải
-   `Tool-Oumijia-v0.5.1.zip` (~100 KB)
-2. **Giải nén** ra một thư mục bất kỳ → chạy **`Install-Tool-Oumijia.bat`**
-   - Installer tự thử bản **add-in** trước (đăng ký + self-test headless)
-   - Nếu EPLAN **vô hiệu hóa add-in** (máy không có API license trên EPLAN bản mới):
-     tự gỡ add-in → **chuyển cài bản script** → kiểm chứng lại rồi mới báo thành công
-3. Mở EPLAN → ribbon **"Tool Oumijia"** xuất hiện với 2 nút: **Nhập EDZ… / Xuất EDZ…**
+1. Tải `Tool-Oumijia-v0.5.2.zip` khi bản phát hành được duyệt.
+2. Giải nén vào một thư mục bất kỳ.
+3. Đóng mọi cửa sổ EPLAN.
+4. Chạy **`Install-Tool-Oumijia.bat`**.
+5. Installer thử bản Add-in trước; nếu EPLAN chặn DLL thì tự gỡ đăng ký Add-in và chuyển sang Script Edition.
+6. Mở EPLAN và kiểm tra ribbon **Tool Oumijia**.
 
-## Hai phiên bản — khi nào dùng bản nào
+Ribbon v0.5.2 có đúng bốn lệnh:
 
-| | **Bản ADD-IN** (`addin\`) | **Bản SCRIPT** (`script\`) |
+```text
+Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
+```
+
+## Hai phiên bản
+
+| | **Add-in** | **Script Edition** |
 |---|---|---|
-| Công nghệ | DLL add-in (net48) | EPLAN Scripting (C# 5) |
-| Yêu cầu | EPLAN có **API license**, HOẶC bản EPLAN cho phép DLL chưa ký (vd 2022) | **Không cần license** (scripting miễn phí) |
-| Phù hợp | EPLAN 2022–2023 | **EPLAN mới (2024+/2026)** chặn add-in chưa ký |
-| Tính năng | Như nhau (Nhập/Xuất EDZ đầy đủ) | Như nhau |
+| Công nghệ | DLL add-in (.NET 48) | EPLAN Scripting (C# 5) |
+| Yêu cầu | API license hoặc EPLAN cho phép DLL chưa ký | Có scripting EPLAN; không cần API license |
+| Phù hợp | EPLAN 2022–2023 hoặc máy IT cho phép | EPLAN mới chặn Add-in |
+| Tính năng | Như nhau | Như nhau |
 
-**Cài thủ công** (nếu không dùng installer thông minh):
+## Component trong gói
 
-- Bản add-in: chạy `addin\Install-AddIn.bat`
-- Bản script: chạy `script\Install-Script.bat`
+- `addin\`: Add-in + shared UI/EDZ reader + PortalHost/WebView2 dependencies.
+- `script\`: Script Edition + folder `portal\` (shared runtime).
+- `Install-Tool-Oumijia.bat/.ps1`, installer/uninstaller riêng cho từng edition.
+- `docs\`: hướng dẫn người dùng và release note.
 
 ## Yêu cầu hệ thống
 
 | | |
 |---|---|
-| OS | Windows 10 / 11 (x64) |
-| EPLAN | **Platform 2022 trở lên** — add-in đã kiểm chứng trên 2022.0.3; script đã kiểm chứng trên 2026.0.3 |
+| OS | Windows 10/11 x64 |
+| EPLAN | Platform 2022 trở lên |
 | Quyền | Không cần Administrator |
-| .NET | Không cần cài (add-in chạy trên .NET Framework của EPLAN; script do EPLAN tự biên dịch) |
+| EPLAN Data Portal | Máy và tài khoản hợp lệ, được IT cho phép |
+| WebView2 | Runtime chính thức của Microsoft; nếu lỗi, dùng nút **Mở ngoài** |
 
-## Kiểm tra tính toàn vẹn
+Không copy `.edz` vào Master Data bằng tay; file thiết bị phải được nhập vào Parts Database bằng chức năng Nhập EDZ.
 
-Mỗi release kèm mã **SHA-256** của file ZIP. Đối chiếu nhanh:
+## Data Portal
 
-```powershell
-Get-FileHash .\Tool-Oumijia-v0.5.1.zip -Algorithm SHA256
-```
+- Nút **Data Portal…** mở portal chính thức trong WebView2.
+- Người dùng tự đăng nhập; Tool không lưu password hoặc tự đăng nhập.
+- Có thể chọn/ghi nhớ thư mục tải.
+- Tài liệu khác chỉ được tải về thư mục đó.
+- `.edz` tải xong có thể chuyển sang **Nhập EDZ…**.
+- Cookie/cache phiên nằm trong `%APPDATA%\Tool Oumijia\WebView2\`; có thể xóa từ cửa sổ Portal.
 
-(`VERSION.txt` trong gói ghi hash của DLL add-in và file script chính.)
+Nếu portal/WebView2 không mở:
+
+1. nhấn **Thử lại**; hoặc
+2. nhấn **Mở ngoài** để dùng trình duyệt; hoặc
+3. gỡ cài/xóa dữ liệu phiên; hoặc
+4. liên hệ IT/EPLAN để mở kết nối Data Portal hợp lệ.
+
+Không tắt/proxy, hosts, SSL hay license để lách Data Portal.
 
 ## Gỡ cài đặt
 
-Chạy **`Uninstall-Tool-Oumijia.bat`** — gỡ cả 2 bản (nếu có), xóa các thư mục
-`%APPDATA%\Tool Oumijia\AddIn` và `%APPDATA%\Tool Oumijia\Script`.
+Chạy **`Uninstall-Tool-Oumijia.bat`**. Script gỡ đăng ký Add-in/Script, xóa:
 
-(Tùy chọn) xóa log/cấu hình: `%APPDATA%\Tool Oumijia\`.
+- `%APPDATA%\Tool Oumijia\AddIn`
+- `%APPDATA%\Tool Oumijia\Script`
+- `%APPDATA%\Tool Oumijia\Portal`
 
-## Phương án dự phòng (nếu installer thông minh báo lỗi)
+Log và `%APPDATA%\Tool Oumijia\WebView2` không bị xóa trong luồng gỡ mặc định nếu cần giữ profile/audit. Để xóa profile hoàn toàn, dùng nút **Xóa dữ liệu phiên** trong Portal hoặc xóa thủ công thư mục sau khi gỡ Tool.
 
-- **Bản add-in**: copy `addin\Oumijia.EplAddin.EDZ.dll` vào `%APPDATA%\Tool Oumijia\AddIn\`,
-  rồi trong EPLAN: **File → Extras → Interfaces → Scripts → Run…** chọn `addin\OumijiaRegister.cs`.
-- **Bản script**: copy `script\ToolOumijiaScript.cs` + `script\OumijiaRegisterScript.cs` vào
-  `%APPDATA%\Tool Oumijia\Script\`, rồi chạy `OumijiaRegisterScript.cs` qua Scripts → Run… như trên.
-- Khởi động lại EPLAN sau khi đăng ký.
+## Nhật ký
 
-## Sử dụng với EPLAN Education
+- `%APPDATA%\Tool Oumijia\logs\addin.log`
+- `%APPDATA%\Tool Oumijia\logs\register-script.log`
+- `%APPDATA%\Tool Oumijia\logs\import-*.csv`
+- `%APPDATA%\Tool Oumijia\logs\export-*.csv`
+- `%APPDATA%\Tool Oumijia\logs\data-portal-downloads-*.csv`
 
-Tool hoạt động độc lập với license EPLAN:
-- Máy EPLAN cũ (2022): dùng bản **add-in**.
-- Máy EPLAN mới + không API license: dùng bản **script** (EPLAN Scripting không cần license).
-
-Gợi ý quy trình:
-
-1. Trong EPLAN: **Data Portal → Import part** vào Parts Database (theo tài khoản của bạn)
-2. Backup/chia sẻ: **Xuất EDZ…** (chọn part trên cây) hoặc xuất theo loại bản ghi
-3. Máy khác: **Nhập EDZ…** lô `.edz` vào Parts Database (thử trên **database test** trước)
-
-> Tuân thủ điều khoản sử dụng của EPLAN/Miền dữ liệu hãng: chỉ dùng cá nhân/nội bộ,
-> không tái phân phối dữ liệu linh kiện.
-
-## Nhật ký & hỗ trợ
-
-- Log: `%APPDATA%\Tool Oumijia\logs\`
-  (`register-script.log` = đăng ký — dòng `[SCRIPT]` là bản script; `addin.log` = hoạt động;
-  `import-*.csv` / `export-*.csv` = kiểm toán)
-- Lỗi compile script của EPLAN (nếu có): `C:\Users\Public\EPLAN\Electric P8\EplLog.eldb`
-- Gặp lỗi: mở issue kèm nội dung log tương ứng.
+Không đính kèm log công khai nếu có dữ liệu nội bộ; che token/đường dẫn trước khi gửi issue.

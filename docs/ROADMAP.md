@@ -1,8 +1,18 @@
 # Lộ trình — Tool Oumijia (EPLAN Edition)
 
-## Mốc hiện tại: v0.5.1
+## Mốc hiện tại: v0.5.2
 
-Người dùng chọn quay lại v0.5.1 và lập kế hoạch mới. Các mục dưới đây ghi nhận lịch sử đến v0.5.1; kế hoạch tiếp theo đang chờ người dùng xác định.
+Cổng Data Portal chính thức được thêm vào Tool Oumijia; hộp Nhập EDZ được làm lại theo UI hai cột. Trước khi phát hành, cần UAT trên máy EPLAN có quyền và tài khoản Data Portal hợp lệ.
+
+## v0.5.2 — Data Portal + preview EDZ
+- Ribbon 4 lệnh: Nhập EDZ… / Xuất EDZ… / Data Portal… / Menu bar.
+- Data Portal nhúng WebView2; không lưu credential, không bypass license/captcha/điều khoản.
+- Nhập EDZ hiển thị Tên thiết bị/Hãng/Mã hàng và file lỗi vẫn nằm trong hàng đợi.
+- Chưa UAT máy thật; release chỉ sau khi kiểm thử đạt.
+
+## v0.5.1 — Checkbox native
+- Cây chọn part trong dialog Xuất EDZ dùng checkbox native của Windows.
+- Áp dụng cho Add-in và Script Edition; xuất phát điểm cho v0.5.2.
 
 ## v0.1.0 — App standalone: phân loại thư viện EDZ ✅ (đã bỏ ở v0.3.0)
 - WinForms: quét `.edz` → phân loại Hãng/Nhóm → xếp thư viện; log CSV
@@ -31,9 +41,7 @@ Người dùng chọn quay lại v0.5.1 và lập kế hoạch mới. Các mục
 - [x] Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
 - [ ] UAT v0.5.0: máy EPLAN 2026.0.3 (bản script) + máy 2022 (bản add-in)
 
-## v0.5.1 — Checkbox native
-- Cây chọn part trong dialog Xuất EDZ dùng checkbox native của Windows.
-- Áp dụng cho Add-in và Script Edition; đây là mốc phát triển hiện tại.
+
 
 ## Nguyên tắc xuyên suốt
 - Chỉ API chính thức + dữ liệu factual; không bẻ license, không tái phân phối dữ liệu hãng

@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Eplan.EplApi.Base;
 using Eplan.EplApi.MasterData;
 
-namespace Oumijia.EplanAddIn.Ui
+namespace Oumijia.EplanUi
 {
     /// <summary>
     /// Gọi <see cref="MDPartsManagement.ImportParts"/> với field-mapping scheme HỢP LỆ.
@@ -20,7 +20,7 @@ namespace Oumijia.EplanAddIn.Ui
     ///   4. Nếu vẫn lỗi: đọc tên scheme từ chính thông báo lỗi rồi thử lại
     ///      (thông báo: "Please use one of the following schemes: 'X'").
     /// </summary>
-    internal static class ImportPartsSupport
+    public static class ImportPartsSupport
     {
         public const string Converter = "IXPartsImportExportEdz";
         public const string FallbackScheme = "Standardvorgabe EPLAN";

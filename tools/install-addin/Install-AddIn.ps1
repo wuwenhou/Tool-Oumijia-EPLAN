@@ -12,6 +12,12 @@ $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dll = Join-Path $here "Oumijia.EplAddin.EDZ.dll"
 $registerScript = Join-Path $here "OumijiaRegister.cs"
+$requiredDlls = @('Oumijia.EplAddin.EDZ.dll', 'Oumijia.EplanUi.dll', 'Oumijia.EdzReader.dll', 'Oumijia.PortalHost.dll', 'SharpCompress.dll', 'WebView2Loader.dll')
+$missingBundled = @($requiredDlls | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) })
+if ($missingBundled.Count -gt 0) {
+    Write-Host ("[LOI] Thieu dependency: " + ($missingBundled -join ', '))
+    exit 1
+}
 
 $destDir = Join-Path $env:APPDATA "Tool Oumijia\AddIn"
 $destDll = Join-Path $destDir "Oumijia.EplAddin.EDZ.dll"
@@ -57,8 +63,8 @@ if (-not $w3u) {
 Write-Host "[+] EPLAN: $w3u"
 
 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-Copy-Item $dll $destDll -Force
-Write-Host "[+] Add-in dll: $destDll"
+Get-ChildItem -LiteralPath $here -Filter '*.dll' -File | Copy-Item -Destination $destDir -Force
+Write-Host "[+] Add-in bundled DLLs: $destDir"
 
 Remove-Item $flagFile -ErrorAction SilentlyContinue
 

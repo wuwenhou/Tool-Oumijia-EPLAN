@@ -5,11 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.2] - 2026-11-06 — “Data Portal và Nhập EDZ mới”
+
+### Added
+- Nút **Data Portal…** trong ribbon Tool Oumijia cho Add-in và Script Edition.
+- Cửa sổ Data Portal chính thức bằng WebView2; người dùng tự đăng nhập, không lưu credential.
+- Chọn và ghi nhớ thư mục tải; có thể chuyển các `.edz` tải xong sang hộp Nhập EDZ.
+- Fallback mở Data Portal trong trình duyệt khi WebView2 lỗi/thiếu.
+- Reader cục bộ cho `.edz`: hiển thị tên thiết bị, hãng và mã hàng trong dialog Nhập.
+- Giao diện Nhập EDZ hai cột; lưới part chọn dòng; file lỗi vẫn nằm trong danh sách nhập.
 
 ### Changed
-- Khôi phục source về v0.5.1 theo yêu cầu người dùng; dọn các Release/tag, nhánh và gói local sau v0.5.1.
-- Chờ kế hoạch phát triển mới từ người dùng.
+- Ribbon có đúng 4 lệnh: Nhập EDZ, Xuất EDZ, Data Portal, Menu bar.
+- `Oumijia.EplanUi` dùng chung cho Add-in và Script Edition để cả hai editions chạy đúng cùng UI.
+- `Oumijia.EdzReader` dùng chung để đọc metadata EDZ; package bổ sung SharpCompress với giấy phép mã nguồn mở.
+- Installer cài cả component dùng chung và dọn chúng khi gỡ cài.
+
+### Verification
+- Build Add-in với EPLAN Platform 2022.0.3; C# 5 compile-check Script.
+- EDZ reader unit smoke test trên các package tổng hợp cũ: tên/hãng/mã hàng đọc thành công.
+- Chưa UAT thực tế Data Portal hoặc nhập tệp tải về trong EPLAN; chưa tạo tag/GitHub Release.
+
 
 ## [0.5.1] - 2026-11-05 — "Native tick chọn part"
 

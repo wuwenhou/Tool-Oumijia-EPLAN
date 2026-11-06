@@ -39,8 +39,8 @@ public class OumijiaReadReg
                 }
             }
 
-            string[] actions = { "OumijiaOpenTool", "OumijiaImportEdz", "OumijiaExportEdz", "OumijiaSelfTest", "OumijiaDiagParts" };
-            int[] ordinals = { 20, 21, 22, 23, 24 };
+            string[] actions = { "OumijiaOpenTool", "OumijiaImportEdz", "OumijiaExportEdz", "OumijiaSelfTest", "OumijiaDiagParts", "OumijiaDataPortal" };
+            int[] ordinals = { 20, 21, 22, 23, 24, 25 };
             for (int i = 0; i < actions.Length; i++)
             {
                 string actionBase = "STATION.EplanEplApiModule.Services.AsmActions." + actions[i] + "." + ordinals[i];

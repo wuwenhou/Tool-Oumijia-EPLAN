@@ -1,14 +1,14 @@
 using System;
 using System.IO;
 
-namespace Oumijia.EplanAddIn
+namespace Oumijia.EplanUi
 {
     /// <summary>
     /// Minimal file logger for the add-in (no external dependencies on purpose:
     /// the add-in must load inside EPLAN's shadow-copy environment).
     /// Log file: %APPDATA%\Tool Oumijia\logs\addin.log
     /// </summary>
-    internal static class AddinLog
+    public static class AddinLog
     {
         private static readonly object Gate = new object();
 

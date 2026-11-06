@@ -6,7 +6,7 @@ using System.Text;
 using Eplan.EplApi.ApplicationFramework;
 using Eplan.EplApi.Base;
 using Eplan.EplApi.MasterData;
-using Oumijia.EplanAddIn.Ui;
+using Oumijia.EplanUi;
 
 namespace Oumijia.EplanAddIn.Actions
 {

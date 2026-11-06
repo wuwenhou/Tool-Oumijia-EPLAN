@@ -19,6 +19,7 @@ $appData = Join-Path $env:APPDATA "Tool Oumijia"
 $registerLog = Join-Path $appData "logs\register-script.log"
 $addinHome = Join-Path $appData "AddIn"
 $scriptHome = Join-Path $appData "Script"
+$portalHome = Join-Path $appData "Portal"
 $addinUnregisterFlag = Join-Path $appData "unregister.flag"
 $scriptUnregisterFlag = Join-Path $appData "script-unregister.flag"
 
@@ -106,6 +107,11 @@ if ((Test-Path $destRegister) -and $w3u) {
     }
 } else {
     Write-Host "[2/2] (khong thay bo script / EPLAN - bo qua)"
+}
+
+if (Test-Path $portalHome) {
+    Remove-Item $portalHome -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "[+] Da xoa shared runtime."
 }
 
 Write-Host ""

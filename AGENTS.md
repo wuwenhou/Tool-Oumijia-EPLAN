@@ -7,67 +7,67 @@
 
 ## 1. Dự án là gì
 
-**Một add-in EPLAN duy nhất** (ribbon "Tool Oumijia") làm việc với **gói dữ liệu linh kiện EPLAN (`.edz`)**:
+**Tool Oumijia (EPLAN Edition)** gồm hai edition cùng giao diện:
 
-1. **Nhập EDZ…** — batch import nhiều gói `.edz` vào Parts Database (API chính thức:
+1. **Nhập EDZ…** — preview EDZ cục bộ rồi batch import nhiều gói `.edz` vào Parts Database (API chính thức:
    `MDPartsManagement.ImportParts`, converter `IXPartsImportExportEdz`)
-2. **Xuất EDZ…** — chọn part từ **cây nhóm kiểu navigator** (checkbox + tìm kiếm) rồi export
+2. **Xuất EDZ…** — chọn part từ cây nhóm navigator (checkbox native + tìm kiếm) rồi export
    ra 1 file hoặc mỗi part 1 file (`MDPartsDatabase.ExportParts`, `DataFormat.EDZ`)
+3. **Data Portal…** — mở **EPLAN Data Portal chính thức** trong WebView2; người dùng tự đăng
+   nhập bằng tài khoản hợp lệ, tải tài liệu/.edz hoặc mở portal trong trình duyệt khi Runtime lỗi.
 
 Bối cảnh gốc: người dùng có EPLAN bản Education — tài khoản Data Portal không tải được EDZ trực tiếp
 (điều khoản service agreement), nên quy trình là: *import part qua Portal trong EPLAN → backup/chia sẻ
-bằng add-in này*.
+bằng Tool*. v0.5.2 không bypass license/điều khoản; thao tác được phép phải do EPLAN cấp cho tài khoản.
 
 **Quyết định phạm vi quan trọng:**
-- **v0.3.0: bỏ hoàn toàn app standalone (exe)** theo yêu cầu người dùng — repo chỉ còn add-in.
-  (Lịch sử: v0.1.0–v0.2.0 có app WinForms + Core library — đã xóa, xem git history nếu cần.)
-- Tool **chỉ xử lý `.edz`** — EMA/EMP/EMS không còn trong phạm vi.
+- **v0.3.0: bỏ hoàn toàn app standalone (exe)** theo yêu cầu người dùng — repo chỉ còn Tool EPLAN.
+- Tool và nội dung factual; EMA/EMP/EMS không nằm trong phạm vi.
 - Kế hoạch xa hơn (EDZ writer, QElectroTech, AutoCAD) — xem `docs/ROADMAP.md`.
 
-## 2. Trạng thái hiện tại (v0.5.1)
+## 2. Trạng thái hiện tại (v0.5.2)
 
-- Theo yêu cầu người dùng ngày 2026-11-05, source trên `main` quay lại tag `v0.5.1`.
-- Release/tag và nhánh phát triển sau v0.5.1 được dọn; dùng bản phát hành v0.5.1 làm nền.
-- Chờ người dùng lập kế hoạch mới trước khi triển khai tính năng tiếp theo.
+- v0.5.1 là nền hợp lệ theo người dùng; mở rộng v0.5.2 dựa trên `main`.
+- **Data Portal…** được thêm vào ribbon hai editions; người dùng tự đăng nhập.
+- **Nhập EDZ…** có UI hai cột đồng bộ với Xuất EDZ và lưới **Tên | Hãng | Mã hàng**.
+- `Oumijia.EplanUi` (UI dùng chung), `Oumijia.EdzReader` (local EDZ parser) và
+  `Oumijia.PortalHost` (WebView2) là dependency chủ đích; installer copy chúng cạnh Add-in/Script.
+- Build Add-in với EPLAN Platform 2022.0.3 thành công; Script C# 5 compile-check thành công.
+- Chưa UAT trên máy công ty EPLAN 2026 hoặc xác nhận end-to-end Data Portal; không bypass license.
 
-✅ **Chạy được & đã kiểm chứng:**
-- **Bản ADD-IN** (cho EPLAN ≤2023 / máy có API license): verified trên EPLAN Platform 2022.0.3 —
-  nạp, ribbon, import/export, self-test, diag đầy đủ (bao gồm import smoke test với scheme thật)
-- **Bản SCRIPT** (không cần API license — cho EPLAN mới chặn add-in chưa ký): người dùng đã kiểm chứng
-  trên EPLAN 2026.0.3 (đọc 552 part, xuất EDZ OK); cơ chế đăng ký + loader tự nạp đã kiểm chứng trên 2022 (R18)
-- Fix **nhập EDZ** (field-mapping scheme) — `IMPORT SMOKE OK (scheme='Standardvorgabe EPLAN')`
-- Fix **đích xuất** (chỉ chọn thư mục + tên tự động theo mã sản phẩm + xem trước + ghi đè + nhớ thư mục)
-- **Installer thông minh** tự chọn bản phù hợp + gỡ cài 1 lệnh
-
-**v0.5.1:** cây chọn part dùng checkbox native trong cả Add-in và Script Edition.
-Các kết quả kiểm chứng bên trên là lịch sử của bản nền; thao tác khôi phục source không thay thế kiểm thử bản cài trong EPLAN.
+✅ **Đã có trên source:**
+- Nhập EDZ preview EDZ cục bộ; lỗi file không block nhập.
+- Xuất EDZ giữ nguyên tree checkbox native và loại bản ghi.
+- Import chuyển EDZ tải về bằng cùng dialog.
+- ZIP/local build có đủ dependencies; installer thông minh giữ Add-in→Script fallback.
 
 ## 3. Bản đồ repo
 
 ```
-src/Oumijia.EplanAddIn/           net48, x64 — ZERO dependency ngoài EPLAN API + BCL
-  AddIn.cs                        IEplAddIn: OnRegister/OnUnregister/OnInit/OnInitGui/OnExit
+src/Oumijia.EplanAddIn/           ribbon + actions Add-in
+src/Oumijia.EplanUi/              net48/x64 — UI dùng chung
+src/Oumijia.EdzReader/            net48/x64 — đọc cục bộ metadata EDZ
+src/Oumijia.PortalHost/           net48/x64 — Data Portal WebView2
+  AddIn.cs                        IEplAddIn: ribbon Nhập/Xuất/Data Portal/Menu bar
   Actions/
-    ImportEdzAction.cs            "OumijiaImportEdz"  (21) — mở ImportEdzForm
-    ExportEdzAction.cs            "OumijiaExportEdz"  (22) — mở ExportEdzForm
-    SelfTestAction.cs             "OumijiaSelfTest"   (23) — ghi SELFTEST OK vào addin.log
-    DiagPartsAction.cs            "OumijiaDiagParts"  (24) — chẩn đoán headless DB + smoke export
-  Ui/
-    ImportEdzForm.cs              chọn file/thư mục + chế độ nhập + log
-    ExportEdzForm.cs              dialog xuất v2: cây nhóm + tick + tìm kiếm + xuất
-    PartsTreeModel.cs             PartEntry/PartInfo (đọc chuỗi hiển thị) + PartsTreeModel (dựng cây)
-  AddinLog.cs / AddinCsvLog.cs    log %APPDATA%\Tool Oumijia\logs\
+    ImportEdzAction.cs            "OumijiaImportEdz"  (21)
+    ExportEdzAction.cs            "OumijiaExportEdz"  (22)
+    SelfTestAction.cs             "OumijiaSelfTest"   (23)
+    DiagPartsAction.cs            "OumijiaDiagParts"  (24)
+    DataPortalAction.cs           "OumijiaDataPortal"  (25)
+src/Oumijia.EplanUi/Ui/
+    ImportEdzForm.cs              preview EDZ + nhập batch
+    ExportEdzForm.cs              dialog xuất v2
+    PartsTreeModel.cs             PartEntry/PartInfo + PartsTreeModel
+    ImportPartsSupport.cs         tự dò field-mapping scheme
 tools/
   eplan-scripts/
-    OumijiaRegister.cs            ⭐ script đăng ký ADD-IN (chạy TRONG EPLAN qua ExecuteScript)
-    OumijiaReadReg.cs             chẩn đoán: đọc lại giá trị registration thực tế
-    OumijiaRibbonDiag.cs          chẩn đoán: liệt kê ribbon tabs + commands
-  script-edition/                 ⭐ bản SCRIPT (C#5): ToolOumijiaScript.cs + OumijiaRegisterScript.cs
-    probe/                        script chẩn đoán (load test / đọc settings / dọn danh sách)
-  install-addin/                  installer bản add-in (nguồn cho gói zip)
-  install-all/                    installer THÔNG MINH (tự chọn bản) — entry point của zip
-  pack.ps1                        đóng gói zip 2 bản (addin\ + script\)
-docs/                             PLAN-v0.3.0, BUILD, INSTALL, USER-GUIDE-vi, ARCHITECTURE, ROADMAP, RELEASING
+    OumijiaRegister.cs            script đăng ký Add-in/ordinal 21–25
+    OumijiaReadReg.cs             chẩn đoán read-back
+  script-edition/                 Script Edition C#5; UI/Portal nạp qua reflection
+  install-addin/                  installer Add-in (copy dependencies)
+  install-all/                    installer thông minh
+  pack.ps1                        đóng gói ZIP 2 editions + component
 ```
 
 ## 4. Lệnh thường dùng
@@ -87,7 +87,7 @@ $bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
   "tools\eplan-scripts\OumijiaRegister.cs"
 
 # Đóng gói release (yêu cầu add-in đã build)
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.5.1
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.5.2
 ```
 
 ## 5. Kiểm thử headless trên máy có EPLAN (recipes đã kiểm chứng)
@@ -161,7 +161,7 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 | R9 | EPLAN instance đang mở không nhận ribbon mới giữa chừng — cần khởi động lại. |
 | R10 | Debug khi add-in "có vẻ đúng mà không load": so `addin.log`, chạy `OumijiaRibbonDiag.cs` + `OumijiaReadReg.cs`, đối chiếu với entry tham chiếu `VEE@ExportConnections` trong `Setting.eod`. |
 | **R11** | ⭐ **Settings giữ NHIỀU GIÁ TRỊ LỊCH SỬ cho cùng key.** Nếu key đã được ghi bởi nguồn khác (vd dialog "API add-ins" của EPLAN với path khác), `SetStringSetting` KHÔNG đổi giá trị mà loader đọc — add-in vẫn nạp bản cũ từ path cũ dù script "OK". **FIX: luôn `DeleteSetting` key trước rồi mới Add+Set (delete-first)** — script hiện tại đã làm vậy + `VERIFY` đọc lại xác nhận. |
-| **R12** | ⭐ **Đọc chuỗi hiển thị property part**: dùng `MDPropertyValue.GetDisplayString().GetStringToDisplay(ISOCode.Language.L_en_US)` — hoạt động cho cả 3 kiểu: enum nhóm ("26" → "PLC"), đa ngôn ngữ ("de_DE@…;en_US@LOGO! 24RC;" → "LOGO! 24RC"), chuỗi thường ("SIE"). `ToString()` trần trả mã số/chuỗi trộn; `ToString(Language)` trả số với thuộc tính enum. Code chuẩn: `Ui/PartsTreeModel.cs` (PartInfo.ReadDisplayText). |
+| **R12** | ⭐ **Đọc chuỗi hiển thị property part**: dùng `MDPropertyValue.GetDisplayString().GetStringToDisplay(ISOCode.Language.L_en_US)` — hoạt động cho cả 3 kiểu: enum nhóm ("26" → "PLC"), đa ngôn ngữ ("de_DE@…;en_US@LOGO! 24RC;" → "LOGO! 24RC"), chuỗi thường ("SIE"). `ToString()` trần trả mã số/chuỗi trộn; `ToString(Language)` trả số với thuộc tính enum. Code chuẩn: `src/Oumijia.EplanUi/Ui/PartsTreeModel.cs` (PartInfo.ReadDisplayText). |
 | **R13** | Property ID: `Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_*` (field type nested, truyền thẳng vào `part.Properties[...]`). Enum nhóm: `MDPartsDatabaseItem.Enums.ProductTopGroup/ProductGroup/ProductSubGroup` (1=Electric, 2=Fluid, 3=Mechanic, 4=Process). Part number cũng có `part.PartNr`; `AdoId` (int) ổn định để key theo part. |
 | **R14** | Đăng ký thủ công qua dialog "API add-ins" của EPLAN (nếu người dùng từng làm) sẽ trỏ vào path người dùng chọn (vd bản giải nén zip) và **đè** lên registration của installer — xử lý bằng R11 (delete-first), không cần đi tìm key. |
 | **R15** | ⭐ **Xuất theo loại bản ghi**: `MDPartsManagement.ExportParts` 15 tham số = (file, converter `"IXPartsImportExportEdz"`, filterScheme `""`) + 6 cặp `{bool, MDObjectFilter}` theo thứ tự: **Parts / Addresses (Customer+Manufacturer/Supplier) / Constructions (= Drilling pattern + `items/contour`) / Terminals (= Connection point pattern) / AccessoryLists / AccessoryPlacements**; filter `null` chấp nhận được. Mapping ĐÃ xác minh bằng giải nén EDZ (EDZ thực chất là **7z container** — `tar`/bsdtar đọc được) đối chiếu số liệu DB. Cảnh báo: chế độ này xuất TOÀN BỘ theo loại (toàn bộ parts của DB demo ≈ 290 MB, accessory lists ≈ 110 MB). |
@@ -171,8 +171,9 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 
 ## 7. Quy ước kỹ thuật
 
-- Add-in: **net48, x64, ZERO dependency ngoài EPLAN API + BCL** (EPLAN load từ shadow-copy —
-  mọi dependency thừa là rủi ro). **Không thêm PackageReference** vào project add-in.
+- Projects dùng net48/x64. Bundled dependencies (`Oumijia.EplanUi`, `Oumijia.EdzReader`,
+  `Oumijia.PortalHost`, SharpCompress/WebView2) là chủ đích; installer phải copy chúng cùng Add-in/Script.
+- Script Edition không compile-time reference WebView2/SharpCompress; nó nạp shared assemblies bằng reflection.
 - **PowerShell scripts trong `tools/` phải là UTF-8 CÓ BOM** (PowerShell 5.1 đọc không BOM theo ANSI
   → vỡ tiếng Việt). Sau khi sửa script, re-apply BOM:
   ```powershell
@@ -181,7 +182,7 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
   ```
 - UI strings: **tiếng Việt**. Docs: VI + EN overview. Commit: **Conventional Commits**. Version: SemVer.
 - Add-in chạy trên **UI thread của EPLAN** — không dùng thread con cho EPLAN API.
-- Log: `%APPDATA%\Tool Oumijia\logs\` (`addin.log`, `register-script.log`, `readreg.log`, `import-*.csv`, `export-*.csv`).
+- Log: `%APPDATA%\Tool Oumijia\logs\` (`addin.log`, `register-script.log`, `readreg.log`, `import-*.csv`, `export-*.csv`, `data-portal-downloads-*.csv`).
 
 ## 8. Ranh giới — KHÔNG làm
 
@@ -192,10 +193,15 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 4. ❌ Không tự ý đổi namespace/thương hiệu (giữ "Tool Oumijia", `Oumijia.*`).
 5. ⚠️ "Parts Management Extension" (nhúng tab vào Parts Management) — API **không chính thức**,
    chỉ làm khi người dùng yêu cầu rõ và chấp nhận rủi ro tương thích.
+6. ❌ Không sửa proxy/hosts/proxy VPN/port để lách license hoặc kiểm tra truy cập Data Portal.
+7. ❌ Không lưu password/cookie WebView2 ra log hoặc vào repo; profile ở `%APPDATA%\Tool Oumijia\WebView2\` chỉ do người dùng quản lý.
 
 ## 9. Việc tiếp theo
 
-Chờ kế hoạch mới do người dùng xác định trên nền v0.5.1. Đối chiếu yêu cầu và kiểm chứng trải nghiệm thực tế trước khi phát hành cập nhật.
+- UAT v0.5.2 trên máy EPLAN được IT cho phép, trước phát hành.
+- Kiểm tra: ribbon 4 nút, Nhập preview EDZ, Xuất EDZ không hồi quy, Portal đăng nhập hợp lệ, .edz tải xong nhập lại database.
+- Hoàn thiện lỗi/xử lý file EDZ và fallback browser theo phản hồi người dùng.
+- Không phát hành Release trước khi người dùng xác nhận kiểm thử thực tế.
 
 ## 10. Phát hành
 

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="945" viewBox="0 0 1680 945" role="img" aria-labelledby="title desc">
+  <title id="title">Tool Oumijia v0.5.2 — Ribbon Tool Oumijia mockup</title>
+  <desc id="desc">EPLAN/Industrial ribbon mockup with Vietnamese labels showing Nhập EDZ, Xuất EDZ, Data Portal, and Menu bar.</desc>
+
+  <defs>
+    <linearGradient id="appbar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#111a2c"/>
+      <stop offset=".65" stop-color="#182942"/>
+      <stop offset="1" stop-color="#1f3b5b"/>
+    </linearGradient>
+    <linearGradient id="ribbonBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f4f6f8"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8f9fb"/>
+    </linearGradient>
+    <linearGradient id="primaryButton" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2877c8"/>
+      <stop offset="1" stop-color="#1d5da1"/>
+    </linearGradient>
+    <linearGradient id="newBadge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e5692c"/>
+      <stop offset="1" stop-color="#d3421f"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0b1e35" flood-opacity=".25"/>
+    </filter>
+  </defs>
+
+  <!-- Desktop context -->
+  <rect width="1680" height="945" fill="#d9dde2"/>
+
+  <!-- EPLAN shell -->
+  <rect x="0" y="0" width="1680" height="945" fill="url(#appbar)"/>
+  <text x="26" y="29" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" fill="#f6f8fb">EPLAN ePULSE</text>
+  <text x="1450" y="29" text-anchor="end" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#aebbd0">Tool Oumijia v0.5.2</text>
+
+  <!-- Quick Access Toolbar -->
+  <g transform="translate(24,48)" fill="none" stroke="#dce5ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 4v13M2.5 11.5 8 17l5.5-5.5"/>
+    <path d="M35 4v13M29.5 11.5 35 17l5.5-5.5" transform="translate(7,0)"/>
+    <path d="M68 4v13M62.5 11.5 68 17l5.5-5.5" transform="translate(8,0)"/>
+  </g>
+
+  <!-- Ribbon tabs -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="15">
+    <text x="102" y="70" fill="#dce5ee">Project</text>
+    <text x="198" y="70" fill="#dce5ee">Design</text>
+    <text x="286" y="70" fill="#dce5ee">Master data</text>
+    <text x="420" y="70" fill="#ffffff">Tool Oumijia</text>
+    <rect x="410" y="77" width="152" height="5" rx="2.5" fill="#54a8f5"/>
+  </g>
+
+  <!-- Ribbon body -->
+  <rect x="0" y="86" width="1680" height="198" fill="url(#ribbonBg)"/>
+  <path d="M0 284 H1680" stroke="#aeb8c4" stroke-width="1"/>
+
+  <!-- Group: Quản lý EDZ -->
+  <g transform="translate(28,108)">
+    <path d="M0 0 V166 M0 166 H650" stroke="#c9d0d8" stroke-width="1.5" fill="none"/>
+    <rect x="0" y="0" width="650" height="30" fill="#173858" opacity=".09"/>
+    <text x="14" y="20" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#173858" letter-spacing=".4">QUẢN LÝ EDZ</text>
+
+    <!-- Button: Nhập EDZ -->
+    <g transform="translate(10,44)">
+      <rect x="0" y="0" width="145" height="108" rx="4" fill="url(#panel)" stroke="#c8d0d9"/>
+      <path d="M29 25h78M40 10v30M52 10v30M64 10v30M76 10v30M88 10v30" stroke="none"/>
+      <path d="M35 25h64l-10 32H45L35 25Z" fill="#e8f0f7" stroke="#173858" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M51 18v18M51 36l-8-8M51 36l8-8" fill="none" stroke="#1d5da1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="42" y="65" width="52" height="17" rx="2" fill="#173858"/>
+      <circle cx="56" cy="73.5" r="2.3" fill="#54a8f5"/>
+      <circle cx="68" cy="73.5" r="2.3" fill="#54a8f5"/>
+      <circle cx="80" cy="73.5" r="2.3" fill="#54a8f5"/>
+      <text x="72.5" y="97" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" fill="#1b2a3a">Nhập EDZ…</text>
+    </g>
+
+    <!-- Button: Xuất EDZ -->
+    <g transform="translate(173,44)">
+      <rect x="0" y="0" width="145" height="108" rx="4" fill="url(#panel)" stroke="#c8d0d9"/>
+      <path d="M35 25h64l-10 32H45L35 25Z" fill="#e8f0f7" stroke="#173858" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M67 36V18M67 18L59 26M67 18l8 8" fill="none" stroke="#1d5da1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="42" y="65" width="52" height="17" rx="2" fill="#d7e5ee" stroke="#849cb4" stroke-width="2"/>
+      <circle cx="56" cy="73.5" r="2.3" fill="#1b2a3a"/>
+      <circle cx="68" cy="73.5" r="2.3" fill="#1b2a3a"/>
+      <circle cx="80" cy="73.5" r="2.3" fill="#1b2a3a"/>
+      <text x="72.5" y="97" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" fill="#1b2a3a">Xuất EDZ…</text>
+    </g>
+
+    <!-- Button: Data Portal (new) -->
+    <g transform="translate(336,44)" filter="url(#softShadow)">
+      <rect x="0" y="0" width="145" height="108" rx="4" fill="#ffffff" stroke="#54a8f5" stroke-width="2.5"/>
+      <rect x="88" y="8" width="42" height="19" rx="9.5" fill="url(#newBadge)"/>
+      <text x="109" y="22" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" font-weight="700" fill="#ffffff">MỚI</text>
+      <circle cx="72.5" cy="38" r="26" fill="#eef6fc" stroke="#173858" stroke-width="3"/>
+      <ellipse cx="72.5" cy="38" rx="13" ry="24" fill="none" stroke="#173858" stroke-width="3"/>
+      <path d="M48 38h49M54 22c9 8 27 8 37 0M54 54c9-8 27-8 37 0" fill="none" stroke="#173858" stroke-width="3" stroke-linecap="round"/>
+      <path d="M59 14l4 7h10l-4-7Z" fill="#54a8f5"/>
+      <text x="72.5" y="97" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#173858">Data Portal…</text>
+    </g>
+
+    <!-- Button: Menu bar -->
+    <g transform="translate(499,44)">
+      <rect x="0" y="0" width="126" height="108" rx="4" fill="url(#panel)" stroke="#c8d0d9"/>
+      <path d="M31 28h56M31 45h56M31 62h56" fill="none" stroke="#173858" stroke-width="6" stroke-linecap="round"/>
+      <text x="63" y="97" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" fill="#1b2a3a">Menu bar</text>
+    </g>
+  </g>
+
+  <!-- Open canvas under ribbon -->
+  <rect x="0" y="284" width="1680" height="661" fill="#f1f2f4"/>
+  <rect x="0" y="284" width="1680" height="24" fill="#dfe3e8"/>
+  <text x="18" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#46505d">project_name.elk  ·  Page: Installation  ·  Parts Management</text>
+
+  <!-- Content grid hint -->
+  <g stroke="#d8dde3" stroke-width="1">
+    <path d="M0 361H1680M0 438H1680M0 515H1680M0 592H1680M0 669H1680M0 746H1680M0 823H1680"/>
+    <path d="M233 284V945M466 284V945M699 284V945M932 284V945M1165 284V945M1398 284V945"/>
+  </g>
+  <g stroke="#c6cdd6" stroke-width="1.5">
+    <path d="M233 300V945M699 300V945M1165 300V945"/>
+  </g>
+  <text x="840" y="480" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="35" font-weight="300" fill="#bac3cc">EPLAN PROJECT CANVAS</text>
+  <text x="840" y="522" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#98a5b1">Ribbon tab v0.5.2: các lệnh EDZ và Data Portal nằm trong “Quản lý EDZ”</text>
+</svg>

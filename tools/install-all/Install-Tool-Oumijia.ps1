@@ -28,6 +28,7 @@ $registerLog = Join-Path $appData "logs\register-script.log"
 $addinLog = Join-Path $appData "logs\addin.log"
 $addinHome = Join-Path $appData "AddIn"
 $scriptHome = Join-Path $appData "Script"
+$portalHome = Join-Path $appData "Portal"
 $addinUnregisterFlag = Join-Path $appData "unregister.flag"
 $scriptUnregisterFlag = Join-Path $appData "script-unregister.flag"
 
@@ -92,7 +93,15 @@ $addinRegister = Join-Path $addinDir "OumijiaRegister.cs"
 if ((Test-Path $addinDll) -and (Test-Path $addinRegister)) {
     Write-Host "[BUOC 1/2] Thu cai ban ADD-IN..."
     New-Item -ItemType Directory -Path $addinHome -Force | Out-Null
-    Copy-Item $addinDll (Join-Path $addinHome "Oumijia.EplAddin.EDZ.dll") -Force
+    Get-ChildItem -LiteralPath $addinDir -Filter '*.dll' -File |
+        Copy-Item -Destination $addinHome -Force
+
+    New-Item -ItemType Directory -Path $portalHome -Force | Out-Null
+    Get-ChildItem -LiteralPath $addinDir -Filter '*.dll' -File |
+        Copy-Item -Destination $portalHome -Force
+    if (Test-Path -LiteralPath (Join-Path $addinDir 'WebView2Loader.dll')) {
+        Copy-Item -LiteralPath (Join-Path $addinDir 'WebView2Loader.dll') -Destination $portalHome -Force
+    }
 
     Remove-Item $addinUnregisterFlag -ErrorAction SilentlyContinue
     $before = Get-LogLength $registerLog
@@ -143,6 +152,22 @@ $destScript = Join-Path $scriptHome "ToolOumijiaScript.cs"
 $destRegister = Join-Path $scriptHome "OumijiaRegisterScript.cs"
 Copy-Item $scriptSource $destScript -Force
 Copy-Item $scriptRegisterSource $destRegister -Force
+
+$portalSource = Join-Path $scriptDir "portal"
+if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll"))) {
+    $portalSource = $addinDir
+}
+if (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll")) {
+    New-Item -ItemType Directory -Path $portalHome -Force | Out-Null
+    Get-ChildItem -LiteralPath $portalSource -Filter '*.dll' -File |
+        Copy-Item -Destination $portalHome -Force
+    if (Test-Path -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll')) {
+        Copy-Item -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll') -Destination $portalHome -Force
+    }
+    Write-Host "[+] Shared runtime: $portalHome"
+} else {
+    throw "Thieu Oumijia.PortalHost.dll/WebView2 trong goi. Hay build lai Add-in va dong goi."
+}
 
 Remove-Item $scriptUnregisterFlag -ErrorAction SilentlyContinue
 $before2 = Get-LogLength $registerLog

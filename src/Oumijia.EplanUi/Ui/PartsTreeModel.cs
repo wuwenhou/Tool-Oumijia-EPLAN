@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using Eplan.EplApi.Base;
 using Eplan.EplApi.MasterData;
 
-namespace Oumijia.EplanAddIn.Ui
+namespace Oumijia.EplanUi
 {
     /// <summary>
     /// Bọc một MDPart với thông tin hiển thị/định vị cây đã đọc sẵn (đọc property đúng 1 lần —
     /// tránh gọi API lặp lại khi lọc/tìm kiếm).
     /// </summary>
-    internal sealed class PartEntry
+    public sealed class PartEntry
     {
         public readonly MDPart Part;
         public readonly string Number;
@@ -81,7 +81,7 @@ namespace Oumijia.EplanAddIn.Ui
     /// 3) chuỗi thường ("SIE").
     /// Không bao giờ ném lỗi — trả chuỗi rỗng nếu không đọc được.
     /// </summary>
-    internal static class PartInfo
+    public static class PartInfo
     {
         public static string ReadText(MDPart part, Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem propertyId)
         {
@@ -203,9 +203,9 @@ namespace Oumijia.EplanAddIn.Ui
     /// Cây nhóm part kiểu navigator EPLAN:
     /// Nhóm sản phẩm (Record type) → nhóm → [phân nhóm] → hãng → part.
     /// </summary>
-    internal sealed class PartsTreeModel
+    public sealed class PartsTreeModel
     {
-        internal sealed class Node
+        public sealed class Node
         {
             public readonly string Name;
             public readonly SortedDictionary<string, Node> Children =
