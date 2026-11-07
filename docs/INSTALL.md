@@ -11,7 +11,7 @@
 5. Installer candidate chỉ cho **Education 2026.0.3 / Script Edition**; bản khác bị từ chối cho đến khi có payload riêng và UAT. Không tự chọn `W3u.exe` đầu tiên. Bản này không thử Add-in trên Education.
 6. Mở EPLAN và kiểm tra ribbon **Tool Oumijia**. Đừng coi cài/headless PASS là GUI PASS.
 
-Ribbon source candidate (khác với ZIP v0.6.0 cũ, chưa duyệt phát hành):
+Ribbon pre-release RC.1 (khác với ZIP v0.6.0 cũ):
 
 ```text
 Quản lý EDZ: Nhập EDZ → Xuất EDZ → Menu bar (xếp dọc)
@@ -22,9 +22,9 @@ Eplan Cloud: bảy nút native, gồm một Data Portal; tab Cloud gốc giữ n
 
 | | **Add-in** | **Script Edition** |
 |---|---|---|
-| Công nghệ | DLL add-in (.NET 48) | EPLAN Scripting (C# 5) |
+| Công nghệ | DLL add-in (.NET Framework 4.8.1 cho API 2026) | EPLAN Scripting (C# 5) |
 | Yêu cầu | API license hoặc EPLAN cho phép DLL chưa ký | Có scripting EPLAN; không cần API license |
-| Phạm vi source candidate | Compile-check 2026, chưa deploy/UAT | GUI UAT Education 2026.0.3; phiên bản khác chưa UAT |
+| Phạm vi pre-release | Build với API 2026 đạt, chưa deploy/UAT runtime | GUI UAT Education 2026.0.3 trước khi đổi version RC; phiên bản khác chưa UAT |
 | Payload của installer candidate | Chưa bật cho target nào | Education 2026.0.3, vẫn cần UAT cài/gỡ headless |
 
 ## Component trong gói

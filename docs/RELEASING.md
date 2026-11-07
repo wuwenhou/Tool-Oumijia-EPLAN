@@ -7,12 +7,12 @@ Quy trình phát hành chuẩn (2 editions — v0.5.0+):
 ```powershell
 git checkout main
 git pull
-# Đảm bảo máy có EPLAN để build add-in + test script (xem docs/BUILD.md)
+# Đảm bảo máy có EPLAN để build đúng API target + test script (xem docs/BUILD.md)
 ```
 
 ## 2. Bump version
 
-- `src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj` — `<Version>X.Y.Z</Version>`
+- Cả ba project trong `src/` — `<Version>X.Y.Z</Version>`
 - `tools/script-edition/ToolOumijiaScript.cs` — hằng số `ScriptVersion = "X.Y.Z-script.1"`
 - `CHANGELOG.md` — thêm mục `[X.Y.Z]` (ngày), cập nhật link refs cuối file
 - `docs/releases/vX.Y.Z.md` — release note (pack.ps1 bắt buộc file này)
@@ -21,7 +21,8 @@ git pull
 
 ```powershell
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
-  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
+  -p:EplanTargetFramework=net481 `
+  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2026.0.3\Bin"
 # + csc-check OumijiaRegister.cs + csc C#5-check ToolOumijiaScript.cs (recipe: docs/BUILD.md)
 # Máy không có .NET SDK: build thủ công bằng csc + AssemblyInfo.cs tạm (docs/BUILD.md)
 ```
@@ -36,8 +37,8 @@ dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
 ## 5. Đóng gói
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
-# -> output\Tool-Oumijia-vX.Y.Z.zip (addin\ + script\ + component dùng chung)
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0-rc.1 -TargetFramework net481
+# -> output\Tool-Oumijia-v0.6.0-rc.1.zip (addin\ + script\ + component dùng chung)
 # -> pack.ps1 phải văng lỗi nếu thiếu: Add-in, UI, EdzReader, SharpCompress
 # -> pack.ps1 lọc bỏ PortalHost/WebView2 còn sót và yêu cầu docs\releases\vX.Y.Z.md
 ```
@@ -72,10 +73,10 @@ git push origin vX.Y.Z
 ```powershell
 gh release create vX.Y.Z "output\Tool-Oumijia-vX.Y.Z.zip" `
   --title "Tool Oumijia (EPLAN) vX.Y.Z" `
-  --notes-file "docs\releases\vX.Y.Z.md"
+  --notes-file "docs\releases\vX.Y.Z.md" --prerelease # RC thử nghiệm; bỏ cờ khi đủ UAT ổn định
 ```
 
-- **docs/releases/vX.Y.Z.md**: tóm tắt thay đổi + mục *Tải về* + **dán SHA-256 của ZIP vào đây**.
+- **docs/releases/vX.Y.Z.md**: tóm tắt thay đổi + mục *Tải về* + **dán SHA-256 sau khi tạo ZIP**; bản notes trong ZIP chưa có hash để tránh vòng lặp.
 - Kiểm tra lại trang Release: asset tải được, notes hiển thị đúng.
 
 ## Quy ước đặt tên

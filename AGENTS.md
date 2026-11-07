@@ -35,7 +35,7 @@ bằng Tool*. v0.6.0 không bypass license/điều khoản; thao tác được p
 - Nhập EDZ dùng cây gói→part và bảng Chi tiết. Bản vá Script Edition đã deploy để UAT
   trên Education 2026.0.3: Data Portal và 7 nút Cloud sao chép command native của EPLAN
   bằng ID tìm theo tên lúc chạy; không mở riêng `DataPortalTabView`. Add-in source đã sửa
-  và compile-check, **chưa deploy Add-in** (máy không có API license; thiếu .NET SDK để build package).
+  và build `net481` với API 2026, **chưa deploy/UAT Add-in** (máy không có API license).
 - `Oumijia.EplanUi` (UI dùng chung) và `Oumijia.EdzReader` (local EDZ parser) là dependency chủ đích;
   installer copy chúng vào shared runtime `%APPDATA%\Tool Oumijia\Portal`.
 - Script Edition pre-release `0.6.0-rc.1-script.1`; Add-in pre-release `0.6.0-rc.1`. GUI UAT trước khi đổi chuỗi version RC; chỉ thay metadata, chưa UAT lại đúng bytes RC.
@@ -46,7 +46,7 @@ bằng Tool*. v0.6.0 không bypass license/điều khoản; thao tác được p
   Nhập/Xuất mở/đóng (không nhập/xuất dữ liệu), Menu bar báo giới hạn. Chưa test sáu nút Cloud còn lại.
 - Smart installer/uninstaller source có `-ListInstalled`/`-TargetW3u`, discovery fixture PASS;
   chỉ Education 2026.0.3 Script candidate có payload được chọn. **Chưa UAT cài/gỡ headless**;
-  Add-in vẫn compile-check, chưa build/deploy mới. Installer riêng từng edition còn chọn W3u đầu tiên.
+  Add-in build `net481` thành công, chưa deploy/UAT runtime. Installer riêng từng edition còn chọn W3u đầu tiên.
 
 ✅ **Đã có trên source:**
 - Nhập EDZ preview EDZ cục bộ; lỗi file không block nhập.
@@ -68,13 +68,13 @@ src/Oumijia.EplanAddIn/           ribbon + actions Add-in
     DiagPartsAction.cs            "OumijiaDiagParts"  (24)
     DataPortalAction.cs           "OumijiaDataPortal"  (25) — wrapper native
     ToggleMainMenuAction.cs       "OumijiaToggleMainMenu" (26)
-src/Oumijia.EplanUi/              net48/x64 — UI dùng chung
+src/Oumijia.EplanUi/              net48 mặc định / net481 RC.1, x64 — UI dùng chung
   Ui/
     ImportEdzForm.cs              preview EDZ + nhập batch
     ExportEdzForm.cs              dialog xuất v2
     PartsTreeModel.cs             PartEntry/PartInfo + PartsTreeModel
     ImportPartsSupport.cs         tự dò field-mapping scheme
-src/Oumijia.EdzReader/            net48/x64 — đọc cục bộ metadata EDZ
+src/Oumijia.EdzReader/            net48 mặc định / net481 RC.1, x64 — đọc cục bộ metadata EDZ
 tools/
   eplan-scripts/
     OumijiaRegister.cs            script đăng ký Add-in/ordinal 21–26
@@ -90,9 +90,10 @@ tools/
 ## 4. Lệnh thường dùng
 
 ```powershell
-# Build add-in (cần máy có EPLAN; tự dò 2022.0.3 hoặc truyền EplanApiDir / EPLAN_API_DIR)
+# Build RC.1 theo API Education 2026.0.3 (không xác nhận DLL tương thích bản khác)
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
-  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
+  -p:EplanTargetFramework=net481 `
+  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2026.0.3\Bin"
 
 # Kiểm tra compile script đăng ký TRƯỚC khi deploy (rất quan trọng — xem R5)
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
@@ -104,7 +105,7 @@ $bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
   "tools\eplan-scripts\OumijiaRegister.cs"
 
 # Đóng gói release (yêu cầu add-in đã build + docs\releases\vX.Y.Z.md)
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0-rc.1 -TargetFramework net481
 ```
 
 ## 5. Kiểm thử headless trên máy có EPLAN (recipes đã kiểm chứng)
@@ -190,7 +191,7 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 
 ## 7. Quy ước kỹ thuật
 
-- Projects dùng net48/x64. Bundled dependencies (`Oumijia.EplanUi`, `Oumijia.EdzReader`,
+- Projects dùng net48/x64 mặc định, chuyển cả ba sang net481/x64 qua `-p:EplanTargetFramework=net481` khi build với API EPLAN 2026. Bundled dependencies (`Oumijia.EplanUi`, `Oumijia.EdzReader`,
   SharpCompress + System.*) là chủ đích; installer phải copy chúng vào shared runtime.
 - Script Edition không compile-time reference SharpCompress; nó nạp shared assemblies bằng reflection.
 - Data Portal chỉ dùng UI/action native EPLAN; không tìm action `XDataPortalNavigatorToggle`,
@@ -220,9 +221,10 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 ## 9. Việc tiếp theo
 
 - Ribbon sửa mới đã GUI UAT Script Edition trên Education 2026.0.3; cần test sáu nút Cloud còn lại
-  trong môi trường được phép và build/deploy Add-in trên máy có SDK + API license trước phát hành.
-- Build lại Add-in/shared runtime (DLL `bin\Release` cũ khác hash runtime UI đã UAT), đóng gói rồi
-  test installer/uninstaller headless trên đúng target; đừng dùng installer repo để lấy DLL build cũ.
+  trong môi trường được phép và deploy/UAT Add-in trên máy có API license trước Release ổn định.
+- Build net481 API 2026 thành công, compile-check Script và parser với ZIP giả lập đạt. Cần
+  test installer/uninstaller headless trên đúng target và UAT Add-in trên máy có API license;
+  không coi DLL mới tương đương shared runtime đã GUI UAT trước đó.
 - Import EDZ thật vẫn cần Parts Database thử nghiệm được người dùng xác nhận; không nhập vào DB hiện tại.
 - Xác nhận installer đã dọn sạch PortalHost/WebView2 khỏi `%APPDATA%\Tool Oumijia`.
 - Không phát hành **Release ổn định** trước khi đủ UAT; chỉ cho phép RC pre-release có cảnh báo nếu người dùng chấp thuận rõ.

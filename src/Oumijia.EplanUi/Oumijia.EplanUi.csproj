@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <EplanTargetFramework Condition="'$(EplanTargetFramework)' == ''">net48</EplanTargetFramework>
+    <TargetFramework>$(EplanTargetFramework)</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>

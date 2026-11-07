@@ -10,11 +10,12 @@
 #   addin\  : add-in + shared Oumijia.EplanUi/EdzReader + SharpCompress + installer
 #   script\ : ToolOumijiaScript.cs + OumijiaRegisterScript.cs + shared runtime + installers
 #
-# Yeu cau: add-in da duoc build (src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll).
+# Yeu cau: add-in da duoc build cho dung TargetFramework (net481 voi API EPLAN 2026).
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][string]$Version
+    [Parameter(Mandatory=$true)][string]$Version,
+    [ValidateSet('net48','net481')][string]$TargetFramework = 'net48'
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,11 +27,14 @@ $stageDir = Join-Path $outputDir $stageName
 $zipPath = Join-Path $outputDir "$stageName.zip"
 $releaseNotes = Join-Path $root "docs\releases\v$Version.md"
 if (-not (Test-Path -LiteralPath $releaseNotes -PathType Leaf)) { throw "Thieu release notes: $releaseNotes" }
+if ($Version -eq '0.6.0-rc.1' -and $TargetFramework -ne 'net481') {
+    throw 'RC.1 phai dong goi DLL net481 build voi API EPLAN 2026.0.3 (-TargetFramework net481).'
+}
 if ((Test-Path -LiteralPath $stageDir) -or (Test-Path -LiteralPath $zipPath)) {
     throw "Output $stageName da ton tai; khong ghi de artifact cu. Hay chon version moi hoac kiem tra output thu cong."
 }
 
-$dll = Join-Path $root "src\Oumijia.EplanAddIn\bin\Release\net48\Oumijia.EplAddin.EDZ.dll"
+$dll = Join-Path $root "src\Oumijia.EplanAddIn\bin\Release\$TargetFramework\Oumijia.EplAddin.EDZ.dll"
 if (-not (Test-Path $dll)) {
     throw "Add-in chua duoc build: $dll`nChay: dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release -p:EplanApiDir=`"...`" (xem docs/BUILD.md)"
 }
@@ -99,6 +103,7 @@ $scriptHash = (Get-FileHash (Join-Path $scriptStage "ToolOumijiaScript.cs") -Alg
 @(
     "Tool Oumijia (EPLAN Edition) v$Version"
     "Build date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    "Target framework: $TargetFramework (EPLAN Education 2026.0.3 API for rc.1; other versions not verified)"
     "Add-in DLL version: $dllVersion"
     ""
     "Oumijia.EplAddin.EDZ.dll SHA256:"

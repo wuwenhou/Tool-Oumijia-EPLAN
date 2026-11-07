@@ -16,10 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Ribbon Script/Add-in: nhóm **Quản lý EDZ** là nhóm đầu, đúng ba nút **Nhập EDZ → Xuất EDZ → Menu bar** xếp dọc; dọn nhóm cũ **Nhập EDZ** và Portal trùng trong EDZ, giữ bảy nút native ở nhóm **Eplan Cloud** cùng tab Cloud gốc.
 - Bộ cài candidate từ chối target khác Education 2026.0.3 (Script Edition), từ chối chọn W3u đầu tiên khi có nhiều bản, chặn cài khi EPLAN đang chạy và sao lưu settings/runtime có SHA-256 trước khi ghi. Không dùng ngầm DLL cũ ở `bin\Release` khi cài từ repo. Uninstaller chỉ gỡ đăng ký trong target và **giữ runtime chung**. `pack.ps1` kèm helper và từ chối Add-in DLL cũ hơn source.
+- Build RC.1 chuyển cả ba project sang `net481` khi truyền `-p:EplanTargetFramework=net481` cho API EPLAN 2026.0.3; đồng bộ assembly dependencies SharpCompress để hết cảnh báo xung đột. Gói RC.1 buộc chọn output `net481`.
 
 ### Verification / chưa kiểm thử
 - Script + Add-in compile-check C# 5 PASS với API EPLAN 2026.0.3. Script runtime đã sao lưu/deploy; GUI UAT Education 2026.0.3 đạt ba nút, một Data Portal trong tab Tool, Portal native kéo/đóng/mở lại, Menu bar báo giới hạn và hai form mở/đóng không ghi dữ liệu. Backup 60 file/hash và kết quả chi tiết trong `docs/AGENT-HANDOFF-2026-11-07.md`.
 - Target discovery/selection fixture PASS, list thật chỉ Education 2026.0.3; installer từ chối ghi khi EPLAN đang mở, hash runtime không đổi. **Chưa chạy installer/uninstaller headless thực tế**, chưa deploy/UAT Add-in mới, chưa UAT phiên bản EPLAN khác, sáu nút Cloud khác hay nhập EDZ vào DB test. RC này chỉ dành cho thử nghiệm, không gắn nhãn bản ổn định.
+- Add-in/shared DLL build `net481` với API 2026.0.3 PASS (0 warning/error), parser đọc EDZ ZIP giả lập PASS; 45 file trong gói RC.1 so hash SHA-256 với stage đều khớp. Add-in và bytes Script RC vẫn chưa GUI UAT.
 
 ## [0.6.0] - 2026-11-06 — “Bỏ WebView2, dùng Data Portal native của EPLAN”
 

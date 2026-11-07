@@ -1,28 +1,29 @@
 # Build & Development — Tool Oumijia (EPLAN Edition)
 
-> Source candidate sau v0.6.0 đã GUI UAT Script Edition trên Education 2026.0.3 bằng `RibbonCommandGroup.AddCommandWithId` tìm ID từ tab Eplan Cloud gốc; **không** mở riêng `DataPortalTabView` (thiếu cửa sổ dockable), không có WebView2 của Tool. Add-in source chỉ compile-check. Xem `docs/AGENT-HANDOFF-2026-11-07.md` trước khi build/deploy.
+> Pre-release v0.6.0-rc.1: Script Edition đã GUI UAT trên Education 2026.0.3 bằng `RibbonCommandGroup.AddCommandWithId` tìm ID từ tab Eplan Cloud gốc; **không** mở riêng `DataPortalTabView`, không có WebView2 của Tool. Add-in build được với API 2026 nhưng **chưa UAT runtime**. Xem `docs/AGENT-HANDOFF-2026-11-07.md` trước khi deploy.
 
 ## Yêu cầu
 
 | | |
 |---|---|
 | Hệ điều hành | Windows 10/11 x64 |
-| .NET SDK | 8.0 (build dự án net48) — hoặc dùng csc thủ công, xem bên dưới |
-| EPLAN Platform | **Bắt buộc** để build add-in — đã kiểm chứng với 2022.0.3 và 2026.0.3 |
+| .NET SDK | 8.0 (target `net48` mặc định; `net481` khi build cho API 2026) — hoặc dùng csc chỉ để compile-check |
+| EPLAN Platform | **Bắt buộc** để build add-in — RC này build với API Education 2026.0.3; các phiên bản khác chưa UAT |
 | WebView2 Runtime | Tool không đóng gói/điều khiển; EPLAN native tự quản lý dependency của nó |
 
 ## Build source
 
 ```powershell
-# Add-in + component dùng chung (UI, EDZ reader)
+# RC.1: Add-in + component dùng chung (UI, EDZ reader) theo API EPLAN 2026.0.3
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
-  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
+  -p:EplanTargetFramework=net481 `
+  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2026.0.3\Bin"
 ```
 
 Output chính:
 
 ```text
-src\Oumijia.EplanAddIn\bin\Release\net48\
+src\Oumijia.EplanAddIn\bin\Release\net481\
   Oumijia.EplAddin.EDZ.dll
   Oumijia.EplanUi.dll
   Oumijia.EdzReader.dll
@@ -61,7 +62,7 @@ $root = "src\Oumijia.EplanAddIn"
   "$root\AssemblyInfo.cs" "$root\AddIn.cs" "$root\Actions\*.cs"
 ```
 
-> Build chuẩn vẫn là `dotnet build`. Máy hiện tại chỉ có .NET runtime (không có SDK), nhưng có Roslyn `csc.exe` của Visual Studio 2019 tại `MSBuild\Current\Bin\Roslyn\csc.exe`; dùng nó với `/langversion:7.3` để build `Oumijia.EplanUi` vào staging. `csc.exe` của .NET Framework chỉ hỗ trợ C# 5, phù hợp compile-check Script Edition. Không ghi đè DLL đang deploy trước UAT.
+> Build chuẩn vẫn là `dotnet build` (SDK 8.0.427 đã cài trong thư mục người dùng). `csc.exe` của .NET Framework chỉ hỗ trợ C# 5, phù hợp compile-check Script Edition; không dùng DLL csc-check thay artifact release. Không ghi đè DLL đang deploy khi EPLAN đang mở.
 
 ## Kiến trúc nguồn
 
@@ -102,12 +103,13 @@ Reader phải:
 ## Đóng gói release
 
 ```powershell
-# Build Add-in/component trước
+# Build Add-in/component trước theo đúng API Education 2026.0.3
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
-  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
+  -p:EplanTargetFramework=net481 `
+  -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2026.0.3\Bin"
 
 # Chỉ sau khi build, tài liệu release cho version mới và UAT phù hợp:
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0-rc.1 -TargetFramework net481
 ```
 
 Output:
@@ -126,7 +128,7 @@ Oumijia.EdzReader.dll
 SharpCompress.dll
 ```
 
-Nó cũng lọc bỏ mọi DLL `Oumijia.PortalHost*`, `Microsoft.Web.WebView2*`, `WebView2Loader.dll` còn sót trong output, kèm `EplanTargets.ps1` và từ chối Add-in DLL cũ hơn source. Trên máy hiện tại UI DLL `bin\Release` khác runtime đã UAT: **build mới trước khi pack**.
+Nó cũng lọc bỏ mọi DLL `Oumijia.PortalHost*`, `Microsoft.Web.WebView2*`, `WebView2Loader.dll` còn sót trong output, kèm `EplanTargets.ps1` và từ chối Add-in DLL cũ hơn source. Với RC.1, lệnh pack từ chối `net48`; build `net481` không đồng nghĩa Add-in đã UAT trên EPLAN.
 
 ## Kiểm thử máy thật trước phát hành
 
@@ -162,4 +164,4 @@ Nó cũng lọc bỏ mọi DLL `Oumijia.PortalHost*`, `Microsoft.Web.WebView2*`,
 
 ## Phát hành
 
-Xem [RELEASING.md](RELEASING.md). Không tạo tag/push Release trước khi kiểm thử máy thật đạt.
+Xem [RELEASING.md](RELEASING.md). Chỉ phát hành **pre-release có cảnh báo** theo yêu cầu người dùng; không tạo Release ổn định trước khi đủ UAT máy thật.
