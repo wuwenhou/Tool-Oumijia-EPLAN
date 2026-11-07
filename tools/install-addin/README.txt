@@ -5,14 +5,17 @@
 Add-in "Tool Oumijia" cho EPLAN Electric P8: nhap/xuat goi du lieu
 linh kien EDZ (file .edz) truc tiep trong EPLAN — khong can app ngoai.
 
-TINH NANG (ribbon "Tool Oumijia" — 2 nut):
-  - "Nhap EDZ..."  : chon file/thu muc .edz -> NHAP HANG LOAT vao
+TINH NANG (ribbon "Tool Oumijia" — 4 nut):
+  - "Nhap EDZ"     : chon file/thu muc .edz -> NHAP HANG LOAT vao
                      Parts Database (API chinh thuc EPLAN; 3 che do:
                      chi them moi / chi cap nhat / cap nhat + them moi;
                      chon cach nhan dang part; log CSV kiem toan).
-  - "Xuat EDZ..."  : chon part bang CAY NHOM kieu navigator EPLAN,
+  - "Xuat EDZ"     : chon part bang CAY NHOM kieu navigator EPLAN,
                      tick chon tung part/nhom, tim kiem nhanh;
                      xuat 1 file .edz hoac moi part 1 file.
+  - "Data Portal"  : mo Data Portal native cua EPLAN (tab Eplan Cloud),
+                     dung phien da dang nhap - KHONG can WebView2.
+  - "Menu bar"     : bat/tat classic menu neu EPLAN con ho tro.
 
 --- CACH CAI (1 buoc) ---
 1. Dam bao EPLAN da TAT (khong bat buoc, nhung nen tat).
@@ -20,9 +23,11 @@ TINH NANG (ribbon "Tool Oumijia" — 2 nut):
 3. Mo EPLAN -> ribbon "Tool Oumijia" xuat hien ngay.
 
 Cai dat se:
-  - Copy Oumijia.EplAddin.EDZ.dll vao %APPDATA%\Tool Oumijia\AddIn
+  - Copy Oumijia.EplAddin.EDZ.dll + shared runtime (EplanUi/EdzReader/
+    SharpCompress) vao %APPDATA%\Tool Oumijia\AddIn
   - Dang ky add-in trong EPLAN bang cach chay an script
     OumijiaRegister.cs (EPLAN tu khoi dong, dang ky, roi tu thoat)
+  - Don DLL PortalHost/WebView2 con sot tu ban 0.5.x
   - Khong can quyen Administrator, khong dung gi toi license EPLAN
 
 --- GO CAI DAT ---
@@ -38,6 +43,8 @@ Dang ky thu cong trong 30 giay:
 - EPLAN Platform 2022 tro len (x64).
   Da kiem chung day du tren EPLAN Platform 2022.0.3.
 - Windows 10/11.
+- Khong can WebView2 Runtime. Neu nut Data Portal khong mo duoc,
+  mo truc tiep Eplan Cloud > Data Portal trong EPLAN.
 
 --- GHI CHU KY THUAT ---
 - Registration duoc luu trong EPLAN settings (pham vi STATION):

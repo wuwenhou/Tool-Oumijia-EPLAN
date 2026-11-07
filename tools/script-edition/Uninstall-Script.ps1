@@ -76,6 +76,17 @@ if (Test-Path $portalHome) {
     Write-Host "[+] Da xoa shared runtime."
 }
 
+# v0.6.0: xoa ban script 0.5.0 con sot
+$legacyDir = Join-Path $env:APPDATA "Tool Oumijia\Scripts"
+$legacyScript = Join-Path $legacyDir "ToolOumijia.cs"
+if (Test-Path -LiteralPath $legacyScript) {
+    Remove-Item -LiteralPath $legacyScript -Force -ErrorAction SilentlyContinue
+    if ((Get-ChildItem -LiteralPath $legacyDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
+        Remove-Item -LiteralPath $legacyDir -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host "[+] Da xoa script cu Scripts\ToolOumijia.cs"
+}
+
 if ($ok) {
     Write-Host "[OK] Da go dang ky Script Edition."
 } else {

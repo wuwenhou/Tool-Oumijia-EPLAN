@@ -19,16 +19,12 @@ namespace Oumijia.EplanUi
         private const MDPartsManagement.ImportIdentifier FixedIdentifier = MDPartsManagement.ImportIdentifier.PartNumber;
         private const bool FixedAdditionalLanguage = false;
 
-        private readonly ListBox _fileList = new ListBox();
+        private readonly TreeView _tree = new TreeView();
         private readonly TextBox _log = new TextBox();
         private readonly Button _startButton = new Button();
         private readonly SplitContainer _split = new SplitContainer();
-        private readonly Label _detailTitle = new Label();
-        private readonly Label _detailFile = new Label();
-        private readonly Label _detailSummary = new Label();
-        private readonly Label _detailStatus = new Label();
-        private readonly ListView _parts = new ListView();
-        private readonly Label _selectedPart = new Label();
+        private readonly Label _detailsHeader = new Label();
+        private readonly ListView _details = new ListView();
         private readonly Label _status = new Label();
         private readonly Dictionary<string, ImportItem> _items =
             new Dictionary<string, ImportItem>(StringComparer.OrdinalIgnoreCase);
@@ -76,14 +72,15 @@ namespace Oumijia.EplanUi
             btnAddFiles.Click += OnAddFilesClicked;
             Button btnAddFolder = new Button { Text = "Thêm thư mục…", Width = 124, Height = 28 };
             btnAddFolder.Click += OnAddFolderClicked;
-            Button btnRemove = new Button { Text = "Xóa mục chọn", Width = 112, Height = 28 };
+            Button btnRemove = new Button { Text = "Xóa gói chọn", Width = 112, Height = 28 };
             btnRemove.Click += OnRemoveClicked;
             Button btnClear = new Button { Text = "Xóa hết", Width = 82, Height = 28 };
             btnClear.Click += delegate
             {
-                _fileList.Items.Clear();
+                _tree.Nodes.Clear();
                 _items.Clear();
-                RefreshDetails();
+                ShowDetails(null);
+                UpdateCount();
                 Log("Đã xóa toàn bộ danh sách.");
             };
 
@@ -104,88 +101,53 @@ namespace Oumijia.EplanUi
             topPanel.Controls.Add(buttonFlow);
             topPanel.Controls.Add(label);
 
-            _fileList.Dock = DockStyle.Fill;
-            _fileList.SelectionMode = SelectionMode.MultiExtended;
-            _fileList.HorizontalScrollbar = true;
-            _fileList.BorderStyle = BorderStyle.FixedSingle;
-            _fileList.SelectedIndexChanged += delegate { RefreshDetails(); };
+            _tree.Dock = DockStyle.Fill;
+            _tree.BorderStyle = BorderStyle.FixedSingle;
+            _tree.HideSelection = false;
+            _tree.ShowLines = true;
+            _tree.ShowRootLines = true;
+            _tree.ItemHeight = 22;
+            _tree.AfterSelect += delegate (object sender, TreeViewEventArgs args) { ShowDetails(args.Node); };
 
             Panel listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 8, 4, 8) };
             Label listCaption = new Label
             {
-                Text = "Danh sách gói EDZ",
+                Text = "Gói EDZ → part (chọn part để xem chi tiết)",
                 Dock = DockStyle.Top,
                 Height = 24,
                 Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(23, 56, 88)
             };
-            listPanel.Controls.Add(_fileList);
+            listPanel.Controls.Add(_tree);
             listPanel.Controls.Add(listCaption);
 
             Panel detailPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8, 8, 10, 8) };
-            _detailTitle.Dock = DockStyle.Top;
-            _detailTitle.Height = 24;
-            _detailTitle.Padding = new Padding(2, 3, 0, 0);
-            _detailTitle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            _detailTitle.Text = "Chi tiết gói EDZ";
+            _detailsHeader.Dock = DockStyle.Top;
+            _detailsHeader.Height = 24;
+            _detailsHeader.Padding = new Padding(4, 3, 0, 0);
+            _detailsHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _detailsHeader.Text = "Chi tiết";
 
-            _detailFile.Dock = DockStyle.Top;
-            _detailFile.Height = 42;
-            _detailFile.Padding = new Padding(2, 1, 0, 0);
-            _detailFile.AutoEllipsis = true;
-            _detailFile.ForeColor = Color.FromArgb(23, 56, 88);
+            _details.Dock = DockStyle.Fill;
+            _details.View = View.Details;
+            _details.FullRowSelect = true;
+            _details.MultiSelect = false;
+            _details.HideSelection = false;
+            _details.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            _details.Columns.Add("Thuộc tính", 190);
+            _details.Columns.Add("Giá trị", 320);
+            _details.DoubleClick += OnDetailsDoubleClick;
 
-            _detailSummary.Dock = DockStyle.Top;
-            _detailSummary.Height = 24;
-            _detailSummary.Padding = new Padding(2, 1, 0, 0);
-            _detailSummary.ForeColor = Color.DimGray;
-
-            _detailStatus.Dock = DockStyle.Top;
-            _detailStatus.Height = 24;
-            _detailStatus.Padding = new Padding(2, 2, 0, 0);
-            _detailStatus.ForeColor = Color.FromArgb(23, 56, 88);
-
-            Label gridCaption = new Label
-            {
-                Text = "Part trong EDZ · Tên | Hãng | Mã hàng",
-                Dock = DockStyle.Top,
-                Height = 24,
-                Padding = new Padding(2, 4, 0, 0),
-                ForeColor = Color.DimGray,
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold)
-            };
-
-            _parts.Dock = DockStyle.Fill;
-            _parts.View = View.Details;
-            _parts.FullRowSelect = true;
-            _parts.GridLines = true;
-            _parts.MultiSelect = false;
-            _parts.HideSelection = false;
-            _parts.Columns.Add("Tên thiết bị", 190);
-            _parts.Columns.Add("Hãng", 100);
-            _parts.Columns.Add("Mã hàng", 150);
-            _parts.SelectedIndexChanged += OnSelectedPartChanged;
-            _parts.Resize += delegate { AdjustGridColumns(); };
-
-            _selectedPart.Dock = DockStyle.Bottom;
-            _selectedPart.Height = 22;
-            _selectedPart.Padding = new Padding(2, 2, 0, 0);
-            _selectedPart.ForeColor = Color.DimGray;
-            _selectedPart.Text = "Chọn một dòng để xem part.";
-
-            detailPanel.Controls.Add(_parts);
-            detailPanel.Controls.Add(_selectedPart);
-            detailPanel.Controls.Add(gridCaption);
-            detailPanel.Controls.Add(_detailStatus);
-            detailPanel.Controls.Add(_detailSummary);
-            detailPanel.Controls.Add(_detailFile);
-            detailPanel.Controls.Add(_detailTitle);
+            detailPanel.Controls.Add(_details);
+            detailPanel.Controls.Add(_detailsHeader);
 
             _split.Dock = DockStyle.Fill;
             _split.Panel1.Controls.Add(listPanel);
             _split.Panel2.Controls.Add(detailPanel);
             _split.Orientation = Orientation.Vertical;
             _split.FixedPanel = FixedPanel.None;
+            _split.Panel2.Resize += delegate { AdjustDetailsColumns(); };
+            _split.SplitterMoved += delegate { AdjustDetailsColumns(); };
 
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 190 };
 
@@ -238,10 +200,11 @@ namespace Oumijia.EplanUi
             {
                 _split.Panel1MinSize = 340;
                 _split.Panel2MinSize = 360;
-                _split.SplitterDistance = Math.Max(450, (int)(_split.Width * 0.58));
             }
+            catch { /* giữ mặc định nếu form chưa đủ rộng */ }
+            try { _split.SplitterDistance = Math.Max(380, (int)(_split.Width * 0.54)); }
             catch { /* giữ mặc định */ }
-            AdjustGridColumns();
+            AdjustDetailsColumns();
         }
 
         private static float ConsolasFontSize()
@@ -274,16 +237,16 @@ namespace Oumijia.EplanUi
 
         private void OnRemoveClicked(object sender, EventArgs e)
         {
-            List<string> remove = new List<string>();
-            foreach (object item in _fileList.SelectedItems)
-            {
-                string path = item == null ? null : item.ToString();
-                if (!String.IsNullOrWhiteSpace(path)) remove.Add(path);
-            }
-            foreach (string path in remove) _items.Remove(path);
-            foreach (string path in remove) _fileList.Items.Remove(path);
-            Log("Đã xóa " + remove.Count + " mục.");
-            RefreshDetails();
+            TreeNode selected = _tree.SelectedNode;
+            if (selected == null) return;
+            TreeNode packageNode = selected.Parent ?? selected;
+            ImportItem item = packageNode.Tag as ImportItem;
+            if (item == null) return;
+            _tree.Nodes.Remove(packageNode);
+            _items.Remove(item.Path);
+            Log("Đã xóa gói " + Path.GetFileName(item.Path) + ".");
+            ShowDetails(_tree.SelectedNode);
+            UpdateCount();
         }
 
         private void AddDistinct(IEnumerable<string> files)
@@ -297,7 +260,10 @@ namespace Oumijia.EplanUi
                 {
                     ImportItem item = new ImportItem(file);
                     _items[file] = item;
-                    _fileList.Items.Add(file);
+                    TreeNode node = new TreeNode(Path.GetFileName(file));
+                    node.Tag = item;
+                    item.Node = node;
+                    _tree.Nodes.Add(node);
                     added++;
                 }
                 else failed++;
@@ -308,17 +274,19 @@ namespace Oumijia.EplanUi
             _startButton.Enabled = false;
             try
             {
-                foreach (object selected in _fileList.Items)
+                foreach (TreeNode node in _tree.Nodes)
                 {
-                    if (!(selected is string selectedPath) || !_items.ContainsKey(selectedPath) || _items[selectedPath].PreviewLoaded) continue;
-                    ReadPreview(_items[selectedPath]);
+                    ImportItem item = node.Tag as ImportItem;
+                    if (item != null && !item.PreviewLoaded) ReadPreview(item);
                 }
             }
             finally
             {
                 UseWaitCursor = false;
                 UpdateCount();
-                RefreshDetails();
+                if (_tree.SelectedNode == null && _tree.Nodes.Count > 0)
+                    _tree.SelectedNode = _tree.Nodes[0];
+                ShowDetails(_tree.SelectedNode);
             }
         }
 
@@ -337,75 +305,158 @@ namespace Oumijia.EplanUi
                 item.Status = "Không đọc được preview";
                 item.Info = null;
             }
+            RefreshPackageNode(item);
         }
 
-        private void RefreshDetails()
+        private void RefreshPackageNode(ImportItem item)
         {
-            string selectedPath = _fileList.SelectedItem == null ? null : _fileList.SelectedItem.ToString();
-            ImportItem item;
-            _parts.BeginUpdate();
+            TreeNode node = item.Node;
+            if (node == null) return;
+            node.Nodes.Clear();
+            node.Text = Path.GetFileName(item.Path) + (item.Error != null ? " [Lỗi preview]" :
+                item.Info != null ? " (" + item.Info.Parts.Count + " part)" : "");
+            if (item.Info == null) return;
+            foreach (EdzPartInfo part in item.Info.Parts)
+            {
+                string label = FirstValue(part.Designation, part.PartNumber, part.TypeNumber,
+                    part.OrderNumber, part.SourceXmlEntry);
+                TreeNode partNode = new TreeNode(OrEmpty(label));
+                partNode.Tag = part;
+                node.Nodes.Add(partNode);
+            }
+        }
+
+        private void ShowDetails(TreeNode node)
+        {
+            _details.BeginUpdate();
             try
             {
-                _parts.Items.Clear();
-                if (selectedPath == null || !_items.TryGetValue(selectedPath, out item))
+                _details.Items.Clear();
+                _detailsHeader.Text = "Chi tiết";
+                if (node == null) return;
+
+                ImportItem item = node.Tag as ImportItem;
+                if (item != null)
                 {
-                    _detailTitle.Text = "Chi tiết gói EDZ";
-                    _detailFile.Text = "Chọn một file trong danh sách.";
-                    _detailSummary.Text = "Tên · Hãng · Mã hàng được lấy cục bộ từ EDZ.";
-                    _detailStatus.Text = "Chưa có file được chọn.";
-                    _detailStatus.ForeColor = Color.DimGray;
-                    _selectedPart.Text = "Chọn một dòng để xem part.";
+                    AddDetail("Tên gói EDZ", Path.GetFileName(item.Path));
+                    AddDetail("Đường dẫn", item.Path);
+                    AddDetail("Kích thước", item.LastWrite == DateTime.MinValue ? null : ByteSize(item.FileSize));
+                    AddDetail("Sửa đổi cuối", item.LastWrite == DateTime.MinValue ? null : item.LastWrite.ToString("dd/MM/yyyy HH:mm"));
+                    AddDetail("Định dạng", item.Info == null ? null : item.Info.ContainerKind);
+                    AddDetail("Số part preview", item.Info == null ? null : item.Info.Parts.Count.ToString());
+                    AddDetail("Trạng thái", item.Status);
+                    AddDetail("Lỗi preview", item.Error);
                     return;
                 }
 
-                _detailTitle.Text = "Chi tiết: " + Path.GetFileName(item.Path);
-                _detailFile.Text = item.Path;
-                string size = ByteSize(item.FileSize);
-                _detailSummary.Text = size + " · Sửa: " + item.LastWrite.ToString("dd/MM/yyyy HH:mm");
-                if (item.Info != null)
-                {
-                    _detailStatus.Text = String.Format("Sẵn sàng · {0} part · {1}", item.Info.Parts.Count, item.Info.ContainerKind.ToUpperInvariant());
-                    _detailStatus.ForeColor = Color.FromArgb(20, 104, 73);
-                    foreach (EdzPartInfo part in item.Info.Parts.Take(500))
-                    {
-                        ListViewItem line = new ListViewItem(OrEmpty(part.Designation ?? part.SourceXmlEntry));
-                        line.SubItems.Add(OrEmpty(part.Manufacturer));
-                        line.SubItems.Add(OrEmpty(part.PartNumber ?? part.TypeNumber ?? part.OrderNumber));
-                        _parts.Items.Add(line);
-                    }
-                }
-                else
-                {
-                    _detailStatus.Text = "Không đọc được preview";
-                    _detailStatus.ForeColor = Color.FromArgb(167, 73, 31);
-                    if (!String.IsNullOrWhiteSpace(item.Error))
-                        _detailSummary.Text += "\r\nLỗi: " + item.Error;
-                }
-                AdjustGridColumns();
+                EdzPartInfo partInfo = node.Tag as EdzPartInfo;
+                if (partInfo != null) ShowPartDetails(partInfo);
             }
             finally
             {
-                _parts.EndUpdate();
+                _details.EndUpdate();
             }
         }
 
-        private void AdjustGridColumns()
+        private void ShowPartDetails(EdzPartInfo part)
         {
-            if (_parts.Columns.Count < 3 || _parts.ClientSize.Width <= 0) return;
-            int third = Math.Max(90, (_parts.ClientSize.Width - 22) / 3);
-            _parts.Columns[0].Width = third + 40;
-            _parts.Columns[1].Width = Math.Max(96, third - 18);
-            _parts.Columns[2].Width = Math.Max(120, _parts.ClientSize.Width - _parts.Columns[0].Width - _parts.Columns[1].Width - 26);
+            AddDetail("Mã hàng (Part number)", part.PartNumber);
+            AddDetail("Số bản (Type number)", part.TypeNumber);
+            AddDetail("Số đặt hàng (Order number)", part.OrderNumber);
+            AddDetail("ERP number", ReadProperty(part, "ARTICLE_ERPNR", "ERP_NUMBER", "ERPNR"));
+            AddDetail("Hãng (Manufacturer)", CombineCodeAndName(part.Manufacturer,
+                ReadProperty(part, "ARTICLE_MANUFACTURER_NAME")));
+            AddDetail("Nhà cung cấp (Supplier)", CombineCodeAndName(
+                ReadProperty(part, "ARTICLE_SUPPLIER"), ReadProperty(part, "ARTICLE_SUPPLIER_NAME")));
+            AddDetail("Nhóm sản phẩm", part.ProductGroup);
+            AddDetail("Tên 1 (Designation 1)", part.Designation);
+            AddDetail("Tên 2 (Designation 2)", ReadProperty(part, "ARTICLE_DESCR2", "DESIGNATION2"));
+            AddDetail("Tên 3 (Designation 3)", ReadProperty(part, "ARTICLE_DESCR3", "DESIGNATION3"));
+            AddDetail("Mô tả (Description)", ReadProperty(part, "ARTICLE_NOTE", "NOTE"));
+            AddDetail("Văn bản bổ sung", ReadProperty(part, "ARTICLE_ADDITIONALTEXT", "ADDITIONALTEXT"));
+            AddDetail("eCl@ss", FirstValue(part.EClassCode, ReadProperty(part, "PART_ECLASS")));
+            AddDetail("Mã nhận dạng (EAN)",
+                (FirstValue(ReadProperty(part, "ARTICLE_IDENTTYPE"), "") + " " +
+                 FirstValue(ReadProperty(part, "ARTICLE_IDENTCODE", "EAN"), "")).Trim());
+            AddDetail("Macro ký hiệu (schematic)", ReadProperty(part, "ARTICLE_GROUPSYMBOLMACRO"));
+            AddDetail("Macro đồ họa (graphical)", ReadProperty(part, "ARTICLE_MACRO"));
+            AddDetail("Kích thước R×C×S (mm)", ComposeDimensions(part));
+            AddDetail("Ngày tạo", ReadProperty(part, "PART_CREATE_DATE"));
+            AddDetail("Người tạo", ReadProperty(part, "PART_CREATE_USER"));
+            AddDetail("Sửa đổi cuối", ReadProperty(part, "PART_LASTCHANGE_DATE"));
+            AddDetail("Người sửa cuối", ReadProperty(part, "PART_LASTCHANGE_USER"));
         }
 
-        private void OnSelectedPartChanged(object sender, EventArgs e)
+        private static string ComposeDimensions(EdzPartInfo part)
         {
-            if (_parts.SelectedItems.Count != 1) return;
-            ListViewItem line = _parts.SelectedItems[0];
-            _selectedPart.Text = String.Format("{0} — {1} — {2}",
-                line.SubItems.Count > 0 ? line.SubItems[0].Text : String.Empty,
-                line.SubItems.Count > 1 ? line.SubItems[1].Text : String.Empty,
-                line.SubItems.Count > 2 ? line.SubItems[2].Text : String.Empty);
+            List<string> values = new List<string>();
+            foreach (string key in new[] { "ARTICLE_WIDTH", "ARTICLE_HEIGHT", "ARTICLE_DEPTH" })
+            {
+                string value = ReadProperty(part, key);
+                if (!String.IsNullOrWhiteSpace(value)) values.Add(value);
+            }
+            return String.Join(" × ", values);
+        }
+
+        private static string ReadProperty(EdzPartInfo part, params string[] aliases)
+        {
+            if (part == null || part.Properties == null) return null;
+            foreach (string alias in aliases)
+            {
+                string value;
+                if (part.Properties.TryGetValue(alias, out value) && !String.IsNullOrWhiteSpace(value)) return value;
+                string normalized = NormalizeKey(alias);
+                if (part.Properties.TryGetValue(normalized, out value) && !String.IsNullOrWhiteSpace(value)) return value;
+                if (part.Properties.TryGetValue("P_" + alias, out value) && !String.IsNullOrWhiteSpace(value)) return value;
+                if (part.Properties.TryGetValue("P" + normalized, out value) && !String.IsNullOrWhiteSpace(value)) return value;
+            }
+            return null;
+        }
+
+        private static string NormalizeKey(string key)
+        {
+            return new string(key.Where(Char.IsLetterOrDigit).Select(Char.ToUpperInvariant).ToArray());
+        }
+
+        private static string FirstValue(params string[] values)
+        {
+            foreach (string value in values)
+                if (!String.IsNullOrWhiteSpace(value)) return value;
+            return null;
+        }
+
+        private static string CombineCodeAndName(string code, string name)
+        {
+            if (String.IsNullOrWhiteSpace(code)) return name;
+            if (String.IsNullOrWhiteSpace(name) ||
+                String.Equals(code, name, StringComparison.OrdinalIgnoreCase)) return code;
+            return code + " (" + name + ")";
+        }
+
+        private void AddDetail(string name, string value)
+        {
+            ListViewItem row = new ListViewItem(name);
+            row.SubItems.Add(OrEmpty(value));
+            _details.Items.Add(row);
+        }
+
+        private void AdjustDetailsColumns()
+        {
+            try
+            {
+                if (_details.Columns.Count >= 2 && _details.ClientSize.Width > 0)
+                    _details.Columns[1].Width = Math.Max(120, _details.ClientSize.Width - _details.Columns[0].Width - 26);
+            }
+            catch { /* giữ kích thước mặc định */ }
+        }
+
+        private void OnDetailsDoubleClick(object sender, EventArgs e)
+        {
+            if (_details.SelectedItems.Count == 0 || _details.SelectedItems[0].SubItems.Count < 2) return;
+            string value = _details.SelectedItems[0].SubItems[1].Text;
+            if (String.IsNullOrEmpty(value) || value == "—") return;
+            try { Clipboard.SetText(value); Log("Đã copy giá trị vào clipboard."); }
+            catch (Exception ex) { Log("Không copy được: " + ex.Message); }
         }
 
         private void UpdateCount()
@@ -502,6 +553,7 @@ namespace Oumijia.EplanUi
             public string Error;
             public bool PreviewLoaded;
             public string Status;
+            public TreeNode Node;
 
             public ImportItem(string path)
             {

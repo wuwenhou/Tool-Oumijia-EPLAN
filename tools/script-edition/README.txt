@@ -7,9 +7,12 @@ Ban SCRIPT cua Tool Oumijia — dung cho may KHONG co EPLAN API license
 nen khong can license, khong can cai .NET, khong can Administrator.
 
 TINH NANG: giong ban add-in (cung ribbon "Tool Oumijia"):
-  - "Nhap EDZ..."  : batch nhieu goi .edz vao Parts Database
-  - "Xuat EDZ..."  : chon part bang cay nhom (nhu navigator EPLAN)
+  - "Nhap EDZ"     : batch nhieu goi .edz vao Parts Database
+  - "Xuat EDZ"     : chon part bang cay nhom (nhu navigator EPLAN)
                      hoac xuat theo loai ban ghi (nhu EPLAN)
+  - "Data Portal"  : mo Data Portal native cua EPLAN (tab Eplan Cloud),
+                     dung phien da dang nhap - KHONG can WebView2
+  - "Menu bar"     : bat/tat classic menu neu EPLAN con ho tro
 
 --- CACH CAI (1 buoc) ---
 1. Chay:   Install-Script.bat
@@ -40,5 +43,9 @@ chon ban phu hop.
     register-script.log (dong [SCRIPT]) = qua trinh dang ky
     addin.log                            = hoat dong script
     import-*.csv / export-*.csv          = nhat ky kiem toan
+
+- Neu nut "Data Portal" bao khong mo duoc: mo truc tiep
+  Eplan Cloud > Data Portal trong EPLAN, roi dung "Nhap EDZ"
+  de nhap file .edz da tai. Khong can WebView2.
 
 Du an: https://github.com/wuwenhou/Tool-Oumijia-EPLAN

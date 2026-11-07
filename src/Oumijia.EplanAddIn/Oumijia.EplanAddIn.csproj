@@ -4,8 +4,9 @@
     EPLAN add-in ("Tool Oumijia" EDZ assistant).
 
     Design rules (do not break):
-      - ZERO third-party / project dependencies: EPLAN loads this DLL from its shadow-copy
-        folder; every extra dependency is a load risk. Only EPLAN API + BCL here.
+      - Only EPLAN API + BCL + the shared Oumijia.EplanUi project: EPLAN loads this DLL
+        from its shadow-copy folder, so avoid new third-party dependencies.
+      - Data Portal and Cloud buttons copy EPLAN's native ribbon commands by runtime ID; no Tool-owned WebView2.
       - Build target net48 + x64 (EPLAN Platform 2022+ is x64 / .NET Framework 4.8.1).
       - Not part of the default solution: build requires EPLAN API assemblies.
 
@@ -23,7 +24,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>Oumijia.EplanAddIn</RootNamespace>
     <AssemblyName>Oumijia.EplAddin.EDZ</AssemblyName>
-    <Version>0.5.2</Version>
+    <Version>0.6.0-rc.1</Version>
     <Authors>wuwenhou</Authors>
     <Company>Tool Oumijia</Company>
     <Product>Tool Oumijia (EPLAN)</Product>
@@ -64,7 +65,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Oumijia.EplanUi\Oumijia.EplanUi.csproj" />
-    <ProjectReference Include="..\Oumijia.PortalHost\Oumijia.PortalHost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

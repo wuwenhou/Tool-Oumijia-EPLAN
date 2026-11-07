@@ -1,10 +1,19 @@
-﻿# Hướng dẫn sử dụng — Tool Oumijia (EPLAN Edition) v0.5.2
+﻿# Hướng dẫn sử dụng — Tool Oumijia (source candidate sau v0.6.0)
 
-Ribbon **Tool Oumijia** có bốn lệnh:
+> Script Edition candidate đã GUI UAT trên Education 2026.0.3 ngày 2026-11-07; **gói phát hành v0.6.0 cũ không chứa các sửa đổi này**. Add-in và bản EPLAN khác chưa UAT runtime. Xem [INSTALL.md](INSTALL.md).
+
+Ribbon **Tool Oumijia** gồm:
 
 ```text
-Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
+Quản lý EDZ: Nhập EDZ → Xuất EDZ → Menu bar (theo cột)
+Eplan Cloud: Eplan Cloud dashboard, Data Portal, Project generation (Free),
+             User management, Parts management (deprecated), Eplan eLearning,
+             Guided Installation (command native EPLAN)
 ```
+
+- **Data Portal**: trong nhóm **Eplan Cloud** của Tool, sao chép command native của EPLAN theo ID tìm lúc chạy; cửa sổ native đã kiểm tra kéo/đóng X/mở lại. Tab Cloud gốc vẫn có Portal.
+- **Menu bar**: nếu EPLAN còn `MfToggleMainMenuAction` thì bật/tắt classic menu; trên EPLAN 2026 action này không còn nên nút sẽ báo rõ thay vì chết lặng (xem §4).
+- Không còn WebView2, không còn nút **Data Portal Web**, không còn profile trình duyệt riêng của Tool.
 
 Cả Add-in và Script Edition dùng cùng giao diện. Cách cài: [INSTALL.md](INSTALL.md).
 
@@ -12,16 +21,11 @@ Cả Add-in và Script Edition dùng cùng giao diện. Cách cài: [INSTALL.md]
 
 ## 1. Nhập EDZ
 
-1. Ribbon **Tool Oumijia → Nhập EDZ…**
+1. Ribbon **Tool Oumijia → Nhập EDZ**
 2. **Thêm tệp…** hoặc **Thêm thư mục…** để gom các gói `.edz`.
-3. Chọn file trong cột trái để xem chi tiết.
-4. Cột phải hiển thị:
-   - tên tệp;
-   - dung lượng và ngày sửa;
-   - số part đọc được;
-   - lưới **Tên thiết bị | Hãng | Mã hàng**.
-   - File EDZ lỗi vẫn được giữ trong hàng đợi; preview bị bỏ qua và lý do được ghi log.
-5. Chọn dòng part trong lưới để focus part. Đây là bước xem trước; không thay đổi clipboard/database.
+3. Chọn gói EDZ hoặc part trong cây bên trái. Nếu cần xóa, **Xóa gói chọn** xóa cả gói chứa part đang chọn.
+4. Bên phải chỉ có **Chi tiết** với bảng `Thuộc tính | Giá trị`: gói hiện đường dẫn/kích thước/trạng thái; part hiện metadata theo các nhãn giống Export. File EDZ lỗi vẫn được giữ trong hàng đợi và có dòng lỗi preview.
+5. Nháy đúp giá trị để copy. Xem trước không thay đổi database; nút nhập xử lý **tất cả** gói trong hàng đợi.
 6. Bấm **NHẬP VÀO PARTS DATABASE ▸** và xác nhận.
 
 Mặc định: **cập nhật part đã có + thêm part mới**, nhận dạng theo **mã hàng**, tự dò field-mapping scheme. Không có tùy chọn mode trong UI để tránh nhập sai.
@@ -36,7 +40,7 @@ Log:
 ## 2. Xuất EDZ
 
 1. Đảm bảo Parts Database đang mở trong EPLAN.
-2. Ribbon **Tool Oumijia → Xuất EDZ…**
+2. Ribbon **Tool Oumijia → Xuất EDZ**
 3. Dùng ô **Tìm** để lọc cây theo mã hàng/tên/hãng.
 4. Tick part/nhóm; tick nhóm để chọn cả nhánh.
 5. Panel bên phải hiển thị chi tiết part hoặc tổng số part của nhóm.
@@ -65,46 +69,40 @@ Chế độ này xuất toàn bộ bản ghi theo loại đã tick; file có th�
 
 ---
 
-## 3. Data Portal — popup đăng nhập
+## 3. Data Portal
 
-1. Ribbon **Tool Oumijia → Data Portal…**
-2. Đăng nhập bằng tài khoản Data Portal hợp lệ.
-3. Trang chính thức mở trong cửa sổ nhúng của Tool.
-4. Chọn thư mục tải phía trên trang.
-5. Tải tài liệu/thiết bị theo quyền account.
-6. File `.edz` tải xong có thể:
-   - giữ trong thư mục đã chọn; hoặc
-   - bấm **Nhập EDZ vừa tải** để mở hộp Nhập với các file đó.
-7. Tài liệu khác (PDF, DOCX, XLSX, ảnh…) được lưu về folder; Tool không tự nhập hoặc sửa.
-8. Nút **Xóa dữ liệu phiên** xóa cookie/cache portal.
+1. Ribbon **Tool Oumijia → Eplan Cloud → Data Portal** (hoặc tab **Eplan Cloud** gốc → Data Portal). Chỉ coi là đạt khi thấy cửa sổ native có title/X.
+2. Dùng phiên EPLAN đã đăng nhập để tìm part, xem chi tiết, Insert Item và tải theo Download list của EPLAN.
+3. Tải `.edz` theo quyền tài khoản.
+4. Mở **Tool Oumijia → Nhập EDZ**, chọn các file `.edz` vừa tải, xem preview rồi nhập vào **database test**.
 
-### Nếu màn hình portal đen/lỗi
+Nếu nút **Data Portal** báo không mở được:
 
-- Kiểm tra máy được IT cho phép kết nối Data Portal.
-- Dùng **Mở ngoài** để mở portal trong trình duyệt.
-- Không sửa proxy/hosts/chứng chỉ để lách kiểm tra license.
-- Không bypass captcha/điều khoản; chỉ tải file bạn có quyền.
+- mở trực tiếp **Eplan Cloud → Data Portal** trong EPLAN;
+- kiểm tra máy được IT cho phép kết nối Data Portal (firewall/proxy/antivirus có thể chặn `dataportal.eplan.com`, `login.eplan.com`, `apps.eplan.com`);
+- xem log `%APPDATA%\Tool Oumijia\logs\addin.log` (probe `Native Cloud ribbon`/retry); không chạy riêng `DataPortalTabView`.
 
-Cookie/cache phiên ở `%APPDATA%\Tool Oumijia\WebView2\`.
+Không sửa proxy/hosts/chứng chỉ để lách kiểm tra license. Không bypass captcha/điều khoản; chỉ tải file bạn có quyền.
 
 ---
 
 ## 4. Menu bar
 
-- Nút **Menu bar** gọi action chính thức `MfToggleMainMenuAction` của EPLAN.
-- Nếu EPLAN không cung cấp action này, thanh menu không thay đổi và trạng thái/log cho biết action không khả dụng.
+- Nút **Menu bar** dò action `MfToggleMainMenuAction` của EPLAN khi tạo ribbon và ghi kết quả vào `addin.log` (dòng `Ribbon probe`).
+- Nếu EPLAN còn action này (các bản cũ), nút gọi trực tiếp action để bật/tắt classic menu.
+- Trên **EPLAN 2026**, action này không còn trong Bin (đã kiểm chứng bằng tìm chuỗi trong `Eplan.EplApi.*.dll`/`*.erx` của 2026.0.3) nên nút chuyển sang action `OumijiaScriptToggleMainMenu` / `OumijiaToggleMainMenu` để **báo rõ** và hướng dẫn dùng ribbon EPLAN (File, Home, Insert, Edit, View, Devices, Connections, Tools, Pre-planning, Master data, Eplan Cloud) thay thế. Tool không giả lập menu của EPLAN.
 
 ---
 
 ## 5. Mẹo sử dụng
 
 - Luôn thử trên **database test** trước khi nhập database chính.
-- EDZ download không nên sao chép thủ công vào Master Data; hãy dùng **Nhập EDZ…**.
+- EDZ tải từ Data Portal của EPLAN không nên sao chép thủ công vào Master Data; hãy dùng **Nhập EDZ**.
 - File `.edz` không đọc được vẫn nhập được — Tool hiển thị trạng thái lỗi riêng.
 - Đừng xin dùng tài khoản công ty ngoài phạm vi được IT cho phép.
 
 ## 6. Ghi / hỗ trợ
 
 - Log: `%APPDATA%\Tool Oumijia\logs\`
-- `data-portal-downloads-*.csv`: lịch sử tải; URL đã bỏ query/fragment.
+- CSV `import-*.csv` / `export-*.csv`: thao tác của Tool; việc tải qua Portal native do EPLAN quản lý.
 - Log không lưu password/cookie; không gửi log công khai nếu chứa dữ liệu nội bộ.

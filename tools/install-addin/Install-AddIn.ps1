@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dll = Join-Path $here "Oumijia.EplAddin.EDZ.dll"
 $registerScript = Join-Path $here "OumijiaRegister.cs"
-$requiredDlls = @('Oumijia.EplAddin.EDZ.dll', 'Oumijia.EplanUi.dll', 'Oumijia.EdzReader.dll', 'Oumijia.PortalHost.dll', 'SharpCompress.dll', 'WebView2Loader.dll')
+$requiredDlls = @('Oumijia.EplAddin.EDZ.dll', 'Oumijia.EplanUi.dll', 'Oumijia.EdzReader.dll', 'SharpCompress.dll')
 $missingBundled = @($requiredDlls | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) })
 if ($missingBundled.Count -gt 0) {
     Write-Host ("[LOI] Thieu dependency: " + ($missingBundled -join ', '))
@@ -63,7 +63,14 @@ if (-not $w3u) {
 Write-Host "[+] EPLAN: $w3u"
 
 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-Get-ChildItem -LiteralPath $here -Filter '*.dll' -File | Copy-Item -Destination $destDir -Force
+Get-ChildItem -LiteralPath $here -Filter '*.dll' -File |
+    Where-Object { $_.Name -notmatch '^(Oumijia\.PortalHost|Microsoft\.Web\.WebView2|WebView2Loader)' } |
+    Copy-Item -Destination $destDir -Force
+$stale = @('Oumijia.PortalHost.dll', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'Microsoft.Web.WebView2.Wpf.dll', 'WebView2Loader.dll')
+foreach ($name in $stale) {
+    $path = Join-Path $destDir $name
+    if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue }
+}
 Write-Host "[+] Add-in bundled DLLs: $destDir"
 
 Remove-Item $flagFile -ErrorAction SilentlyContinue

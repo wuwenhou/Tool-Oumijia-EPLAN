@@ -1,20 +1,21 @@
-﻿# Cài đặt — Tool Oumijia (EPLAN Edition) v0.5.2
+﻿# Cài đặt — Tool Oumijia (EPLAN Edition, pre-release v0.6.0-rc.1)
 
-> Gói gồm Add-in và Script Edition, component dùng chung và installer thông minh tự chọn bản phù hợp.
+> **Pre-release thử nghiệm, không phải bản ổn định.** Source ngày 2026-11-07 đã UAT ribbon/Portal bằng Script Edition trên Education 2026.0.3; installer mới chỉ test discovery/selection, chưa UAT cài/gỡ headless. Gói v0.6.0 cũ không chứa bản vá ribbon này.
 
 ## Cài đặt nhanh
 
-1. Tải `Tool-Oumijia-v0.5.2.zip` khi bản phát hành được duyệt.
+1. Chỉ dùng gói `v0.6.0-rc.1` trên **máy thử nghiệm** chấp nhận rủi ro; không dùng lại ZIP v0.6.0 để có ribbon mới.
 2. Giải nén vào một thư mục bất kỳ.
 3. Đóng mọi cửa sổ EPLAN.
-4. Chạy **`Install-Tool-Oumijia.bat`**.
-5. Installer thử bản Add-in trước; nếu EPLAN chặn DLL thì tự gỡ đăng ký Add-in và chuyển sang Script Edition.
-6. Mở EPLAN và kiểm tra ribbon **Tool Oumijia**.
+4. Chạy `Install-Tool-Oumijia.bat -ListInstalled` để xem các đích. Nếu có nhiều bản EPLAN, gọi `Install-Tool-Oumijia.bat -TargetW3u "C:\Program Files\EPLAN\Education\2026.0.3\Bin\W3u.exe"` (thay bằng đường dẫn được liệt kê).
+5. Installer candidate chỉ cho **Education 2026.0.3 / Script Edition**; bản khác bị từ chối cho đến khi có payload riêng và UAT. Không tự chọn `W3u.exe` đầu tiên. Bản này không thử Add-in trên Education.
+6. Mở EPLAN và kiểm tra ribbon **Tool Oumijia**. Đừng coi cài/headless PASS là GUI PASS.
 
-Ribbon v0.5.2 có đúng bốn lệnh:
+Ribbon source candidate (khác với ZIP v0.6.0 cũ, chưa duyệt phát hành):
 
 ```text
-Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
+Quản lý EDZ: Nhập EDZ → Xuất EDZ → Menu bar (xếp dọc)
+Eplan Cloud: bảy nút native, gồm một Data Portal; tab Cloud gốc giữ nguyên
 ```
 
 ## Hai phiên bản
@@ -23,14 +24,14 @@ Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
 |---|---|---|
 | Công nghệ | DLL add-in (.NET 48) | EPLAN Scripting (C# 5) |
 | Yêu cầu | API license hoặc EPLAN cho phép DLL chưa ký | Có scripting EPLAN; không cần API license |
-| Phù hợp | EPLAN 2022–2023 hoặc máy IT cho phép | EPLAN mới chặn Add-in |
-| Tính năng | Như nhau | Như nhau |
+| Phạm vi source candidate | Compile-check 2026, chưa deploy/UAT | GUI UAT Education 2026.0.3; phiên bản khác chưa UAT |
+| Payload của installer candidate | Chưa bật cho target nào | Education 2026.0.3, vẫn cần UAT cài/gỡ headless |
 
 ## Component trong gói
 
-- `addin\`: Add-in + shared UI/EDZ reader + PortalHost/WebView2 dependencies.
+- `addin\`: Add-in + shared UI/EDZ reader + SharpCompress.
 - `script\`: Script Edition + folder `portal\` (shared runtime).
-- `Install-Tool-Oumijia.bat/.ps1`, installer/uninstaller riêng cho từng edition.
+- `EplanTargets.ps1`, `Install-Tool-Oumijia.bat/.ps1`, `Uninstall-Tool-Oumijia.bat/.ps1` ở gốc gói; các installer riêng từng edition là legacy, không tự chọn target.
 - `docs\`: hướng dẫn người dùng và release note.
 
 ## Yêu cầu hệ thống
@@ -38,40 +39,25 @@ Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
 | | |
 |---|---|
 | OS | Windows 10/11 x64 |
-| EPLAN | Platform 2022 trở lên |
+| EPLAN đã GUI UAT source mới | Education 2026.0.3 / Script Edition; không khẳng định 2022–2025 |
 | Quyền | Không cần Administrator |
-| EPLAN Data Portal | Máy và tài khoản hợp lệ, được IT cho phép |
-| WebView2 | Runtime chính thức của Microsoft; nếu lỗi, dùng nút **Mở ngoài** |
+| EPLAN Data Portal | Máy và tài khoản EPLAN hợp lệ, được IT cho phép |
 
-Không copy `.edz` vào Master Data bằng tay; file thiết bị phải được nhập vào Parts Database bằng chức năng Nhập EDZ.
+Không cần WebView2 Runtime. Không copy `.edz` vào Master Data bằng tay; file thiết bị phải được nhập vào Parts Database bằng chức năng Nhập EDZ.
 
 ## Data Portal
 
-- Nút **Data Portal…** mở portal chính thức trong WebView2.
-- Người dùng tự đăng nhập; Tool không lưu password hoặc tự đăng nhập.
-- Có thể chọn/ghi nhớ thư mục tải.
-- Tài liệu khác chỉ được tải về thư mục đó.
-- `.edz` tải xong có thể chuyển sang **Nhập EDZ…**.
-- Cookie/cache phiên nằm trong `%APPDATA%\Tool Oumijia\WebView2\`; có thể xóa từ cửa sổ Portal.
-
-Nếu portal/WebView2 không mở:
-
-1. nhấn **Thử lại**; hoặc
-2. nhấn **Mở ngoài** để dùng trình duyệt; hoặc
-3. gỡ cài/xóa dữ liệu phiên; hoặc
-4. liên hệ IT/EPLAN để mở kết nối Data Portal hợp lệ.
+- Nút **Data Portal** mở **Data Portal native của EPLAN** (tab **Eplan Cloud**), dùng đúng phiên đã đăng nhập.
+- Không còn WebView2, không còn đăng nhập riêng, không còn profile trình duyệt của Tool.
+- Tải `.edz` theo quyền tài khoản EPLAN.
+- Sau khi tải, mở **Nhập EDZ** của Tool Oumijia và chọn file `.edz` vừa tải.
+- Tool sao chép **command ID native** từ tab Eplan Cloud ở thời điểm chạy, không gọi `XDataPortalNavigatorToggle` hay mở `DataPortalTabView` riêng. Nếu Cloud không sẵn sàng, dùng tab gốc **Eplan Cloud → Data Portal**.
 
 Không tắt/proxy, hosts, SSL hay license để lách Data Portal.
 
 ## Gỡ cài đặt
 
-Chạy **`Uninstall-Tool-Oumijia.bat`**. Script gỡ đăng ký Add-in/Script, xóa:
-
-- `%APPDATA%\Tool Oumijia\AddIn`
-- `%APPDATA%\Tool Oumijia\Script`
-- `%APPDATA%\Tool Oumijia\Portal`
-
-Log và `%APPDATA%\Tool Oumijia\WebView2` không bị xóa trong luồng gỡ mặc định nếu cần giữ profile/audit. Để xóa profile hoàn toàn, dùng nút **Xóa dữ liệu phiên** trong Portal hoặc xóa thủ công thư mục sau khi gỡ Tool.
+Chạy **`Uninstall-Tool-Oumijia.bat -ListInstalled`**, rồi **`Uninstall-Tool-Oumijia.bat -TargetW3u "<đường dẫn đã liệt kê>"`** (có thể bỏ `-TargetW3u` khi chỉ có một đích). Gỡ đăng ký **chỉ đích được chọn**, sao lưu USER/STATION settings có SHA-256; **giữ nguyên** `Script`, `AddIn`, `Portal` và log trong `%APPDATA%\Tool Oumijia` vì bản EPLAN khác có thể đang dùng. Chưa có garbage collector xác minh reference count; dọn tay các file cũ chỉ sau khi xác nhận không còn bản nào dùng.
 
 ## Nhật ký
 
@@ -79,6 +65,5 @@ Log và `%APPDATA%\Tool Oumijia\WebView2` không bị xóa trong luồng gỡ m�
 - `%APPDATA%\Tool Oumijia\logs\register-script.log`
 - `%APPDATA%\Tool Oumijia\logs\import-*.csv`
 - `%APPDATA%\Tool Oumijia\logs\export-*.csv`
-- `%APPDATA%\Tool Oumijia\logs\data-portal-downloads-*.csv`
 
 Không đính kèm log công khai nếu có dữ liệu nội bộ; che token/đường dẫn trước khi gửi issue.

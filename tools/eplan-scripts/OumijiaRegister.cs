@@ -85,6 +85,7 @@ public class OumijiaRegister
                 DeleteAction(settings, "OumijiaSelfTest", 23);
                 DeleteAction(settings, "OumijiaDiagParts", 24);
                 DeleteAction(settings, "OumijiaDataPortal", 25);
+                DeleteAction(settings, "OumijiaToggleMainMenu", 26);
 
                 WriteAction(settings, "OumijiaImportEdz", 21,
                     "Oumijia.EplanAddIn.Actions.ImportEdzAction", dllPath, assemblyFullName, logPath);
@@ -96,6 +97,8 @@ public class OumijiaRegister
                     "Oumijia.EplanAddIn.Actions.DiagPartsAction", dllPath, assemblyFullName, logPath);
                 WriteAction(settings, "OumijiaDataPortal", 25,
                     "Oumijia.EplanAddIn.Actions.DataPortalAction", dllPath, assemblyFullName, logPath);
+                WriteAction(settings, "OumijiaToggleMainMenu", 26,
+                    "Oumijia.EplanAddIn.Actions.ToggleMainMenuAction", dllPath, assemblyFullName, logPath);
 
                 // Đọc lại để tự xác nhận giá trị EPLAN sẽ dùng khi khởi động.
                 try
@@ -144,6 +147,7 @@ public class OumijiaRegister
                 DeleteAction(settings, "OumijiaSelfTest", 23);
                 DeleteAction(settings, "OumijiaDiagParts", 24);
                 DeleteAction(settings, "OumijiaDataPortal", 25);
+                DeleteAction(settings, "OumijiaToggleMainMenu", 26);
             }
             finally
             {

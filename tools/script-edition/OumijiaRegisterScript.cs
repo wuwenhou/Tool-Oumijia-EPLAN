@@ -64,6 +64,15 @@ public class OumijiaRegisterScript
         Settings settings = new Settings();
         List<string> current = ReadValues(settings, logPath);
 
+        // v0.6.0: dọn mục script cũ %APPDATA%\Tool Oumijia\Scripts\ToolOumijia.cs
+        // (bản 0.5.0) để EPLAN không nạp song song hai bản Tool Oumijia.
+        List<string> cleaned = RemoveLegacyEntries(current, logPath);
+        if (cleaned.Count != current.Count)
+        {
+            RewriteRegistry(settings, cleaned, logPath);
+            current = cleaned;
+        }
+
         if (Contains(current, scriptPath))
         {
             WriteLog(logPath, "OK: da dang ky tu truoc: " + scriptPath);
@@ -101,6 +110,72 @@ public class OumijiaRegisterScript
         {
             WriteLog(logPath, "    - " + value);
         }
+    }
+
+    private static List<string> RemoveLegacyEntries(List<string> values, string logPath)
+    {
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string legacyDir = Path.Combine(Path.Combine(appData, "Tool Oumijia"), "Scripts");
+        string legacyDirTrimmed = legacyDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        List<string> keep = new List<string>();
+        foreach (string value in values)
+        {
+            bool legacy = false;
+            try
+            {
+                string full = Path.GetFullPath(value);
+                string directory = Path.GetDirectoryName(full);
+                string fileName = Path.GetFileName(full);
+                if (!String.IsNullOrEmpty(directory) && !String.IsNullOrEmpty(fileName))
+                {
+                    string directoryTrimmed = directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    legacy = String.Equals(directoryTrimmed, legacyDirTrimmed, StringComparison.OrdinalIgnoreCase)
+                        && fileName.StartsWith("ToolOumijia", StringComparison.OrdinalIgnoreCase)
+                        && fileName.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch
+            {
+                // giữ nguyên mục không đọc được
+            }
+
+            if (legacy)
+            {
+                WriteLog(logPath, "REMOVE legacy script entry: " + value);
+            }
+            else
+            {
+                keep.Add(value);
+            }
+        }
+        return keep;
+    }
+
+    private static void RewriteRegistry(Settings settings, List<string> values, string logPath)
+    {
+        try
+        {
+            settings.RemoveAllIndexedSetting(ScriptsSetting);
+        }
+        catch (Exception ex)
+        {
+            WriteLog(logPath, "  (xoa danh sach cu loi: " + ex.Message + ")");
+        }
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            try
+            {
+                settings.SetStringSetting(ScriptsSetting, values[i], i);
+            }
+            catch (Exception ex)
+            {
+                WriteLog(logPath, "  (ghi lai muc " + i + " loi: " + ex.Message + ")");
+            }
+        }
+
+        WriteLog(logPath, "OK: da don danh sach script tu nap (" + values.Count + " muc).");
     }
 
     private static void Unregister(string scriptPath, string logPath)

@@ -15,6 +15,7 @@ git pull
 - `src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj` — `<Version>X.Y.Z</Version>`
 - `tools/script-edition/ToolOumijiaScript.cs` — hằng số `ScriptVersion = "X.Y.Z-script.1"`
 - `CHANGELOG.md` — thêm mục `[X.Y.Z]` (ngày), cập nhật link refs cuối file
+- `docs/releases/vX.Y.Z.md` — release note (pack.ps1 bắt buộc file này)
 
 ## 3. Build add-in + kiểm tra compile script
 
@@ -22,6 +23,7 @@ git pull
 dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
   -p:EplanApiDir="C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
 # + csc-check OumijiaRegister.cs + csc C#5-check ToolOumijiaScript.cs (recipe: docs/BUILD.md)
+# Máy không có .NET SDK: build thủ công bằng csc + AssemblyInfo.cs tạm (docs/BUILD.md)
 ```
 
 ## 4. Test headless (khuyến nghị; recipe: docs/BUILD.md)
@@ -36,20 +38,24 @@ dotnet build src/Oumijia.EplanAddIn/Oumijia.EplanAddIn.csproj -c Release `
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version X.Y.Z
 # -> output\Tool-Oumijia-vX.Y.Z.zip (addin\ + script\ + component dùng chung)
-# -> pack.ps1 phải văng lỗi nếu thiếu: Add-in, UI, EdzReader, PortalHost, WebView2/SharpCompress
+# -> pack.ps1 phải văng lỗi nếu thiếu: Add-in, UI, EdzReader, SharpCompress
+# -> pack.ps1 lọc bỏ PortalHost/WebView2 còn sót và yêu cầu docs\releases\vX.Y.Z.md
 ```
 
 ## 6. Cổng UAT trước phát hành
 
 Chỉ release khi **kiểm thử thật** đạt:
 
-- Ribbon đúng 4 lệnh; Nhập EDZ preview hiển thị Tên/Hãng/Mã.
+- Ribbon đúng nhóm **Quản lý EDZ** ba nút Nhập → Xuất → Menu bar theo cột; một Portal ở nhóm Cloud của Tool (7 nút), tab Cloud gốc còn nguyên.
+- Nhập EDZ preview cây gói→part, bên phải chỉ `Chi tiết` + `Thuộc tính | Giá trị`; lỗi preview không chặn queue.
 - Xuất EDZ không hồi quy.
-- Data Portal mở hợp lệ, tự đăng nhập, tài khoản được phép, tải file kiểm thử.
+- Data Portal **thực sự hiện** tab native EPLAN (không chỉ action trả `true`), dùng phiên đã đăng nhập và quyền tài khoản được phép.
+- Không còn WebView2/PortalHost trong thư mục cài đặt và log không còn lỗi WebView2.
 - `.edz` tải xong nhập lại Parts Database.
 - Máy phù hợp được IT cho phép; lỗi portal không được sửa bằng workaround license.
+- Build payload theo Variant/Version, test `-ListInstalled`/`-TargetW3u` khi máy có nhiều bản; installer/gỡ headless PASS đúng target và không phá shared runtime bản khác. Add-in và Script Edition chỉ gắn nhãn hỗ trợ ở bản thực sự UAT.
 
-Nếu chưa đạt UAT: chỉ push commit nhánh/main cho source candidate; **không tạo tag/Release**.
+Nếu chưa đạt UAT: không tạo **Release ổn định**. Chỉ tạo **pre-release** khi người dùng chấp thuận rõ, có build/package hợp lệ, ghi công khai chính xác phần chưa UAT và giới hạn target; tuyệt đối không gắn nhãn hỗ trợ các phiên bản chưa thử.
 
 ## 7. Commit + tag + push
 
@@ -77,6 +83,6 @@ gh release create vX.Y.Z "output\Tool-Oumijia-vX.Y.Z.zip" `
 | Thứ | Quy ước | Ví dụ |
 |---|---|---|
 | Tag | `v` + SemVer | `v0.5.0` |
-| Asset | `Tool-Oumijia-v<ver>.zip` (2 editions) | `Tool-Oumijia-v0.5.2.zip` |
-| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.5.0` |
+| Asset | `Tool-Oumijia-v<ver>.zip` (2 editions) | `Tool-Oumijia-v0.6.0.zip` |
+| Release title | `Tool Oumijia (EPLAN) v<ver>` | `Tool Oumijia (EPLAN) v0.6.0` |
 | Commit phát hành | `release: vX.Y.Z` | |

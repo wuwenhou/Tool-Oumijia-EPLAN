@@ -64,21 +64,37 @@ Copy-Item $scriptSource $destScript -Force
 Copy-Item $registerScriptSource $destRegister -Force
 Write-Host "[+] Script: $destScript"
 
-# ------------------------------------------------------------------ Shared Portal/UI/EDZ runtime
+# v0.6.0: go ban script 0.5.0 (Scripts\ToolOumijia.cs) de EPLAN chi nap mot ban
+$legacyDir = Join-Path $env:APPDATA "Tool Oumijia\Scripts"
+$legacyScript = Join-Path $legacyDir "ToolOumijia.cs"
+if (Test-Path -LiteralPath $legacyScript) {
+    $legacyBackupDir = Join-Path $env:APPDATA "Tool Oumijia\backups"
+    New-Item -ItemType Directory -Path $legacyBackupDir -Force | Out-Null
+    Move-Item -LiteralPath $legacyScript -Destination (Join-Path $legacyBackupDir "ToolOumijia.legacy.cs") -Force -ErrorAction SilentlyContinue
+    if ((Get-ChildItem -LiteralPath $legacyDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
+        Remove-Item -LiteralPath $legacyDir -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host "[+] Da go script cu Scripts\ToolOumijia.cs"
+}
+
+# ------------------------------------------------------------------ Shared UI/EDZ runtime (không còn PortalHost/WebView2)
 $portalSource = Join-Path $here "portal"
-if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll"))) {
-    $portalSource = Join-Path $here "..\..\src\Oumijia.PortalHost\bin\Release\net48"
+if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.EplanUi.dll"))) {
+    $portalSource = Join-Path $here "..\..\src\Oumijia.EplanAddIn\bin\Release\net48"
 }
 $portalHome = Join-Path $env:APPDATA "Tool Oumijia\Portal"
-if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.PortalHost.dll"))) {
-    Write-Host "[LOI] Thieu shared runtime (Oumijia.PortalHost.dll). Hay build lai Add-in/PortalHost truoc."
+if (-not (Test-Path -LiteralPath (Join-Path $portalSource "Oumijia.EplanUi.dll"))) {
+    Write-Host "[LOI] Thieu shared runtime (Oumijia.EplanUi.dll). Hay build lai Add-in truoc."
     exit 1
 }
 New-Item -ItemType Directory -Path $portalHome -Force | Out-Null
 Get-ChildItem -LiteralPath $portalSource -Filter '*.dll' -File |
+    Where-Object { $_.Name -notmatch '^(Oumijia\.PortalHost|Microsoft\.Web\.WebView2|WebView2Loader)' } |
     Copy-Item -Destination $portalHome -Force
-if (Test-Path -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll')) {
-    Copy-Item -LiteralPath (Join-Path $portalSource 'WebView2Loader.dll') -Destination $portalHome -Force
+$stale = @('Oumijia.PortalHost.dll', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'Microsoft.Web.WebView2.Wpf.dll', 'WebView2Loader.dll')
+foreach ($name in $stale) {
+    $path = Join-Path $portalHome $name
+    if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue }
 }
 Write-Host "[+] Shared runtime: $portalHome"
 

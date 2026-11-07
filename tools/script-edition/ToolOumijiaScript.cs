@@ -1,8 +1,9 @@
 //#################################################################################################################################################
-// Tool Oumijia — EPLAN Script Edition (v0.5.2)
+// Tool Oumijia — EPLAN Script Edition (v0.6.0)
 //#################################################################################################################################################
-// Nhập / Xuất EDZ và EPLAN Data Portal dùng cùng Oumijia.EplanUi.dll đã biên dịch.
-// Script này không cần EPLAN API license. Người dùng tự đăng nhập vào Data Portal
+// Nhập / Xuất EDZ dùng Oumijia.EplanUi.dll đã biên dịch; Data Portal và nhóm
+// Cloud sao chép command native từ tab Eplan Cloud — không còn WebView2.
+// Script này không cần EPLAN API license. Người dùng tự đăng nhập vào EPLAN
 // và tuân theo quyền, điều khoản, giấy phép của EPLAN.
 //
 // CÀI ĐẶT (một lần):
@@ -10,7 +11,17 @@
 //
 // SỬ DỤNG:
 //   Ribbon "Tool Oumijia" > nhóm "Quản lý EDZ":
-//   Nhập EDZ… | Xuất EDZ… | Data Portal… | Menu bar
+//   Nhập EDZ | Xuất EDZ | Menu bar
+//   Nhóm "Eplan Cloud" có một nút Data Portal native.
+//
+// GHI CHÚ (đã kiểm chứng trên EPLAN Education 2026.0.3):
+//   - Nút "Data Portal" dùng chính command ID của EPLAN; không gọi
+//     DataPortalTabView (chỉ là phần nội dung, không phải cửa sổ dockable).
+//     EPLAN tự quản lý phiên đăng nhập; không có trình duyệt riêng của Tool.
+//   - Không còn WebView2/PortalHost, không còn profile WebView2 riêng.
+//   - Nếu EPLAN không cung cấp action native, Tool báo rõ và hướng dẫn mở
+//     Eplan Cloud > Data Portal thay vì chết lặng.
+//   - EPLAN 2026 không còn MfToggleMainMenuAction; nút "Menu bar" báo rõ.
 //
 // LOG:
 //   %APPDATA%\Tool Oumijia\logs\addin.log
@@ -18,13 +29,10 @@
 // GHI CHÚ:
 //   - Mọi xử lý UI chạy qua assemblies net48 trong %APPDATA%\Tool Oumijia\Portal.
 //   - Script dùng Reflection để nạp chúng, nên EPLAN compiler không cần WebView2/SharpCompress.
-//   - EDZ downloads được chuyển tiếp tới cùng màn hình Nhập EDZ với bản Add-in.
 //#################################################################################################################################################
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -37,18 +45,32 @@ using Eplan.EplApi.Scripting;
 namespace Oumijia.EdzScript
 {
     /// <summary>
-    /// Điểm vào Script Edition: tạo ribbon + bốn lệnh Tool Oumijia.
+    /// Điểm vào Script Edition: nhóm EDZ ba lệnh và nhóm Eplan Cloud native.
     /// </summary>
     public class ToolOumijiaScript
     {
-        private const string ScriptVersion = "0.5.2-script.1";
+        private const string ScriptVersion = "0.6.0-rc.1-script.1";
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
+        private const string OldCommandGroupName = "Nhập EDZ";
         private const string ImportActionName = "OumijiaScriptImportEdz";
         private const string ExportActionName = "OumijiaScriptExportEdz";
         private const string DataPortalActionName = "OumijiaScriptDataPortal";
+        private const string NativeCloudTabName = "Eplan Cloud";
+        private const string CloudGroupName = "Eplan Cloud";
+        private static readonly string[] NativeCloudCommands = {
+            "Eplan Cloud dashboard", "Data Portal", "Project generation (Free)",
+            "User management", "Parts management (deprecated)",
+            "Eplan eLearning", "Guided Installation"
+        };
+        // Chỉ dùng để dọn nút cũ trên ribbon, không tìm hoặc thực thi action này.
+        private const string LegacyPortalCommandLine = "XDataPortalNavigatorToggle";
+        private const string LegacyMenuActionName = "MfToggleMainMenuAction";
+        private const string ToggleMenuActionName = "OumijiaScriptToggleMainMenu";
 
         private static bool _sharedResolverAttached;
+        private static Timer _cloudRibbonTimer;
+        private static int _cloudRibbonAttempts;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool SetDllDirectory(string lpPathName);
@@ -92,6 +114,7 @@ namespace Oumijia.EdzScript
         [DeclareEventHandler("Eplan.EplApi.OnMainEnd")]
         public void OnMainEnd()
         {
+            StopCloudRibbonTimer();
             AddinLog.Write("Event OnMainEnd");
         }
 
@@ -111,68 +134,36 @@ namespace Oumijia.EdzScript
             OpenSharedForm("Oumijia.EplanUi.ExportEdzForm", null, "Không mở được hộp thoại Xuất EDZ");
         }
 
-        /// <summary>Mở EPLAN Data Portal chính thức trong WebView2; người dùng tự đăng nhập.</summary>
+        /// <summary>Lệnh tương thích cũ: không mở riêng DataPortalTabView vì nó
+        /// không có cửa sổ native. Nút ribbon mới sao chép command ID của EPLAN.</summary>
         [DeclareAction("OumijiaScriptDataPortal")]
         public void DataPortal()
         {
-            AddinLog.Write("Action OumijiaScriptDataPortal");
-            object form = null;
-            try
-            {
-                EnsureSharedResolver();
-                string sharedDirectory = SharedDirectory();
-                string hostPath = Path.Combine(sharedDirectory, "Oumijia.PortalHost.dll");
-                if (!File.Exists(hostPath))
-                {
-                    ShowMissingShared(hostPath);
-                    return;
-                }
+            AddinLog.Write("Action OumijiaScriptDataPortal: native ribbon command unavailable; no content-only dialog opened");
+            ShowNativePortalUnavailable("Lệnh native của EPLAN chưa sẵn sàng trên ribbon.");
+        }
 
-                Assembly assembly = Assembly.LoadFrom(hostPath);
-                Type formType = assembly.GetType("Oumijia.PortalHost.PortalForm", true);
-                string dataRoot = DataRoot();
-                string userData = Path.Combine(dataRoot, "WebView2");
-                string logDirectory = Path.Combine(dataRoot, "logs");
-                form = Activator.CreateInstance(formType, new object[] { userData, null, logDirectory });
+        private static void ShowNativePortalUnavailable(string detail)
+        {
+            MessageBox.Show(
+                "Không mở được Data Portal native của EPLAN.\n\n" + detail +
+                "\n\nHãy mở trực tiếp: tab Eplan Cloud → Data Portal.\n\n" +
+                "Sau khi tải .edz bằng EPLAN, dùng nút Nhập EDZ của Tool Oumijia để nhập.\n\n" +
+                "Chi tiết đã ghi vào addin.log.",
+                "Tool Oumijia — Data Portal", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
 
-                MethodInfo showDialog = formType.GetMethod("ShowDialog", Type.EmptyTypes);
-                showDialog.Invoke(form, null);
-
-                List<string> downloaded = ReadDownloadedFiles(formType, form);
-                bool requestImport = ReadBooleanProperty(formType, form, "RequestImport");
-                AddinLog.Write("DataPortal closed: downloaded=" + downloaded.Count + ", requestImport=" + requestImport);
-
-                IDisposable portalDialog = form as IDisposable;
-                if (portalDialog != null) { portalDialog.Dispose(); }
-                form = null;
-                if (downloaded.Count == 0) return;
-
-                bool openImport = requestImport;
-                if (!openImport)
-                {
-                    DialogResult answer = MessageBox.Show(
-                        "Đã tải " + downloaded.Count + " tệp từ EPLAN Data Portal.\n\n" +
-                        "Mở hộp Nhập EDZ với các tệp này?",
-                        "Tool Oumijia", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    openImport = answer == DialogResult.Yes;
-                }
-                if (!openImport) return;
-
-                string[] files = downloaded.ToArray();
-                OpenSharedForm("Oumijia.EplanUi.ImportEdzForm", files, "Không mở được hộp thoại Nhập EDZ");
-            }
-            catch (Exception ex)
-            {
-                AddinLog.WriteError("DataPortal", ex);
-                MessageBox.Show(
-                    "Không mở được EPLAN Data Portal.\n\n" + ex.Message,
-                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                IDisposable disposable = form as IDisposable;
-                if (disposable != null) { try { disposable.Dispose(); } catch { } }
-            }
+        /// <summary>Menu bar khi EPLAN không còn MfToggleMainMenuAction (2026):
+        /// báo rõ thay vì chết lặng. Không giả lập menu của EPLAN.</summary>
+        [DeclareAction("OumijiaScriptToggleMainMenu")]
+        public void ToggleMainMenu()
+        {
+            AddinLog.Write("Action OumijiaScriptToggleMainMenu - EPLAN khong con MfToggleMainMenuAction (da probe khi tao ribbon), khong the hien classic menu qua API");
+            MessageBox.Show(
+                "EPLAN bản này không còn action MfToggleMainMenuAction nên không bật được classic menu qua API.\n\n" +
+                "Hãy dùng ribbon của EPLAN (File, Home, Insert, Edit, View, Devices, Connections, Tools, Pre-planning, Master data, Eplan Cloud) thay thế.\n\n" +
+                "Chi tiết đã ghi vào log addin.log (dòng Ribbon probe).",
+                "Tool Oumijia — Menu bar", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         /// <summary>Kiểm tra script đã nạp và shared runtime có sẵn.</summary>
@@ -180,10 +171,9 @@ namespace Oumijia.EdzScript
         public void SelfTest()
         {
             if (!File.Exists(Path.Combine(SharedDirectory(), "Oumijia.EplanUi.dll")) ||
-                !File.Exists(Path.Combine(SharedDirectory(), "Oumijia.EdzReader.dll")) ||
-                !File.Exists(Path.Combine(SharedDirectory(), "Oumijia.PortalHost.dll")))
+                !File.Exists(Path.Combine(SharedDirectory(), "Oumijia.EdzReader.dll")))
             {
-                AddinLog.Write("SELFTEST ERROR - shared runtime is missing");
+                AddinLog.Write("SELFTEST ERROR - shared runtime is missing (EplanUi/EdzReader)");
                 return;
             }
             AddinLog.Write("SELFTEST OK - script loaded, shared UI loaded (version " + ScriptVersion + ")");
@@ -206,13 +196,13 @@ namespace Oumijia.EdzScript
                 RibbonTab tab = ribbon.GetTab(RibbonTabName);
                 if (tab == null) tab = ribbon.AddTab(RibbonTabName);
 
-                RibbonCommandGroup group = tab.GetCommandGroup(CommandGroupName);
-                if (group == null) group = tab.AddCommandGroup(CommandGroupName);
-
-                EnsureCommand(group, "Nhập EDZ…", ImportActionName);
-                EnsureCommand(group, "Xuất EDZ…", ExportActionName);
-                EnsureCommand(group, "Data Portal…", DataPortalActionName);
-                EnsureCommand(group, "Menu bar", "MfToggleMainMenuAction");
+                bool hasLegacyMenu = RibbonHasAction(ribbon, LegacyMenuActionName);
+                AddinLog.Write("Ribbon probe (" + source + "): " + LegacyMenuActionName +
+                    "=" + (hasLegacyMenu ? "found" : "notfound"));
+                LogRibbonTabs(ribbon, source);
+                EnsureEdzGroup(tab, hasLegacyMenu);
+                if (!EnsureNativeCloudRibbon(ribbon, tab))
+                    StartCloudRibbonTimer();
 
                 AddinLog.Write("Ribbon ready (" + source + ")");
             }
@@ -224,14 +214,285 @@ namespace Oumijia.EdzScript
 
         private static void EnsureCommand(RibbonCommandGroup group, string buttonText, string actionName)
         {
+            EnsureCommand(group, buttonText, actionName, null, null);
+        }
+
+        private static void EnsureCommand(RibbonCommandGroup group, string buttonText, string actionName, string tooltip, string description)
+        {
             try
             {
-                if (group.GetCommand(actionName) == null) group.AddCommand(buttonText, actionName);
+                if (group.GetCommand(actionName) != null) return;
+                if (String.IsNullOrEmpty(tooltip) && String.IsNullOrEmpty(description))
+                {
+                    group.AddCommand(buttonText, actionName);
+                }
+                else
+                {
+                    group.AddCommand(buttonText, actionName, tooltip ?? String.Empty, description ?? String.Empty);
+                }
             }
             catch (Exception ex)
             {
                 AddinLog.WriteError("EnsureCommand(" + actionName + ")", ex);
             }
+        }
+
+        private static void EnsureMenuCommand(RibbonCommandGroup group, bool hasLegacyMenu)
+        {
+            if (hasLegacyMenu)
+                EnsureCommand(group, "Menu bar", LegacyMenuActionName,
+                    "Bat/tat classic menu cua EPLAN", "Goi action MfToggleMainMenuAction cua EPLAN");
+            else
+                EnsureCommand(group, "Menu bar", ToggleMenuActionName,
+                    "EPLAN ban nay khong con classic menu - bam de xem huong dan",
+                    "Bao ro thay vi chet lang khi action MfToggleMainMenuAction khong con");
+        }
+
+        private static bool IsToolEdzCommand(RibbonCommand command)
+        {
+            if (command == null) return false;
+            string action = command.ActionCommandLine;
+            return String.Equals(action, ImportActionName, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(action, ExportActionName, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(action, DataPortalActionName, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(action, ToggleMenuActionName, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(action, LegacyMenuActionName, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(action, LegacyPortalCommandLine, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(command.Text, "Data Portal", StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(command.Text, "Data Portal Web", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static List<RibbonCommand> GroupCommands(RibbonCommandGroup group)
+        {
+            Dictionary<uint, RibbonCommand> commands = group.GetCommands(false);
+            return commands == null ? new List<RibbonCommand>() : new List<RibbonCommand>(commands.Values);
+        }
+
+        private static bool IsExpectedEdzGroup(RibbonCommandGroup group, bool hasLegacyMenu)
+        {
+            List<RibbonCommand> commands = GroupCommands(group);
+            if (commands.Count != 3) return false;
+            commands.Sort(delegate(RibbonCommand a, RibbonCommand b) {
+                return a.IndexInCommandGroup.CompareTo(b.IndexInCommandGroup);
+            });
+            return String.Equals(commands[0].Text, "Nhập EDZ", StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(commands[1].Text, "Xuất EDZ", StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(commands[2].Text, "Menu bar", StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(commands[0].ActionCommandLine, ImportActionName, StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(commands[1].ActionCommandLine, ExportActionName, StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(commands[2].ActionCommandLine, hasLegacyMenu ? LegacyMenuActionName : ToggleMenuActionName,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureEdzGroup(RibbonTab tab, bool hasLegacyMenu)
+        {
+            try
+            {
+                RibbonCommandGroup old = tab.GetCommandGroup(OldCommandGroupName);
+                if (old != null) CleanObsoleteEdzGroup(old);
+
+                RibbonCommandGroup group = tab.GetCommandGroup(CommandGroupName);
+                bool isFirst = tab.CommandGroups != null && tab.CommandGroups.Length > 0 &&
+                    String.Equals(tab.CommandGroups[0].Name, CommandGroupName, StringComparison.OrdinalIgnoreCase);
+                if (group != null && (!IsExpectedEdzGroup(group, hasLegacyMenu) || !isFirst))
+                {
+                    List<RibbonCommand> commands = GroupCommands(group);
+                    bool onlyOurs = true;
+                    foreach (RibbonCommand command in commands)
+                        if (!IsToolEdzCommand(command)) onlyOurs = false;
+                    if (onlyOurs)
+                    {
+                        group.Remove();
+                        group = null;
+                    }
+                    else
+                    {
+                        foreach (RibbonCommand command in commands)
+                            if (IsToolEdzCommand(command)) command.Remove();
+                        AddinLog.Write("Ribbon migration: preserved other commands in " + CommandGroupName);
+                    }
+                }
+                if (group == null) group = tab.AddCommandGroup(CommandGroupName, 0);
+                EnsureCommand(group, "Nhập EDZ", ImportActionName);
+                EnsureCommand(group, "Xuất EDZ", ExportActionName);
+                EnsureMenuCommand(group, hasLegacyMenu);
+            }
+            catch (Exception ex) { AddinLog.WriteError("EnsureEdzGroup", ex); }
+        }
+
+        private static void CleanObsoleteEdzGroup(RibbonCommandGroup group)
+        {
+            List<RibbonCommand> commands = GroupCommands(group);
+            bool onlyOurs = true;
+            foreach (RibbonCommand command in commands)
+                if (!IsToolEdzCommand(command)) onlyOurs = false;
+            if (onlyOurs)
+            {
+                group.Remove();
+                AddinLog.Write("Ribbon migration: removed " + OldCommandGroupName);
+            }
+            else
+            {
+                foreach (RibbonCommand command in commands)
+                    if (IsToolEdzCommand(command)) command.Remove();
+                AddinLog.Write("Ribbon migration: kept other commands in " + OldCommandGroupName);
+            }
+        }
+
+        private static bool EnsureNativeCloudRibbon(RibbonBar ribbon, RibbonTab tab)
+        {
+            try
+            {
+                RibbonTab source = ribbon.GetTab(NativeCloudTabName);
+                if (source == null) return false;
+                Dictionary<uint, string> commands = source.GetCommands(false);
+                if (commands == null || commands.Count == 0) return false;
+
+                RibbonCommandGroup cloud = tab.GetCommandGroup(CloudGroupName);
+                if (cloud == null) cloud = tab.AddCommandGroup(CloudGroupName);
+                bool complete = true;
+                foreach (string name in NativeCloudCommands)
+                {
+                    uint id = 0;
+                    foreach (KeyValuePair<uint, string> pair in commands)
+                        if (String.Equals(pair.Value, name, StringComparison.OrdinalIgnoreCase)) id = pair.Key;
+                    if (id == 0)
+                    {
+                        AddinLog.Write("Native Cloud command unavailable: " + name);
+                        complete = false;
+                        continue;
+                    }
+                    if (cloud.GetCommandWithId(id) == null && cloud.AddCommandWithId(id) == null)
+                    {
+                        AddinLog.Write("Native Cloud clone failed: " + name);
+                        complete = false;
+                    }
+                }
+                return complete;
+            }
+            catch (Exception ex)
+            {
+                AddinLog.WriteError("EnsureNativeCloudRibbon", ex);
+                return false;
+            }
+        }
+
+        private static void StartCloudRibbonTimer()
+        {
+            if (_cloudRibbonTimer == null)
+            {
+                _cloudRibbonTimer = new Timer();
+                _cloudRibbonTimer.Interval = 1000;
+                _cloudRibbonTimer.Tick += delegate {
+                    if (++_cloudRibbonAttempts > 90)
+                    {
+                        AddinLog.Write("Native Cloud ribbon unavailable after 90 retries");
+                        StopCloudRibbonTimer();
+                        return;
+                    }
+                    try
+                    {
+                        RibbonBar ribbon = new RibbonBar();
+                        RibbonTab tab = ribbon.GetTab(RibbonTabName);
+                        if (tab != null && EnsureNativeCloudRibbon(ribbon, tab))
+                        {
+                            AddinLog.Write("Native Cloud ribbon ready after retries=" + _cloudRibbonAttempts);
+                            StopCloudRibbonTimer();
+                        }
+                    }
+                    catch (Exception ex) { AddinLog.Write("Native Cloud retry failed: " + ex.GetType().FullName); }
+                };
+            }
+            if (!_cloudRibbonTimer.Enabled)
+            {
+                _cloudRibbonAttempts = 0;
+                _cloudRibbonTimer.Start();
+            }
+        }
+
+        private static void StopCloudRibbonTimer()
+        {
+            if (_cloudRibbonTimer == null) return;
+            _cloudRibbonTimer.Stop();
+            _cloudRibbonTimer.Dispose();
+            _cloudRibbonTimer = null;
+        }
+
+        private static bool RibbonHasAction(RibbonBar ribbon, string actionName)
+        {
+            try
+            {
+                RibbonTab[] tabs = ribbon.Tabs;
+                if (tabs == null) return false;
+                foreach (RibbonTab tab in tabs)
+                {
+                    if (tab == null) continue;
+                    try
+                    {
+                        Dictionary<uint, string> tabCommands = tab.GetCommands(false);
+                        if (tabCommands != null)
+                        {
+                            foreach (string value in tabCommands.Values)
+                            {
+                                if (String.Equals(value, actionName, StringComparison.OrdinalIgnoreCase)) return true;
+                            }
+                        }
+                    }
+                    catch { }
+                    try
+                    {
+                        RibbonCommandGroup[] groups = tab.CommandGroups;
+                        if (groups != null)
+                        {
+                            foreach (RibbonCommandGroup group in groups)
+                            {
+                                if (group == null) continue;
+                                try
+                                {
+                                    Dictionary<uint, RibbonCommand> groupCommands = group.GetCommands(false);
+                                    if (groupCommands != null)
+                                    {
+                                        foreach (RibbonCommand command in groupCommands.Values)
+                                        {
+                                            if (command != null && String.Equals(command.ActionCommandLine, actionName, StringComparison.OrdinalIgnoreCase)) return true;
+                                        }
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static void LogRibbonTabs(RibbonBar ribbon, string source)
+        {
+            try
+            {
+                RibbonTab[] tabs = ribbon.Tabs;
+                if (tabs == null) return;
+                foreach (RibbonTab tab in tabs)
+                {
+                    if (tab == null) continue;
+                    try
+                    {
+                        int count = 0;
+                        try
+                        {
+                            Dictionary<uint, string> cmds = tab.GetCommands(false);
+                            if (cmds != null) count = cmds.Count;
+                        }
+                        catch { }
+                        AddinLog.Write("Ribbon tab (" + source + "): " + tab.Name + " commands=" + count);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
 
         // ------------------------------------------------------------------ shared runtime
@@ -264,7 +525,6 @@ namespace Oumijia.EdzScript
 
                 bool isOurs =
                     simpleName.StartsWith("Oumijia.", StringComparison.OrdinalIgnoreCase) ||
-                    simpleName.StartsWith("Microsoft.Web.WebView2", StringComparison.OrdinalIgnoreCase) ||
                     simpleName.Equals("SharpCompress", StringComparison.OrdinalIgnoreCase) ||
                     simpleName.Equals("System.Buffers", StringComparison.OrdinalIgnoreCase) ||
                     simpleName.Equals("System.Memory", StringComparison.OrdinalIgnoreCase) ||
@@ -315,36 +575,6 @@ namespace Oumijia.EdzScript
                     "Không mở được màn hình Tool Oumijia.\n\n" + ex.Message,
                     "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private static List<string> ReadDownloadedFiles(Type formType, object form)
-        {
-            List<string> files = new List<string>();
-            try
-            {
-                PropertyInfo property = formType.GetProperty("DownloadedFiles");
-                IEnumerable values = property == null ? null : property.GetValue(form, null) as IEnumerable;
-                if (values == null) return files;
-                foreach (object value in values)
-                {
-                    string path = value == null ? null : value.ToString();
-                    if (!String.IsNullOrWhiteSpace(path)) files.Add(path);
-                }
-            }
-            catch { }
-            return files;
-        }
-
-        private static bool ReadBooleanProperty(Type formType, object form, string propertyName)
-        {
-            try
-            {
-                PropertyInfo property = formType.GetProperty(propertyName);
-                if (property == null) return false;
-                object value = property.GetValue(form, null);
-                return value is bool && (bool)value;
-            }
-            catch { return false; }
         }
 
         private static void ShowMissingShared(string requiredPath)

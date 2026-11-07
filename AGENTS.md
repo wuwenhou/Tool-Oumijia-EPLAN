@@ -13,60 +13,77 @@
    `MDPartsManagement.ImportParts`, converter `IXPartsImportExportEdz`)
 2. **Xuất EDZ…** — chọn part từ cây nhóm navigator (checkbox native + tìm kiếm) rồi export
    ra 1 file hoặc mỗi part 1 file (`MDPartsDatabase.ExportParts`, `DataFormat.EDZ`)
-3. **Data Portal…** — mở **EPLAN Data Portal chính thức** trong WebView2; người dùng tự đăng
-   nhập bằng tài khoản hợp lệ, tải tài liệu/.edz hoặc mở portal trong trình duyệt khi Runtime lỗi.
+3. **Data Portal** — yêu cầu EPLAN mở **Data Portal native** (tab Eplan Cloud);
+   phiên đăng nhập do EPLAN quản lý, không có WebView2 của Tool. Xem R19 về lỗi v0.6.0.
 
 Bối cảnh gốc: người dùng có EPLAN bản Education — tài khoản Data Portal không tải được EDZ trực tiếp
 (điều khoản service agreement), nên quy trình là: *import part qua Portal trong EPLAN → backup/chia sẻ
-bằng Tool*. v0.5.2 không bypass license/điều khoản; thao tác được phép phải do EPLAN cấp cho tài khoản.
+bằng Tool*. v0.6.0 không bypass license/điều khoản; thao tác được phép phải do EPLAN cấp cho tài khoản.
 
 **Quyết định phạm vi quan trọng:**
 - **v0.3.0: bỏ hoàn toàn app standalone (exe)** theo yêu cầu người dùng — repo chỉ còn Tool EPLAN.
 - Tool và nội dung factual; EMA/EMP/EMS không nằm trong phạm vi.
 - Kế hoạch xa hơn (EDZ writer, QElectroTech, AutoCAD) — xem `docs/ROADMAP.md`.
 
-## 2. Trạng thái hiện tại (v0.5.2)
+## 2. Trạng thái hiện tại (v0.6.0-rc.1 pre-release candidate; không phải bản ổn định)
 
-- v0.5.1 là nền hợp lệ theo người dùng; mở rộng v0.5.2 dựa trên `main`.
-- **Data Portal…** được thêm vào ribbon hai editions; người dùng tự đăng nhập.
-- **Nhập EDZ…** có UI hai cột đồng bộ với Xuất EDZ và lưới **Tên | Hãng | Mã hàng**.
-- `Oumijia.EplanUi` (UI dùng chung), `Oumijia.EdzReader` (local EDZ parser) và
-  `Oumijia.PortalHost` (WebView2) là dependency chủ đích; installer copy chúng cạnh Add-in/Script.
-- Build Add-in với EPLAN Platform 2022.0.3 thành công; Script C# 5 compile-check thành công.
-- Chưa UAT trên máy công ty EPLAN 2026 hoặc xác nhận end-to-end Data Portal; không bypass license.
+> **Đọc `docs/AGENT-HANDOFF-2026-11-07.md`** trước khi deploy/cài đặt: có kế hoạch, lịch sử, backup/hash, GUI UAT và rollback mới. ZIP v0.6.0 cũ không chứa bản sửa nhóm EDZ ngày 07-11. RC.1 chỉ dùng thử trên Education 2026.0.3; Add-in/installer headless và các bản EPLAN khác chưa UAT.
+
+- v0.6.0 bỏ hoàn toàn PortalHost/WebView2; UAT phát hiện nút **Data Portal** gọi
+  `XDataPortalNavigatorToggle` nhưng action này không được đăng ký, nên nút báo lỗi.
+- **Nhập EDZ** có UI hai cột đồng bộ với Xuất EDZ và lưới **Tên | Hãng | Mã hàng**.
+- Nhập EDZ dùng cây gói→part và bảng Chi tiết. Bản vá Script Edition đã deploy để UAT
+  trên Education 2026.0.3: Data Portal và 7 nút Cloud sao chép command native của EPLAN
+  bằng ID tìm theo tên lúc chạy; không mở riêng `DataPortalTabView`. Add-in source đã sửa
+  và compile-check, **chưa deploy Add-in** (máy không có API license; thiếu .NET SDK để build package).
+- `Oumijia.EplanUi` (UI dùng chung) và `Oumijia.EdzReader` (local EDZ parser) là dependency chủ đích;
+  installer copy chúng vào shared runtime `%APPDATA%\Tool Oumijia\Portal`.
+- Script Edition pre-release `0.6.0-rc.1-script.1`; Add-in pre-release `0.6.0-rc.1`. GUI UAT trước khi đổi chuỗi version RC; chỉ thay metadata, chưa UAT lại đúng bytes RC.
+- Script C# 5 compile-check thành công; Add-in compile-check thành công với EPLAN 2026.0.3.
+- Source ngày 07-11 đã chuyển nhóm chính thành **Quản lý EDZ**, đúng ba nút Nhập → Xuất → Menu bar;
+  Data Portal chỉ còn ở nhóm **Eplan Cloud** của Tool, tab Eplan Cloud gốc giữ nguyên.
+  Script mới đã deploy trên Education 2026.0.3 và GUI UAT: đóng X, kéo cửa sổ, mở lại Portal native;
+  Nhập/Xuất mở/đóng (không nhập/xuất dữ liệu), Menu bar báo giới hạn. Chưa test sáu nút Cloud còn lại.
+- Smart installer/uninstaller source có `-ListInstalled`/`-TargetW3u`, discovery fixture PASS;
+  chỉ Education 2026.0.3 Script candidate có payload được chọn. **Chưa UAT cài/gỡ headless**;
+  Add-in vẫn compile-check, chưa build/deploy mới. Installer riêng từng edition còn chọn W3u đầu tiên.
 
 ✅ **Đã có trên source:**
 - Nhập EDZ preview EDZ cục bộ; lỗi file không block nhập.
 - Xuất EDZ giữ nguyên tree checkbox native và loại bản ghi.
-- Import chuyển EDZ tải về bằng cùng dialog.
+- Nút Data Portal bản vá dùng chính command native; action tương thích cũ chỉ báo hướng dẫn,
+  không còn mở nội dung riêng lẻ với `GfDialogManagerShow /DialogName:DataPortalTabView`.
 - ZIP/local build có đủ dependencies; installer thông minh giữ Add-in→Script fallback.
+- Installer/pack tự dọn DLL PortalHost/WebView2 còn sót.
 
 ## 3. Bản đồ repo
 
 ```
 src/Oumijia.EplanAddIn/           ribbon + actions Add-in
-src/Oumijia.EplanUi/              net48/x64 — UI dùng chung
-src/Oumijia.EdzReader/            net48/x64 — đọc cục bộ metadata EDZ
-src/Oumijia.PortalHost/           net48/x64 — Data Portal WebView2
-  AddIn.cs                        IEplAddIn: ribbon Nhập/Xuất/Data Portal/Menu bar
+  AddIn.cs                        IEplAddIn: EDZ Nhập/Xuất/Menu bar + Cloud native
   Actions/
     ImportEdzAction.cs            "OumijiaImportEdz"  (21)
     ExportEdzAction.cs            "OumijiaExportEdz"  (22)
     SelfTestAction.cs             "OumijiaSelfTest"   (23)
     DiagPartsAction.cs            "OumijiaDiagParts"  (24)
-    DataPortalAction.cs           "OumijiaDataPortal"  (25)
-src/Oumijia.EplanUi/Ui/
+    DataPortalAction.cs           "OumijiaDataPortal"  (25) — wrapper native
+    ToggleMainMenuAction.cs       "OumijiaToggleMainMenu" (26)
+src/Oumijia.EplanUi/              net48/x64 — UI dùng chung
+  Ui/
     ImportEdzForm.cs              preview EDZ + nhập batch
     ExportEdzForm.cs              dialog xuất v2
     PartsTreeModel.cs             PartEntry/PartInfo + PartsTreeModel
     ImportPartsSupport.cs         tự dò field-mapping scheme
+src/Oumijia.EdzReader/            net48/x64 — đọc cục bộ metadata EDZ
 tools/
   eplan-scripts/
-    OumijiaRegister.cs            script đăng ký Add-in/ordinal 21–25
+    OumijiaRegister.cs            script đăng ký Add-in/ordinal 21–26
     OumijiaReadReg.cs             chẩn đoán read-back
-  script-edition/                 Script Edition C#5; UI/Portal nạp qua reflection
+  script-edition/                 Script Edition C#5; shared UI nạp qua reflection
   install-addin/                  installer Add-in (copy dependencies)
   install-all/                    installer thông minh
+    EplanTargets.ps1              discovery/selection theo Variant/Version/W3u
+    Test-EplanTargets.ps1         fixture không chạy EPLAN thật
   pack.ps1                        đóng gói ZIP 2 editions + component
 ```
 
@@ -86,8 +103,8 @@ $bin = "C:\Program Files\EPLAN\Platform\2022.0.3\Bin"
   /reference:"System.Windows.Forms.dll" /reference:"System.Drawing.dll" `
   "tools\eplan-scripts\OumijiaRegister.cs"
 
-# Đóng gói release (yêu cầu add-in đã build)
-powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.5.2
+# Đóng gói release (yêu cầu add-in đã build + docs\releases\vX.Y.Z.md)
+powershell -ExecutionPolicy Bypass -File tools/pack.ps1 -Version 0.6.0
 ```
 
 ## 5. Kiểm thử headless trên máy có EPLAN (recipes đã kiểm chứng)
@@ -168,12 +185,16 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 | **R16** | ⭐ **Bẫy construct WinForms**: `SplitContainer.Panel2MinSize` / `SplitterDistance` ném `InvalidOperationException` nếu đặt khi control chưa có kích thước thật (trong ctor) → luôn đặt trong `OnShown` + try/catch. Tổng quát: **kiểm tra construct form offscreen** (DiagParts đã làm) để bắt lỗi khởi tạo UI trước khi UAT — cách này đã bắt được 1 lỗi crash mở dialog thật. |
 | **R17** | ⭐ **Script Edition & license**: EPLAN mới (2024+/2026) **vô hiệu hóa DLL add-in chưa ký** khi máy không có API license ("The assembly … is deactivated") — không phải lỗi code. Bản SCRIPT (EPLAN Scripting) **không cần license**. Compiler script của EPLAN reference **theo phiên bản**: 2022.0.3 thiếu `Eplan.EplApi.MasterData` (script dùng MasterData không compile được → dùng add-in); 2026.0.3 có (đã kiểm chứng bởi người dùng). Coverage chuẩn: EPLAN cũ → add-in; EPLAN mới + no license → script. |
 | **R18** | ⭐ **Đăng ký "script tự nạp"**: action `RegisterScript` của EPLAN 2022 chạy không lỗi nhưng **KHÔNG ghi gì** (bẫy!). Cách đã kiểm chứng: script chạy trong EPLAN tự ghi danh sách indexed `STATION.EplanEplApiScriptGui.Scripts` (`SetStringSetting(path, value, index)`; gỡ = đọc lại toàn bộ + `RemoveAllIndexedSetting` + ghi lại các entry giữ). EPLAN **tự thử nạp** các script trong danh sách ở mỗi lần khởi động (xác nhận qua log). Script phải compile được bằng **compiler của EPLAN** (khác csc ngoài!) — lỗi chi tiết nằm trong **`C:\Users\Public\EPLAN\Electric P8\EplLog.eldb`** (mã S046006/S046007 + chi tiết CSxxxx). Attributes `[DeclareRegister]`/`[DeclareUnregister]`/`[DeclareEventHandler]` đều có trên 2022. |
+| **R19** | ⭐ **Các opener sai đã loại bỏ**: `XDataPortalNavigatorToggle` chỉ là chuỗi hằng, không được đăng ký làm action; `XDataPortalNavigate` và các action `XDataPortalNavigatorInit`/`TriggerInit` không phải opener. `GfDialogManagerShow /DialogName:DataPortalTabView` trả `execute=True` nhưng chỉ mở phần nội dung, thiếu cửa sổ dockable/closable. Gọi trực tiếp `XMVCCloudSolutionAction /Url:https://dataportal.eplan.com/` mở cửa sổ **Eplan Cloud** chung, không phải Data Portal native. Không khôi phục hai đường này. |
+| **R20** | ⭐ **Bản vá Cloud UAT 2026-11-06**: `DataPortalTabView` chỉ là nội dung, không phải container dockable. Nút gốc Eplan Cloud chạy `MfEPulseCommandExecuteAction → XMVCCloudSolutionAction → ECloudSolutionsViewBarN → GfDialogManagerToggle`. `RibbonCommandGroup.AddCommandWithId(id)` clone được đúng hành vi native; tìm ID theo tên command trên tab `Eplan Cloud` tại runtime, không hard-code `38901`. Eplan Cloud có thể báo 0 command trong `OnMainStart`; retry qua `System.Windows.Forms.Timer` trên UI thread, lần UAT này sẵn sàng sau 1 lần. Xem `docs/CLOUD_NATIVE_UAT.md` và log UAT; không dùng URL hay token. |
 
 ## 7. Quy ước kỹ thuật
 
 - Projects dùng net48/x64. Bundled dependencies (`Oumijia.EplanUi`, `Oumijia.EdzReader`,
-  `Oumijia.PortalHost`, SharpCompress/WebView2) là chủ đích; installer phải copy chúng cùng Add-in/Script.
-- Script Edition không compile-time reference WebView2/SharpCompress; nó nạp shared assemblies bằng reflection.
+  SharpCompress + System.*) là chủ đích; installer phải copy chúng vào shared runtime.
+- Script Edition không compile-time reference SharpCompress; nó nạp shared assemblies bằng reflection.
+- Data Portal chỉ dùng UI/action native EPLAN; không tìm action `XDataPortalNavigatorToggle`,
+  không nhúng trình duyệt/WebView2 của Tool.
 - **PowerShell scripts trong `tools/` phải là UTF-8 CÓ BOM** (PowerShell 5.1 đọc không BOM theo ANSI
   → vỡ tiếng Việt). Sau khi sửa script, re-apply BOM:
   ```powershell
@@ -182,7 +203,7 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
   ```
 - UI strings: **tiếng Việt**. Docs: VI + EN overview. Commit: **Conventional Commits**. Version: SemVer.
 - Add-in chạy trên **UI thread của EPLAN** — không dùng thread con cho EPLAN API.
-- Log: `%APPDATA%\Tool Oumijia\logs\` (`addin.log`, `register-script.log`, `readreg.log`, `import-*.csv`, `export-*.csv`, `data-portal-downloads-*.csv`).
+- Log: `%APPDATA%\Tool Oumijia\logs\` (`addin.log`, `register-script.log`, `readreg.log`, `import-*.csv`, `export-*.csv`).
 
 ## 8. Ranh giới — KHÔNG làm
 
@@ -194,14 +215,17 @@ STATION.EplanEplApiModule.Services.AsmActions.<ActionName>.<Ordinal>.{AssemblyNa
 5. ⚠️ "Parts Management Extension" (nhúng tab vào Parts Management) — API **không chính thức**,
    chỉ làm khi người dùng yêu cầu rõ và chấp nhận rủi ro tương thích.
 6. ❌ Không sửa proxy/hosts/proxy VPN/port để lách license hoặc kiểm tra truy cập Data Portal.
-7. ❌ Không lưu password/cookie WebView2 ra log hoặc vào repo; profile ở `%APPDATA%\Tool Oumijia\WebView2\` chỉ do người dùng quản lý.
+7. ❌ Không lưu password/cookie/session ra log hoặc vào repo; Data Portal dùng phiên EPLAN do người dùng quản lý.
 
 ## 9. Việc tiếp theo
 
-- UAT v0.5.2 trên máy EPLAN được IT cho phép, trước phát hành.
-- Kiểm tra: ribbon 4 nút, Nhập preview EDZ, Xuất EDZ không hồi quy, Portal đăng nhập hợp lệ, .edz tải xong nhập lại database.
-- Hoàn thiện lỗi/xử lý file EDZ và fallback browser theo phản hồi người dùng.
-- Không phát hành Release trước khi người dùng xác nhận kiểm thử thực tế.
+- Ribbon sửa mới đã GUI UAT Script Edition trên Education 2026.0.3; cần test sáu nút Cloud còn lại
+  trong môi trường được phép và build/deploy Add-in trên máy có SDK + API license trước phát hành.
+- Build lại Add-in/shared runtime (DLL `bin\Release` cũ khác hash runtime UI đã UAT), đóng gói rồi
+  test installer/uninstaller headless trên đúng target; đừng dùng installer repo để lấy DLL build cũ.
+- Import EDZ thật vẫn cần Parts Database thử nghiệm được người dùng xác nhận; không nhập vào DB hiện tại.
+- Xác nhận installer đã dọn sạch PortalHost/WebView2 khỏi `%APPDATA%\Tool Oumijia`.
+- Không phát hành **Release ổn định** trước khi đủ UAT; chỉ cho phép RC pre-release có cảnh báo nếu người dùng chấp thuận rõ.
 
 ## 10. Phát hành
 

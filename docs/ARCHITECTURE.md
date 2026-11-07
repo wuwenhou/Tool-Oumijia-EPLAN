@@ -1,15 +1,19 @@
-# Kiến trúc — Tool Oumijia (EPLAN Edition) v0.3.0
+# Kiến trúc — Tool Oumijia (EPLAN Edition), source candidate sau v0.6.0
+
+> Data Portal native qua `DataPortalTabView` là thiết kế candidate, chưa UAT GUI. v0.6.0 đang deploy gọi nhầm action không được đăng ký.
 
 ## Tổng quan
 
 ```
 ┌──────────────────────────────── EPLAN Electric P8 ─────────────────────────────────┐
 │  ribbon "Tool Oumijia"                                                             │
-│   ├── Nhập EDZ…  ──► ImportEdzAction ──► ImportEdzForm                             │
-│   └── Xuất EDZ…  ──► ExportEdzAction ──► ExportEdzForm ──► PartsTreeModel          │
+│   ├── Nhập EDZ   ──► ImportEdzAction ──► ImportEdzForm                             │
+│   ├── Xuất EDZ   ──► ExportEdzAction ──► ExportEdzForm ──► PartsTreeModel          │
+│   └── Data Portal ─► DataPortalAction ──► DataPortalTabView (native, cần UAT)       │
 │                                                                                    │
 │  API chính thức:  MDPartsManagement.ImportParts / MDPartsDatabase.ExportParts      │
 │  Converter EDZ:   IXPartsImportExportEdz                                           │
+│  Không còn WebView2/PortalHost từ v0.6.0.                                           │
 └────────────────────────────────────────────────────────────────────────────────────┘
         ▲ nạp lúc khởi động (shadow-copy DLL)
 ┌───────┴───────────────── EPLAN settings (STATION) ────────────────────────────────┐
@@ -26,24 +30,26 @@
 
 | Thành phần | Vai trò |
 |---|---|
-| `AddIn.cs` | `IEplAddIn` — tạo ribbon 2 nút (**Nhập EDZ… / Xuất EDZ…**) trong `OnInitGui` |
+| `AddIn.cs` | `IEplAddIn` — tạo nhóm **Quản lý EDZ** ba nút Nhập/Xuất/Menu bar và nhóm **Eplan Cloud** bảy lệnh native trong `OnInitGui` |
 | `Actions/ImportEdzAction.cs` | action `OumijiaImportEdz` (21) — mở dialog nhập |
 | `Actions/ExportEdzAction.cs` | action `OumijiaExportEdz` (22) — mở dialog xuất |
 | `Actions/SelfTestAction.cs` | action `OumijiaSelfTest` (23) — self-test headless |
 | `Actions/DiagPartsAction.cs` | action `OumijiaDiagParts` (24) — chẩn đoán DB + smoke export |
+| `Actions/DataPortalAction.cs` | action `OumijiaDataPortal` (25) — wrapper gọi Data Portal native |
+| `Actions/ToggleMainMenuAction.cs` | action `OumijiaToggleMainMenu` (26) — bật/tắt menu bar nếu EPLAN hỗ trợ |
 | `Ui/ImportEdzForm.cs` | nhập batch EDZ (đơn giản hóa v0.4.0: chọn file/thư mục → NHẬP; mặc định cập nhật + thêm mới) |
 | `Ui/ExportEdzForm.cs` | dialog xuất v3: cây nhóm + panel chi tiết + 2 chế độ (chọn cây / theo loại bản ghi) |
 | `Ui/PartsTreeModel.cs` | `PartEntry`/`PartInfo` (đọc chuỗi hiển thị), `PartsTreeModel` (dựng cây nhóm) |
 | `AddinLog.cs` / `AddinCsvLog.cs` | log `%APPDATA%\Tool Oumijia\logs\` + CSV kiểm toán |
 
-Cả 4 action **phải được đăng ký** trong settings mục `Services.AsmActions` mới gọi được
+Các action **phải được đăng ký** trong settings mục `Services.AsmActions` mới gọi được
 (kể cả từ command line) — xem AGENTS.md mục 6.
 
 ## Luồng dữ liệu
 
 ### Nhập EDZ
 ```
-ImportEdzForm (chọn nhiều .edz + chế độ + nhận dạng)
+ImportEdzForm (queue nhiều .edz; cây gói→part + bảng chi tiết; mode/identifier cố định)
     │  xác nhận
     ▼
 MDPartsManagement.ImportParts(files, "IXPartsImportExportEdz", mode, bExtraLang, identifier, null)
@@ -71,6 +77,19 @@ MDPartsManagement.ExportParts(đích, "IXPartsImportExportEdz", "",
 ```
 Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số liệu database (AGENTS.md R15).
 
+### Data Portal (native)
+```
+Tool ribbon > Eplan Cloud > Data Portal
+    │  dò command ID từ tab Eplan Cloud gốc theo text ở runtime
+    │  RibbonCommandGroup.AddCommandWithId(id)
+    ▼
+EPLAN native Data Portal (window có title/X; GUI UAT Education 2026.0.3)
+    └─► phiên do EPLAN quản lý; không có WebView2/credential của Tool
+```
+`OumijiaDataPortal`/`OumijiaScriptDataPortal` chỉ còn là action tương thích cũ báo hướng dẫn.
+`GfDialogManagerShow /DialogName:DataPortalTabView` từng trả `true` nhưng chỉ mở nội dung,
+không có cửa sổ dockable: **không** dùng làm opener. Tab Cloud gốc không bị thay đổi.
+
 ## Đọc dữ liệu part (quan trọng — xem AGENTS.md R12/R13)
 
 - Property ID: `Eplan.EplApi.MasterData.Properties.MDPartsDatabaseItem.ARTICLE_*`
@@ -88,16 +107,16 @@ Mapping cờ→loại đã xác minh bằng giải nén EDZ đối chiếu số 
 
 | # | Quyết định | Lý do |
 |---|---|---|
-| D1 | Add-in **zero dependency** ngoài EPLAN API + BCL | EPLAN nạp DLL từ shadow-copy — dependency thừa là rủi ro |
+| D1 | Add-in dùng shared `Oumijia.EplanUi`, `Oumijia.EdzReader`, SharpCompress và dependency .NET cần thiết | EPLAN shadow-copy cả folder DLL; pack đủ runtime, không nhúng PortalHost/WebView2 của Tool |
 | D2 | Đăng ký bằng **script chạy trong EPLAN** (không offline) | Offline settings writes không persist (R2); script là cách duy nhất kiểm chứng được |
 | D3 | Registration **delete-first + VERIFY** | Settings giữ giá trị lịch sử theo key — nguồn khác ghi cùng key sẽ "đè" (R11) |
 | D4 | Cây nhóm dựng bằng `SortedDictionary` + entry đọc sẵn | Dựng lại cây khi tìm kiếm rất nhanh, không gọi API lặp |
 | D5 | Tick chọn lưu theo `AdoId` (không theo node) | Lọc/tìm kiếm dựng lại cây mà không mất trạng thái tick |
-| D6 | Trạng thái tick vẽ bằng `ImageList` + `HitTest(Image)` | TreeView WinForms không có checkbox 3 trạng thái native |
+| D6 | Xuất EDZ dùng checkbox native của TreeView | Dấu tick phải hiện ở nhiều DPI/Windows; code cũ vẽ ảnh là lịch sử |
 | D7 | CSV + addin.log cho mọi thao tác | Truy vết/đối chiếu khi hỗ trợ người dùng |
 | D8 | Layout dưới bằng TableLayoutPanel/Dock; kiểm tra construct UI offscreen trong DiagParts | Không còn nút bị khuất ở mọi DPI; bắt lỗi khởi tạo dialog trước khi UAT (đã bắt được 1 crash thật — R16) |
 | D9 | Script Edition dùng action `OumijiaScript*` + **tự ghi settings đăng ký** (không dùng action `RegisterScript` của EPLAN) | Không xung đột nếu cài cả 2 bản; `RegisterScript` không hoạt động trên 2022 (R18) |
-| D10 | Installer thông minh tự chọn bản bằng **self-test thực tế** (không check version) | Phản ánh đúng trạng thái license/threshold của từng máy — add-in chạy được thì dùng, bị chặn thì chuyển script |
+| D10 | Installer candidate liệt kê/chọn target, chỉ dùng payload có Variant/Version đã kiểm chứng; self-test theo target sau khi cài | Không suy từ một W3u đầu tiên hoặc giả định một DLL/Script chạy mọi bản; Education 2026.0.3 / Script là candidate, cài/gỡ headless chưa UAT |
 
 ## Đăng ký add-in (tóm tắt)
 
@@ -115,7 +134,8 @@ Chi tiết đầy đủ: **AGENTS.md mục 6** (quy tắc R1–R14). Điểm c�
 tools/script-edition/ToolOumijiaScript.cs   1 file C# 5 (~1900 dòng) — port đầy đủ từ add-in:
   ├─ [DeclareEventHandler("Eplan.EplApi.OnMainStart")]  → tạo ribbon
   │  (+ OnLoadWorkspace / OnResetRibbon trên bản EPLAN mới)
-  ├─ [DeclareAction]  OumijiaScriptImportEdz / OumijiaScriptExportEdz / OumijiaScriptSelfTest
+  ├─ [DeclareAction]  OumijiaScriptImportEdz / OumijiaScriptExportEdz /
+  │                   OumijiaScriptDataPortal (native) / OumijiaScriptSelfTest
   └─ tự nạp: OumijiaRegisterScript.cs ghi STATION.EplanEplApiScriptGui.Scripts (danh sách indexed)
 
 Installer thông minh (tools/install-all → gốc zip):
