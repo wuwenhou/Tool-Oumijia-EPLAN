@@ -12,7 +12,11 @@
 #   - Repo          : tools\install-all\ + ..\install-addin\ + ..\script-edition\
 
 [CmdletBinding()]
-param([switch]$ListInstalled, [string]$TargetW3u)
+param(
+    [switch]$ListInstalled,
+    [string]$TargetW3u,
+    [ValidateSet('Stage','Finalize','Rollback')][string]$Phase2022 = 'Stage'
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -24,12 +28,25 @@ $installed = @(Get-OumijiaEplanInstallations)
 if ($ListInstalled) {
     if ($installed.Count -eq 0) { Write-Host 'Khong tim thay EPLAN.' }
     foreach ($item in $installed) {
-        $status = if ($item.Variant -eq 'Education' -and $item.Version -eq '2026.0.3') { 'Script GUI UAT local; installer chua UAT headless' } else { 'Chua co payload da UAT' }
+        $status = if ($item.Variant -eq 'Electric P8' -and $item.Version -eq '2022.0.3') {
+            if (Test-Path -LiteralPath (Join-Path $here 'payload\2022\manifest.sha256.csv')) { 'Add-in 2022 payload; Stage/Finalize' }
+            else { '2022 payload not bundled' }
+        } elseif ($item.Variant -eq 'Education' -and $item.Version -eq '2026.0.3') {
+            if (Test-Path -LiteralPath (Join-Path $here 'script\ToolOumijiaScript.cs')) { 'Script 2026 payload (GUI UAT on Education 2026.0.3)' }
+            else { '2026 payload not bundled' }
+        } else { 'Unsupported / not UAT' }
         Write-Host ("{0} {1} | {2} | {3}" -f $item.Variant, $item.Version, $item.W3u, $status)
     }
     return
 }
 $target = Select-OumijiaEplanInstallation -Installations $installed -TargetW3u $TargetW3u
+if ($target.Variant -eq 'Electric P8' -and $target.Version -eq '2022.0.3') {
+    $installer2022 = Join-Path $here 'Install-2022.ps1'
+    if (-not (Test-Path -LiteralPath $installer2022 -PathType Leaf)) { throw "Missing 2022 installer: $installer2022" }
+    & $installer2022 -TargetW3u $target.W3u -Phase $Phase2022
+    return
+}
+if ($Phase2022 -ne 'Stage') { throw 'Phase2022 is only valid for Electric P8 2022.0.3.' }
 if ($target.Variant -ne 'Education' -or $target.Version -ne '2026.0.3') {
     throw "Chua co payload da kiem chung cho $($target.Variant) $($target.Version). Khong cai thu DLL/Script 2026 sang ban nay."
 }

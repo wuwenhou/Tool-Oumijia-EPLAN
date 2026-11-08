@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### UAT Electric P8 2022.0.3 — 2026-11-08
+
+- Fixed: nhóm ribbon **Quản lý EDZ** của bản 2022 được rebuild khi không đúng 3 lệnh; loại bỏ nút `Data Portal` thứ tư bị "chết" và hết thông báo trùng menu ID `47002`.
+- Fixed: Finalize 2022 giữ `2022.staging` hợp lệ trong lúc đăng ký bản final, chỉ xóa staging sau khi register/verify/self-test PASS; tránh lỗi headless EPLAN exit code khác 0 khi STATION còn trỏ tới staging đã bị move. State cuối `Finalized` xác nhận lúc 2026-11-08 09:28.
+- Verified: Stage backup 389 file SHA-256, register/verify/self-test PASS; ribbon đúng **3 + 2** sau restart.
+- Verified: form **Nhập EDZ** preview 3 gói test (`Preview: 3 | Lỗi: 0`, không ghi Parts Database); form **Xuất EDZ** nạp 649 part, 0 chọn, không ghi file.
+- Documented limitation: Cloud native `XMVCCloudSolutionAction` và fallback `GfDialogManagerShow` vẫn mở pane, nhưng CEF của EPLAN 2022.0.3 không parse được JS hiện tại (`SyntaxError: Unexpected token '{'`), nên pane trắng/`Loading...`. Không dùng WebView2 thay thế; xem `docs/UAT-2022-2026-11-08.md`.
+- Chưa UAT EPLAN 2026 trên máy này; chưa nhập EDZ vào Parts Database production.
+
 ## [0.6.0-rc.1] - 2026-11-07 — Pre-release Education 2026 (chưa đủ UAT ổn định)
 
 ### Added

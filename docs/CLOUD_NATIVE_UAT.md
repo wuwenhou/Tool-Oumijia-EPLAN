@@ -1,6 +1,8 @@
 # Kế hoạch và kết quả UAT — Eplan Cloud native (2026-11-06)
 
 > Tài liệu lịch sử ngày 06-11: nhóm EDZ lúc đó còn Portal thứ tư. Bản source 07-11 đã đổi thành nhóm **Quản lý EDZ** ba nút và Portal chỉ trong nhóm Cloud. Kết quả mới ở `AGENT-HANDOFF-2026-11-07.md`.
+>
+> **Cập nhật 2022.0.3 (2026-11-08):** action Cloud native vẫn mở pane, nhưng CEF nhúng trong EPLAN 2022.0.3 báo `SyntaxError: Unexpected token '{'` với bundle `apps.eplan.com` / `dataportal.eplan.com`; pane trắng hoặc `Loading...`. Fallback `GfDialogManagerShow /DialogName:ECloudSolutionsViewBar8|9` cũng dùng cùng CEF và lỗi tương tự. Đây là giới hạn của EPLAN 2022.0.3, không phải add-in; không thay bằng WebView2. Chi tiết và bằng chứng ở `docs/UAT-2022-2026-11-08.md`.
 
 ## Phạm vi
 

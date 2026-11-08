@@ -16,8 +16,28 @@ namespace Oumijia.EplanAddIn.Actions
         public bool Execute(ActionCallingContext oActionCallingContext)
         {
             AddinLog.Write("SELFTEST OK — add-in loaded, actions callable");
+#if EPLAN2022
+            ProbeNativeAction("XMVCCloudSolutionAction");
+            ProbeNativeAction("GfDialogManagerShow");
+            ProbeNativeAction("MfToggleMainMenuAction");
+#endif
             return true;
         }
+
+#if EPLAN2022
+        private static void ProbeNativeAction(string name)
+        {
+            try
+            {
+                var action = new ActionManager().FindAction(name, false);
+                AddinLog.Write("SELFTEST ACTION " + name + " => " + (action != null ? "found" : "MISSING"));
+            }
+            catch (Exception ex)
+            {
+                AddinLog.Write("SELFTEST ACTION " + name + " => error: " + ex.Message);
+            }
+        }
+#endif
 
         public bool OnRegister(ref string Name, ref int Ordinal)
         {

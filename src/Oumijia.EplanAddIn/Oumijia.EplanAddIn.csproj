@@ -37,6 +37,7 @@
   <PropertyGroup>
     <EplanApiDir Condition="'$(EplanApiDir)' == ''">$(EPLAN_API_DIR)</EplanApiDir>
     <EplanApiDir Condition="'$(EplanApiDir)' == '' And Exists('C:\Program Files\EPLAN\Platform\2022.0.3\Bin\Eplan.EplApi.AFu.dll')">C:\Program Files\EPLAN\Platform\2022.0.3\Bin</EplanApiDir>
+    <DefineConstants Condition="'$(EplanApi2022)' == 'true'">$(DefineConstants);EPLAN2022</DefineConstants>
   </PropertyGroup>
 
   <Target Name="FailWhenEplanApiMissing" BeforeTargets="BeforeCompile"
