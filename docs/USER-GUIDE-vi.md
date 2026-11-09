@@ -1,6 +1,6 @@
-﻿# Hướng dẫn sử dụng — Tool Oumijia (v0.7.0)
+﻿# Hướng dẫn sử dụng — Tool Oumijia (v0.7.1)
 
-> **Phiên bản hiện tại: v0.7.0 (pre-release).** Script Edition và shared runtime mới **chưa GUI UAT trên Education 2026.0.3**; Add-in 2026 không có. Add-in 2022.0.3 đã GUI UAT giao diện; **nhập thật vào Parts Database chưa được test** — luôn dùng database test. Xem [INSTALL.md](INSTALL.md).
+> **Phiên bản hiện tại: v0.7.1 (pre-release).** Script Edition và shared runtime mới **chưa GUI UAT trên Education 2026.0.3**; Add-in 2026 không có. Add-in 2022.0.3 đã GUI UAT giao diện; **nhập thật vào Parts Database chưa được test** — luôn dùng database test. Xem [INSTALL.md](INSTALL.md).
 
 Ribbon **Tool Oumijia** gồm:
 

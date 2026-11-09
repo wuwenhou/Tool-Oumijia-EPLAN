@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] — 2026-11-09
+
+Hotfix cho **Add-in 2022**: dọn 2 nút **Eplan Cloud dashboard** / **Data Portal** bị nhân đôi trong tab Tool Oumijia.
+
+### Fixed
+- `AddIn` (2022): khi tạo/Ensure nhóm **Eplan Cloud**, xóa 2 command chết `OumijiaOpenDashboard` / `OumijiaOpenDataPortal` (tàn dư bản thử nghiệm 2026-11-08; các action này không còn được đăng ký nên là nút chết). Trước sửa, phiên bản trước hiển thị 4 nút Cloud (2 native + 2 chết); sau sửa, nhóm đúng 2 lệnh native `XMVCCloudSolutionAction` (`apps.eplan.com`, `dataportal.eplan.com`).
+
+### Verified
+- GUI trên EPLAN Electric P8 2022.0.3: nhóm **Quản lý EDZ** = 3 lệnh; nhóm **Eplan Cloud** = 2 lệnh native sau khi khởi động lại (xem `addin.log`: `removed stale cloud command OumijiaOpenDashboard`, `removed stale cloud command OumijiaOpenDataPortal`, `Cloud commands=2`).
+
+### Packages
+- `Tool-Oumijia-v0.7.1-2022.zip` — thay `v0.7.0-2022.zip`; Fix chưa có trong v0.7.0.
+- `Tool-Oumijia-v0.7.1-2026.zip` — **không có thay đổi logic** so với `v0.7.0-2026.zip`; shared runtime được build lại đánh số build 0.7.1.0 (chỉ assembly version attributes), `ScriptVersion = 0.7.1-script.1`.
+
 ## [0.7.0] — 2026-11-09
 
 Bản phát hành cho **EPLAN Electric P8 2022.0.3** (Add-in `net48`) và **EPLAN Education 2026.0.3** (Script Edition, shared runtime mới). Pre-release; chưa nhập thật vào Parts Database trong quá trình phát triển.
@@ -288,7 +302,8 @@ Bản phát hành cho **EPLAN Electric P8 2022.0.3** (Add-in `net48`) và **EPLA
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.7.1
 [0.7.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.7.0
 [0.6.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.0
 [0.5.3]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.3

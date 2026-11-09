@@ -2,7 +2,7 @@
 
 **Add-in / Script cho EPLAN: nhập/xuất `.edz`, mở Data Portal native của EPLAN và quản lý dữ liệu linh kiện ngay trong EPLAN.**
 
-> **v0.7.0 là pre-release (2026-11-09).** Nhập EDZ trên EPLAN Electric P8 2022.0.3 đã GUI UAT (checkbox từng part, layout đồng bộ); **nhập thật vào Parts Database chưa được test** — chỉ dùng database test. Script Edition 2026 được build lại nhưng **chưa GUI UAT trên Education 2026.0.3**; nếu bạn cần ổn định trên 2026, dùng bản v0.6.0-2026. Chi tiết: [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) · [docs/PLAN-v0.7.0.md](docs/PLAN-v0.7.0.md).
+> **v0.7.1 là pre-release (2026-11-09).** Nhập EDZ trên EPLAN Electric P8 2022.0.3 đã GUI UAT (checkbox từng part, layout đồng bộ); **nhập thật vào Parts Database chưa được test** — chỉ dùng database test. Script Edition 2026 được build lại nhưng **chưa GUI UAT trên Education 2026.0.3**; nếu bạn cần ổn định trên 2026, dùng bản v0.6.0-2026. Chi tiết: [docs/releases/v0.7.1.md](docs/releases/v0.7.1.md) · [docs/PLAN-v0.7.0.md](docs/PLAN-v0.7.0.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)
@@ -17,7 +17,7 @@
 
 Installer candidate cho `-ListInstalled` và `-TargetW3u`; chỉ chọn Script Education 2026.0.3, **chưa UAT cài headless**, không tự dùng DLL 2026 cho bản khác. Xem [cài đặt](docs/INSTALL.md).
 
-## Tính năng (pre-release v0.7.0; khác v0.6.0)
+## Tính năng (pre-release v0.7.1; khác v0.6.0)
 
 ### Nhập EDZ — đồng bộ với Xuất
 - Chọn nhiều tệp/thư mục, quét thư mục con.
@@ -52,7 +52,7 @@ Eplan Cloud: bảy lệnh native, gồm một Data Portal
 
 ## Bắt đầu nhanh
 
-1. Chỉ dùng gói **pre-release v0.7.0** trên máy thử nghiệm chấp nhận rủi ro; bản v0.6.0 giữ nguyên như lần phát hành trước. Build theo [docs/BUILD.md](docs/BUILD.md).
+1. Chỉ dùng gói **pre-release v0.7.1** trên máy thử nghiệm chấp nhận rủi ro; bản v0.6.0 giữ nguyên như lần phát hành trước. Build theo [docs/BUILD.md](docs/BUILD.md).
 2. Đóng EPLAN → `Install-Tool-Oumijia.bat -ListInstalled`, chọn target qua `-TargetW3u` khi có nhiều bản.
 3. Mở EPLAN → ribbon **Tool Oumijia**.
 4. Test trên database test trước khi nhập database chính.

@@ -434,10 +434,38 @@ namespace Oumijia.EplanAddIn
             }
         }
 
+        // Leftover commands from the 2026-11-08 in-place browser experiment.
+        // They are no longer registered actions, so the buttons are dead but keep
+        // occupying the Eplan Cloud group; drop them on startup.
+        private static readonly string[] StaleCloudActions2022 = {
+            "OumijiaOpenDashboard", "OumijiaOpenDataPortal"
+        };
+
+        private static void RemoveStaleCloudCommands2022(RibbonCommandGroup group)
+        {
+            foreach (string action in StaleCloudActions2022)
+            {
+                try
+                {
+                    RibbonCommand stale = group.GetCommand(action);
+                    if (stale != null)
+                    {
+                        stale.Remove();
+                        AddinLog.Write("2022 ribbon: removed stale cloud command " + action);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddinLog.WriteError("RemoveStaleCloudCommands2022(" + action + ")", ex);
+                }
+            }
+        }
+
         private static void EnsureCloudGroup2022(RibbonTab tab)
         {
             RibbonCommandGroup group = tab.GetCommandGroup(CloudGroupName2022);
             if (group == null) group = tab.AddCommandGroup(CloudGroupName2022, -1);
+            else RemoveStaleCloudCommands2022(group);
             EnsureNativeCommand2022(group, "Eplan Cloud dashboard", DashboardCommandLine);
             EnsureNativeCommand2022(group, "Data Portal", DataPortalCommandLine);
             LogCommands2022("Cloud", group);

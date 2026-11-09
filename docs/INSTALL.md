@@ -1,17 +1,17 @@
-﻿# Cài đặt — Tool Oumijia (EPLAN Edition, pre-release v0.7.0)
+﻿# Cài đặt — Tool Oumijia (EPLAN Edition, pre-release v0.7.1)
 
-> **Pre-release, không phải bản ổn định.** v0.7.0 (2026-11-09): Add-in 2022.0.3 đã GUI UAT giao diện; **nhập thật vào Parts Database chưa được test**; Script Edition 2026 được đóng gói lại nhưng **chưa GUI UAT trên Education 2026.0.3**; installer chưa UAT cài/gỡ headless. Bản v0.6.0 giữ nguyên như đã phát hành.
+> **Pre-release, không phải bản ổn định.** v0.7.1 (2026-11-09): Add-in 2022.0.3 đã GUI UAT giao diện (v0.7.1 dọn 2 nút Eplan Cloud chết); **nhập thật vào Parts Database chưa được test**; Script Edition 2026 được đóng gói lại nhưng **chưa GUI UAT trên Education 2026.0.3**; installer chưa UAT cài/gỡ headless. Bản v0.6.0 giữ nguyên như đã phát hành.
 
 ## Cài đặt nhanh
 
-1. Chỉ dùng gói pre-release v0.7.0 trên **máy thử nghiệm** chấp nhận rủi ro; bản v0.6.0 giữ nguyên như đã phát hành.
+1. Chỉ dùng gói pre-release v0.7.1 trên **máy thử nghiệm** chấp nhận rủi ro; bản v0.6.0 giữ nguyên như đã phát hành.
 2. Giải nén vào một thư mục bất kỳ.
 3. Đóng mọi cửa sổ EPLAN.
 4. Chạy `Install-Tool-Oumijia.bat -ListInstalled` để xem các đích. Nếu có nhiều bản EPLAN, gọi `Install-Tool-Oumijia.bat -TargetW3u "C:\Program Files\EPLAN\Education\2026.0.3\Bin\W3u.exe"` (thay bằng đường dẫn được liệt kê).
 5. Installer candidate chỉ cho **Education 2026.0.3 / Script Edition**; bản khác bị từ chối cho đến khi có payload riêng và UAT. Không tự chọn `W3u.exe` đầu tiên. Bản này không thử Add-in trên Education.
 6. Mở EPLAN và kiểm tra ribbon **Tool Oumijia**. Đừng coi cài/headless PASS là GUI PASS.
 
-Ribbon v0.7.0 (giống v0.6.0 về ribbon):
+Ribbon v0.7.1 (giống v0.6.0 về ribbon):
 
 ```text
 Quản lý EDZ: Nhập EDZ → Xuất EDZ → Menu bar (xếp dọc)

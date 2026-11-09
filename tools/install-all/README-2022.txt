@@ -53,11 +53,15 @@ Do not import EDZ into a production Parts Database as a test.
 If GUI UAT passes, close EPLAN and run:
   powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-Tool-Oumijia.ps1 -TargetW3u 'C:\Program Files\EPLAN\Electric P8\2022.0.3\Bin\W3u.exe' -Phase2022 Finalize
 
-v0.7.0 note (2026-11-09):
+v0.7.1 note (2026-11-09, thay cho v0.7.0 note):
   - Nhap EDZ: tick tung part tren cay; tick goi = chon het part; nut
     Chon het / Bo chon; chi cac part da tick duoc gui cho ImportParts.
     Neu chi chon mot phan goi, Tool tao EDZ tam (manifest da loc + cac
     file duoc package tham chieu, writer 7z noi bo) roi tu xoa sau nap.
+  - Eplan Cloud: chi 2 lenh native (Eplan Cloud dashboard, Data Portal).
+    Ban v0.7.0 cung co the hien 4 nut neu may da tung cai ban thu nghiem
+    2026-11-08; v0.7.1 tu dong xoa 2 lenh chet OumijiaOpenDashboard /
+    OumijiaOpenDataPortal khi Add-in khoi dong.
   - Chi chon mot phan goi: EDZ tam da qua `7z t` o may phat trien;
     EPLAN co chap nhan tep do Tool ghi hay khong chua duoc xac nhan
     bang import that. Chi dung database test.

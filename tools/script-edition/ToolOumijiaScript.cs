@@ -49,7 +49,7 @@ namespace Oumijia.EdzScript
     /// </summary>
     public class ToolOumijiaScript
     {
-        private const string ScriptVersion = "0.7.0-script.1";
+        private const string ScriptVersion = "0.7.1-script.1";
         private const string RibbonTabName = "Tool Oumijia";
         private const string CommandGroupName = "Quản lý EDZ";
         private const string OldCommandGroupName = "Nhập EDZ";

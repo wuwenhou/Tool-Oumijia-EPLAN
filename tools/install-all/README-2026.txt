@@ -34,9 +34,11 @@ UAT status (source: docs/releases/v0.7.0-2026.md):
   Ribbon 3 + 7 native commands: PASS on Education 2026.0.3 (previous UAT).
   Data Portal native pane open/close/move/reopen: PASS (previous UAT).
   Import/Export forms open and close without writing data: PASS (previous UAT).
-  v0.7.0 adds per-part selection in Import EDZ (checkboxes) plus a local 7z
+  v0.7.x adds per-part selection in Import EDZ (checkboxes) plus a local 7z
     writer. The NEW shared runtime has NOT been GUI UAT'd on 2026 yet;
     if it fails to load, uninstall this and install v0.6.0-2026.
+  v0.7.1 vs v0.7.0 (2026): no logic changes; shared runtime rebuilt with
+    assembly version 0.7.1.0 (version attributes only).
   EDZ import into a production Parts Database: NOT TESTED. Use a test database.
   Add-in runtime on 2026: NOT TESTED; not shipped.
   Instances other than Education 2026.0.3: NOT TESTED; blocked by installer.
