@@ -1,14 +1,22 @@
-﻿# Build an isolated Electric P8 2022.0.3 package from an API-2022/net48 build.
+﻿# Build an isolated Electric P8 2022.0.3 package for a specific version.
 # First run creates a candidate directory. Only -CreateZip after GUI UAT succeeds.
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'output'),
+    [ValidatePattern('^0\.\d+\.\d+$')][string]$Version = '0.7.0',
+    [string]$OutputDirectory = '',
     [ValidatePattern('^(-[a-zA-Z0-9]+)?$')][string]$CandidateSuffix = '',
     [switch]$CreateZip
 )
 $ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
-$name = 'Tool-Oumijia-v0.6.0-2022'
+$ScriptRoot = $PSScriptRoot
+if (-not $ScriptRoot) { $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $OutputDirectory) { $OutputDirectory = Join-Path (Split-Path -Parent $ScriptRoot) 'output' }
+$root = Split-Path -Parent $ScriptRoot
+$name = "Tool-Oumijia-v$Version-2022"
+$releaseNotes = Join-Path $root "docs\releases\v$Version.md"
+if (-not (Test-Path -LiteralPath $releaseNotes -PathType Leaf)) {
+    throw "Missing release notes: $releaseNotes"
+}
 $stage = Join-Path $OutputDirectory ($name + '.candidate' + $CandidateSuffix)
 $zip = Join-Path $OutputDirectory ($name + '.zip')
 $dllDir = Join-Path $root 'src\Oumijia.EplanAddIn\bin\Release\net48'
@@ -44,8 +52,9 @@ $required = @('Oumijia.EplAddin.EDZ.dll','Oumijia.EplanUi.dll','Oumijia.EdzReade
 foreach ($file in $required) {
     if (-not (Test-Path -LiteralPath (Join-Path $dllDir $file) -PathType Leaf)) { throw "Missing required DLL: $file" }
 }
-if ((Get-Item -LiteralPath $addinDll).VersionInfo.FileVersion -ne '0.6.0.0') {
-    throw 'Unexpected add-in version; this packer only supports v0.6.0 for 2022.'
+$expectedFileVersion = $Version + '.0'
+if ((Get-Item -LiteralPath $addinDll).VersionInfo.FileVersion -ne $expectedFileVersion) {
+    throw "Unexpected add-in version; expected FileVersion $expectedFileVersion for $Version."
 }
 
 $payload = Join-Path $stage 'payload\2022'
@@ -62,9 +71,11 @@ foreach ($file in @('Install-Tool-Oumijia.ps1','Install-Tool-Oumijia.bat','Insta
 }
 Copy-Item -LiteralPath (Join-Path $root 'tools\install-all\README-2022.txt') -Destination (Join-Path $stage 'README.txt')
 @(
-    'Tool Oumijia - Electric P8 2022.0.3 candidate'
+    "Tool Oumijia - Electric P8 2022.0.3 v$Version"
     'Payload is net48 built with EPLAN Platform 2022.0.3 API.'
     'Other 2022.0.x, 2023-2025 and 2026 are not supported by THIS ZIP.'
+    'GUI UAT was performed on the code-identical build (see CHANGELOG / UAT notes);'
+    'the packaged binaries differ only in assembly version attributes.'
     ('Add-in SHA256: ' + (Get-FileHash -LiteralPath (Join-Path $payload 'Oumijia.EplAddin.EDZ.dll') -Algorithm SHA256).Hash)
 ) | Set-Content -LiteralPath (Join-Path $stage 'VERSION.txt') -Encoding UTF8
 

@@ -28,6 +28,7 @@ namespace Oumijia.EplanUi
         private readonly Label _status = new Label();
         private readonly Dictionary<string, ImportItem> _items =
             new Dictionary<string, ImportItem>(StringComparer.OrdinalIgnoreCase);
+        private bool _updatingChecks;
 
         public ImportEdzForm()
             : this(null)
@@ -37,11 +38,7 @@ namespace Oumijia.EplanUi
         /// <summary>Mở hộp Nhập và nạp sẵn các tệp EDZ đã tải từ Data Portal.</summary>
         public ImportEdzForm(IEnumerable<string> initialFiles)
         {
-            Text = "Tool Oumijia — Nhập EDZ";
-            ClientSize = new Size(1120, 780);
-            MinimumSize = new Size(940, 640);
-            StartPosition = FormStartPosition.CenterScreen;
-            Font = new Font("Segoe UI", 9F);
+            EdzDialogStyle.ApplyForm(this, "Tool Oumijia — Nhập EDZ");
             BuildUi();
             if (initialFiles != null) AddDistinct(initialFiles);
             UpdateCount();
@@ -52,13 +49,9 @@ namespace Oumijia.EplanUi
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 96, Padding = new Padding(8, 6, 8, 0) };
             Label label = new Label
             {
-                Text = "Các gói EDZ cần nhập",
-                Dock = DockStyle.Top,
-                Height = 24,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(23, 56, 88),
-                Padding = new Padding(2, 0, 0, 0)
+                Text = "Các gói EDZ cần nhập"
             };
+            EdzDialogStyle.ApplyHeader(label);
 
             FlowLayoutPanel buttonFlow = new FlowLayoutPanel
             {
@@ -68,13 +61,13 @@ namespace Oumijia.EplanUi
                 Padding = new Padding(0, 4, 0, 0)
             };
 
-            Button btnAddFiles = new Button { Text = "Thêm tệp…", Width = 104, Height = 28 };
+            Button btnAddFiles = new Button { Text = "Thêm tệp…", Width = 104, Height = EdzDialogStyle.ToolbarButtonHeight };
             btnAddFiles.Click += OnAddFilesClicked;
-            Button btnAddFolder = new Button { Text = "Thêm thư mục…", Width = 124, Height = 28 };
+            Button btnAddFolder = new Button { Text = "Thêm thư mục…", Width = 124, Height = EdzDialogStyle.ToolbarButtonHeight };
             btnAddFolder.Click += OnAddFolderClicked;
-            Button btnRemove = new Button { Text = "Xóa gói chọn", Width = 112, Height = 28 };
+            Button btnRemove = new Button { Text = "Xóa gói chọn", Width = 112, Height = EdzDialogStyle.ToolbarButtonHeight };
             btnRemove.Click += OnRemoveClicked;
-            Button btnClear = new Button { Text = "Xóa hết", Width = 82, Height = 28 };
+            Button btnClear = new Button { Text = "Xóa hết", Width = 82, Height = EdzDialogStyle.ToolbarButtonHeight };
             btnClear.Click += delegate
             {
                 _tree.Nodes.Clear();
@@ -84,40 +77,47 @@ namespace Oumijia.EplanUi
                 Log("Đã xóa toàn bộ danh sách.");
             };
 
+            Button btnCheckAll = new Button { Text = "Chọn hết", Width = 84, Height = EdzDialogStyle.ToolbarButtonHeight };
+            btnCheckAll.Click += delegate { SetAllPartsChecked(true); };
+
+            Button btnUncheckAll = new Button { Text = "Bỏ chọn", Width = 84, Height = EdzDialogStyle.ToolbarButtonHeight };
+            btnUncheckAll.Click += delegate { SetAllPartsChecked(false); };
+
+            EdzDialogStyle.ApplyToolbarButton(btnAddFiles);
+            EdzDialogStyle.ApplyToolbarButton(btnAddFolder);
+            EdzDialogStyle.ApplyToolbarButton(btnRemove);
+            EdzDialogStyle.ApplyToolbarButton(btnClear);
+            EdzDialogStyle.ApplyToolbarButton(btnCheckAll);
+            EdzDialogStyle.ApplyToolbarButton(btnUncheckAll);
+
             buttonFlow.Controls.Add(btnAddFiles);
             buttonFlow.Controls.Add(btnAddFolder);
             buttonFlow.Controls.Add(btnRemove);
             buttonFlow.Controls.Add(btnClear);
+            buttonFlow.Controls.Add(btnCheckAll);
+            buttonFlow.Controls.Add(btnUncheckAll);
 
             Label hint = new Label
             {
-                Dock = DockStyle.Top,
-                Height = 20,
-                ForeColor = Color.DimGray,
-                Padding = new Padding(2, 1, 0, 0),
-                Text = "Mặc định: cập nhật part đã có + thêm part mới; nhận dạng theo mã hàng."
+                Text = "Tick part cần nhập; bỏ tick để chỉ nhập một phần gói EDZ."
             };
+            EdzDialogStyle.ApplyHint(hint);
             topPanel.Controls.Add(hint);
             topPanel.Controls.Add(buttonFlow);
             topPanel.Controls.Add(label);
 
+            EdzDialogStyle.ApplyTree(_tree);
             _tree.Dock = DockStyle.Fill;
-            _tree.BorderStyle = BorderStyle.FixedSingle;
-            _tree.HideSelection = false;
-            _tree.ShowLines = true;
-            _tree.ShowRootLines = true;
-            _tree.ItemHeight = 22;
+            _tree.CheckBoxes = true;
+            _tree.AfterCheck += OnTreeAfterCheck;
             _tree.AfterSelect += delegate (object sender, TreeViewEventArgs args) { ShowDetails(args.Node); };
 
             Panel listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 8, 4, 8) };
             Label listCaption = new Label
             {
-                Text = "Gói EDZ → part (chọn part để xem chi tiết)",
-                Dock = DockStyle.Top,
-                Height = 24,
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(23, 56, 88)
+                Text = "Gói EDZ → part (tick part cần nhập)"
             };
+            EdzDialogStyle.ApplyCaption(listCaption);
             listPanel.Controls.Add(_tree);
             listPanel.Controls.Add(listCaption);
 
@@ -128,14 +128,7 @@ namespace Oumijia.EplanUi
             _detailsHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             _detailsHeader.Text = "Chi tiết";
 
-            _details.Dock = DockStyle.Fill;
-            _details.View = View.Details;
-            _details.FullRowSelect = true;
-            _details.MultiSelect = false;
-            _details.HideSelection = false;
-            _details.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            _details.Columns.Add("Thuộc tính", 190);
-            _details.Columns.Add("Giá trị", 320);
+            EdzDialogStyle.ApplyDetails(_details);
             _details.DoubleClick += OnDetailsDoubleClick;
 
             detailPanel.Controls.Add(_details);
@@ -146,12 +139,12 @@ namespace Oumijia.EplanUi
             _split.Panel2.Controls.Add(detailPanel);
             _split.Orientation = Orientation.Vertical;
             _split.FixedPanel = FixedPanel.None;
-            _split.Panel2.Resize += delegate { AdjustDetailsColumns(); };
-            _split.SplitterMoved += delegate { AdjustDetailsColumns(); };
+            _split.Panel2.Resize += delegate { EdzDialogStyle.AdjustDetailsColumns(_details); };
+            _split.SplitterMoved += delegate { EdzDialogStyle.AdjustDetailsColumns(_details); };
 
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 190 };
 
-            Panel actionPanel = new Panel { Dock = DockStyle.Top, Height = 44 };
+            Panel actionPanel = new Panel { Dock = DockStyle.Top, Height = EdzDialogStyle.ActionRowHeight };
             TableLayoutPanel actionLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -164,12 +157,11 @@ namespace Oumijia.EplanUi
 
             _status.Text = "Đã nạp: 0 | Preview: 0 | Lỗi: 0";
             _status.Dock = DockStyle.Fill;
-            _status.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            _status.ForeColor = Color.FromArgb(23, 56, 88);
+            EdzDialogStyle.ApplyStatus(_status);
 
             _startButton.Text = "NHẬP VÀO PARTS DATABASE ▸";
-            _startButton.Size = new Size(260, 34);
-            _startButton.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _startButton.Size = new Size(260, EdzDialogStyle.PrimaryButtonHeight);
+            EdzDialogStyle.ApplyPrimaryButton(_startButton);
             _startButton.Enabled = false;
             _startButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             _startButton.Click += OnStartClicked;
@@ -178,12 +170,7 @@ namespace Oumijia.EplanUi
             actionLayout.Controls.Add(_startButton, 1, 0);
             actionPanel.Controls.Add(actionLayout);
 
-            _log.Dock = DockStyle.Fill;
-            _log.Multiline = true;
-            _log.ReadOnly = true;
-            _log.ScrollBars = ScrollBars.Both;
-            _log.WordWrap = false;
-            _log.Font = new Font("Consolas", ConsolasFontSize());
+            EdzDialogStyle.ApplyLog(_log);
 
             bottomPanel.Controls.Add(_log);
             bottomPanel.Controls.Add(actionPanel);
@@ -205,11 +192,6 @@ namespace Oumijia.EplanUi
             try { _split.SplitterDistance = Math.Max(380, (int)(_split.Width * 0.54)); }
             catch { /* giữ mặc định */ }
             AdjustDetailsColumns();
-        }
-
-        private static float ConsolasFontSize()
-        {
-            return 8.5F;
         }
 
         private void OnAddFilesClicked(object sender, EventArgs e)
@@ -262,6 +244,7 @@ namespace Oumijia.EplanUi
                     _items[file] = item;
                     TreeNode node = new TreeNode(Path.GetFileName(file));
                     node.Tag = item;
+                    node.ToolTipText = file;
                     item.Node = node;
                     _tree.Nodes.Add(node);
                     added++;
@@ -290,9 +273,91 @@ namespace Oumijia.EplanUi
             }
         }
 
-        private void ReadPreview(ImportItem item)
+        /// <summary>Tick/untick one node: a package drives all its parts; a part updates its package.</summary>
+        private void OnTreeAfterCheck(object sender, TreeViewEventArgs e)
         {
-            item.PreviewLoaded = true;
+            if (_updatingChecks) return;
+            _updatingChecks = true;
+            try
+            {
+                ImportItem item = e.Node.Tag as ImportItem;
+                if (item != null)
+                {
+                    foreach (TreeNode child in e.Node.Nodes) child.Checked = e.Node.Checked;
+                }
+                else if (e.Node.Parent != null)
+                {
+                    TreeNode parent = e.Node.Parent;
+                    bool all = parent.Nodes.Count > 0;
+                    foreach (TreeNode child in parent.Nodes)
+                    {
+                        if (child.Checked) continue;
+                        all = false;
+                        break;
+                    }
+                    parent.Checked = all;
+                }
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+            UpdateCount();
+        }
+
+        private void SetAllPartsChecked(bool value)
+        {
+            _updatingChecks = true;
+            try
+            {
+                foreach (TreeNode packageNode in _tree.Nodes)
+                {
+                    packageNode.Checked = value;
+                    foreach (TreeNode child in packageNode.Nodes) child.Checked = value;
+                }
+            }
+            finally
+            {
+                _updatingChecks = false;
+            }
+            UpdateCount();
+        }
+
+        private int CountSelectedParts()
+        {
+            int count = 0;
+            foreach (TreeNode packageNode in _tree.Nodes)
+                foreach (TreeNode child in packageNode.Nodes)
+                    if (child.Tag is EdzPartInfo && child.Checked) count++;
+            return count;
+        }
+
+        private int CountTotalParts()
+        {
+            int count = 0;
+            foreach (TreeNode packageNode in _tree.Nodes)
+                foreach (TreeNode child in packageNode.Nodes)
+                    if (child.Tag is EdzPartInfo) count++;
+            return count;
+        }
+
+        private static string FilterTempDirectory
+        {
+            get { return Path.Combine(Path.GetTempPath(), "ToolOumijia", "edz-filter"); }
+        }
+
+        private void CleanupTempFiles(List<string> tempFiles)
+        {
+            if (tempFiles == null) return;
+            foreach (string file in tempFiles)
+            {
+                try { if (File.Exists(file)) File.Delete(file); }
+                catch (Exception ex) { Log("Không xóa được tệp tạm: " + ex.Message); }
+            }
+        }
+
+        private void ReadPreview(ImportItem item)
+        {            item.PreviewLoaded = true;
             item.Error = null;
             try
             {
@@ -318,12 +383,32 @@ namespace Oumijia.EplanUi
             if (item.Info == null) return;
             foreach (EdzPartInfo part in item.Info.Parts)
             {
-                string label = FirstValue(part.Designation, part.PartNumber, part.TypeNumber,
-                    part.OrderNumber, part.SourceXmlEntry);
-                TreeNode partNode = new TreeNode(OrEmpty(label));
+                string label = BuildPartLabel(part);
+                TreeNode partNode = new TreeNode(EdzDialogStyle.Shorten(label));
                 partNode.Tag = part;
+                partNode.ToolTipText = OrEmpty(label);
+                partNode.Checked = true;
                 node.Nodes.Add(partNode);
             }
+            node.Checked = item.Info.Parts.Count > 0;
+        }
+
+        /// <summary>Same row format as Xuất EDZ: "PARTNR (Designation)" with TypeNumber fallback.</summary>
+        private static string BuildPartLabel(EdzPartInfo part)
+        {
+            if (part == null) return String.Empty;
+
+            string number = FirstValue(part.PartNumber, part.TypeNumber, part.OrderNumber);
+            string name = FirstValue(part.Designation, part.TypeNumber, part.OrderNumber);
+
+            if (String.IsNullOrWhiteSpace(number)) return OrEmpty(name);
+            number = number.Trim();
+            if (String.IsNullOrWhiteSpace(name) ||
+                String.Equals(name.Trim(), number, StringComparison.OrdinalIgnoreCase))
+            {
+                return number;
+            }
+            return number + " (" + name.Trim() + ")";
         }
 
         private void ShowDetails(TreeNode node)
@@ -365,15 +450,15 @@ namespace Oumijia.EplanUi
             AddDetail("Số đặt hàng (Order number)", part.OrderNumber);
             AddDetail("ERP number", ReadProperty(part, "ARTICLE_ERPNR", "ERP_NUMBER", "ERPNR"));
             AddDetail("Hãng (Manufacturer)", CombineCodeAndName(part.Manufacturer,
-                ReadProperty(part, "ARTICLE_MANUFACTURER_NAME")));
+                ReadPropertyText(part, "ARTICLE_MANUFACTURER_NAME")));
             AddDetail("Nhà cung cấp (Supplier)", CombineCodeAndName(
-                ReadProperty(part, "ARTICLE_SUPPLIER"), ReadProperty(part, "ARTICLE_SUPPLIER_NAME")));
+                ReadProperty(part, "ARTICLE_SUPPLIER"), ReadPropertyText(part, "ARTICLE_SUPPLIER_NAME")));
             AddDetail("Nhóm sản phẩm", part.ProductGroup);
-            AddDetail("Tên 1 (Designation 1)", part.Designation);
-            AddDetail("Tên 2 (Designation 2)", ReadProperty(part, "ARTICLE_DESCR2", "DESIGNATION2"));
-            AddDetail("Tên 3 (Designation 3)", ReadProperty(part, "ARTICLE_DESCR3", "DESIGNATION3"));
-            AddDetail("Mô tả (Description)", ReadProperty(part, "ARTICLE_NOTE", "NOTE"));
-            AddDetail("Văn bản bổ sung", ReadProperty(part, "ARTICLE_ADDITIONALTEXT", "ADDITIONALTEXT"));
+            AddDetail("Tên 1 (Designation 1)", EdzText.CleanMultiLanguage(part.Designation));
+            AddDetail("Tên 2 (Designation 2)", ReadPropertyText(part, "ARTICLE_DESCR2", "DESIGNATION2"));
+            AddDetail("Tên 3 (Designation 3)", ReadPropertyText(part, "ARTICLE_DESCR3", "DESIGNATION3"));
+            AddDetail("Mô tả (Description)", ReadPropertyText(part, "ARTICLE_NOTE", "NOTE"));
+            AddDetail("Văn bản bổ sung", ReadPropertyText(part, "ARTICLE_ADDITIONALTEXT", "ADDITIONALTEXT"));
             AddDetail("eCl@ss", FirstValue(part.EClassCode, ReadProperty(part, "PART_ECLASS")));
             AddDetail("Mã nhận dạng (EAN)",
                 (FirstValue(ReadProperty(part, "ARTICLE_IDENTTYPE"), "") + " " +
@@ -413,6 +498,11 @@ namespace Oumijia.EplanUi
             return null;
         }
 
+        private static string ReadPropertyText(EdzPartInfo part, params string[] aliases)
+        {
+            return EdzText.CleanMultiLanguage(ReadProperty(part, aliases));
+        }
+
         private static string NormalizeKey(string key)
         {
             return new string(key.Where(Char.IsLetterOrDigit).Select(Char.ToUpperInvariant).ToArray());
@@ -442,12 +532,7 @@ namespace Oumijia.EplanUi
 
         private void AdjustDetailsColumns()
         {
-            try
-            {
-                if (_details.Columns.Count >= 2 && _details.ClientSize.Width > 0)
-                    _details.Columns[1].Width = Math.Max(120, _details.ClientSize.Width - _details.Columns[0].Width - 26);
-            }
-            catch { /* giữ kích thước mặc định */ }
+            EdzDialogStyle.AdjustDetailsColumns(_details);
         }
 
         private void OnDetailsDoubleClick(object sender, EventArgs e)
@@ -463,8 +548,12 @@ namespace Oumijia.EplanUi
         {
             int ok = _items.Values.Count(delegate (ImportItem value) { return value.Info != null; });
             int failed = _items.Values.Count(delegate (ImportItem value) { return value.Error != null; });
-            _status.Text = String.Format("Đã nạp: {0} | Preview: {1} | Lỗi: {2}", _items.Count, ok, failed);
-            _startButton.Enabled = _items.Count > 0;
+            int unreadable = _items.Count - ok;
+            int selected = CountSelectedParts();
+            int total = CountTotalParts();
+            _status.Text = String.Format("Đã nạp: {0} gói | Chọn: {1}/{2} part | Lỗi: {3}",
+                _items.Count, selected, total, failed);
+            _startButton.Enabled = selected > 0 || unreadable > 0;
         }
 
         private void OnStartClicked(object sender, EventArgs e)
@@ -476,19 +565,109 @@ namespace Oumijia.EplanUi
                 return;
             }
 
+            List<string> plan = new List<string>();
+            List<string> tempFiles = new List<string>();
+            int selectedParts = 0;
+            int skipped = 0;
+
+            try
+            {
+                foreach (TreeNode packageNode in _tree.Nodes)
+                {
+                    ImportItem item = packageNode.Tag as ImportItem;
+                    if (item == null) continue;
+
+                    if (item.Info == null)
+                    {
+                        // Preview failed: keep the previous behaviour and import the file as-is.
+                        plan.Add(item.Path);
+                        continue;
+                    }
+
+                    List<string> keys = new List<string>();
+                    foreach (TreeNode child in packageNode.Nodes)
+                    {
+                        if (!child.Checked) continue;
+                        EdzPartInfo part = child.Tag as EdzPartInfo;
+                        if (part == null) continue;
+                        string key = FirstValue(part.PackageKey, part.PartNumber, part.TypeNumber, part.OrderNumber);
+                        if (!String.IsNullOrWhiteSpace(key)) keys.Add(key.Trim());
+                    }
+
+                    if (keys.Count == 0)
+                    {
+                        skipped++;
+                        Log("Bỏ qua " + Path.GetFileName(item.Path) + " (không tick part nào).");
+                        continue;
+                    }
+
+                    selectedParts += keys.Count;
+
+                    if (keys.Count >= item.Info.Parts.Count)
+                    {
+                        plan.Add(item.Path);
+                        continue;
+                    }
+
+                    EdzFilterResult filtered = EdzPackageFilter.Create(item.Path, keys, FilterTempDirectory);
+                    if (!filtered.CreatedTempFile)
+                    {
+                        plan.Add(item.Path);
+                        continue;
+                    }
+
+                    plan.Add(filtered.FileToImport);
+                    tempFiles.Add(filtered.FileToImport);
+                    Log(String.Format("Lọc {0}/{1} part: {2} → {3}",
+                        filtered.SelectedParts, filtered.TotalParts,
+                        Path.GetFileName(item.Path), Path.GetFileName(filtered.FileToImport)));
+                    if (filtered.MissingEntries.Count > 0)
+                    {
+                        Log("Cảnh báo: không tìm thấy " + filtered.MissingEntries.Count +
+                            " mục được manifest tham chiếu (ví dụ: " + filtered.MissingEntries[0] + ").");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CleanupTempFiles(tempFiles);
+                Log("LỖI lọc EDZ: " + ex.Message);
+                AddinLog.WriteError("FilterEdz", ex);
+                MessageBox.Show(this, "Không lọc được gói EDZ để nhập từng part:\n" + ex.Message,
+                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (plan.Count == 0)
+            {
+                CleanupTempFiles(tempFiles);
+                MessageBox.Show(this, "Chưa có part nào được tick để nhập.",
+                    "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string detail = skipped > 0
+                ? "\nBỏ qua " + skipped + " gói không tick part."
+                : String.Empty;
             DialogResult confirm = MessageBox.Show(this,
-                "Nhập " + _items.Count + " gói EDZ vào Parts Database?\n\n" +
-                "Mặc định: cập nhật part đã có + thêm part mới (theo mã hàng).\n\n" +
-                "Bạn nên kiểm tra trên database test trước khi nhập vào database chính.",
+                "Nhập " + plan.Count + " tệp EDZ (" + selectedParts + " part đã tick) vào Parts Database?" +
+                detail +
+                "\n\nMặc định: cập nhật part đã có + thêm part mới (theo mã hàng)." +
+                "\nBạn nên kiểm tra trên database test trước khi nhập vào database chính.",
                 "Tool Oumijia", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
+            if (confirm != DialogResult.Yes)
+            {
+                CleanupTempFiles(tempFiles);
+                return;
+            }
 
             _startButton.Enabled = false;
             try
             {
-                ArrayList files = new ArrayList(_items.Keys.ToArray());
-                Log("Bắt đầu nhập " + files.Count + " gói (cập nhật + thêm mới, theo mã hàng) …");
-                AddinLog.Write("Import: " + files.Count + " files, mode=UpdateAndAppend, identifier=PartNumber");
+                ArrayList files = new ArrayList(plan.ToArray());
+                Log("Bắt đầu nhập " + files.Count + " tệp (" + selectedParts + " part; cập nhật + thêm mới, theo mã hàng) …");
+                AddinLog.Write("Import: " + files.Count + " files, " + selectedParts +
+                    " parts, mode=UpdateAndAppend, identifier=PartNumber");
 
                 MDPartsManagement management = new MDPartsManagement();
                 string scheme = ImportPartsSupport.Import(management, files,
@@ -499,7 +678,7 @@ namespace Oumijia.EplanUi
                 AddinCsvLog.Append("import", "OK", FixedImportMode.ToString(), FixedIdentifier.ToString(),
                     files.Count.ToString(), scheme);
                 MessageBox.Show(this,
-                    "Đã gửi yêu cầu nhập " + files.Count + " gói cho EPLAN.\n" +
+                    "Đã gửi yêu cầu nhập " + files.Count + " tệp EDZ cho EPLAN.\n" +
                     "Kiểm tra Parts Management để xác nhận kết quả.",
                     "Tool Oumijia", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -513,7 +692,8 @@ namespace Oumijia.EplanUi
             }
             finally
             {
-                _startButton.Enabled = _items.Count > 0;
+                CleanupTempFiles(tempFiles);
+                _startButton.Enabled = CountSelectedParts() > 0 || _items.Values.Any(v => v.Info == null);
                 UpdateCount();
             }
         }

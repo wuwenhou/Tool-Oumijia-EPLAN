@@ -2,7 +2,7 @@
 
 **Add-in / Script cho EPLAN: nhập/xuất `.edz`, mở Data Portal native của EPLAN và quản lý dữ liệu linh kiện ngay trong EPLAN.**
 
-> **v0.6.0-rc.1 là pre-release thử nghiệm, không phải bản ổn định.** Script Edition đã GUI UAT trên EPLAN Education 2026.0.3 (07/11/2026): ribbon mới, Portal native và mở/đóng hai form. Add-in, installer cài/gỡ headless và các bản EPLAN khác **chưa UAT**; ZIP v0.6.0 cũ không có sửa đổi này. Không nhập EDZ thật trước khi có Parts Database test được xác nhận. [Bàn giao AI Agent](docs/AGENT-HANDOFF-2026-11-07.md).
+> **v0.7.0 là pre-release (2026-11-09).** Nhập EDZ trên EPLAN Electric P8 2022.0.3 đã GUI UAT (checkbox từng part, layout đồng bộ); **nhập thật vào Parts Database chưa được test** — chỉ dùng database test. Script Edition 2026 được build lại nhưng **chưa GUI UAT trên Education 2026.0.3**; nếu bạn cần ổn định trên 2026, dùng bản v0.6.0-2026. Chi tiết: [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) · [docs/PLAN-v0.7.0.md](docs/PLAN-v0.7.0.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)
@@ -17,13 +17,16 @@
 
 Installer candidate cho `-ListInstalled` và `-TargetW3u`; chỉ chọn Script Education 2026.0.3, **chưa UAT cài headless**, không tự dùng DLL 2026 cho bản khác. Xem [cài đặt](docs/INSTALL.md).
 
-## Tính năng (pre-release v0.6.0-rc.1; khác bản v0.6.0 cũ)
+## Tính năng (pre-release v0.7.0; khác v0.6.0)
 
 ### Nhập EDZ — đồng bộ với Xuất
 - Chọn nhiều tệp/thư mục, quét thư mục con.
+- **Tick/untick từng part** ngay trên cây: tick gói = chọn hết part trong gói; bỏ tick 1 part = loại nó; nút **Chọn hết / Bỏ chọn**; status `Chọn: X/Y part`; chỉ các part đã tick mới được gửi cho `ImportParts`.
+- Khi chỉ chọn một phần gói, Tool tự sinh EDZ tạm (`manifest` đã lọc + các file được tham chiếu, writer 7z nội bộ) rồi tự xóa sau khi nạp.
 - Bề mặt hai cột giống hộp Xuất:
   - bên trái cây **gói EDZ → part**;
   - bên phải chỉ có **Chi tiết** và bảng **Thuộc tính | Giá trị**.
+- Tên part hiển thị `PARTNR (Tên thiết bị)` (dọn chuỗi đa ngôn ngữ); tooltip giữ nguyên văn bản.
 - Chọn node gói/part để xem metadata đọc cục bộ; double-click giá trị để copy.
 - EDZ lỗi không làm hỏng danh sách; Tool hiển thị lý do và vẫn dùng API nhập.
 - Mặc định: cập nhật + thêm mới; nhận dạng theo mã hàng; tự dò field-mapping scheme.
@@ -49,7 +52,7 @@ Eplan Cloud: bảy lệnh native, gồm một Data Portal
 
 ## Bắt đầu nhanh
 
-1. Chỉ dùng gói **pre-release v0.6.0-rc.1** trên máy thử nghiệm chấp nhận rủi ro; gói v0.6.0 cũ không có ribbon mới. Build theo [docs/BUILD.md](docs/BUILD.md).
+1. Chỉ dùng gói **pre-release v0.7.0** trên máy thử nghiệm chấp nhận rủi ro; bản v0.6.0 giữ nguyên như lần phát hành trước. Build theo [docs/BUILD.md](docs/BUILD.md).
 2. Đóng EPLAN → `Install-Tool-Oumijia.bat -ListInstalled`, chọn target qua `-TargetW3u` khi có nhiều bản.
 3. Mở EPLAN → ribbon **Tool Oumijia**.
 4. Test trên database test trước khi nhập database chính.

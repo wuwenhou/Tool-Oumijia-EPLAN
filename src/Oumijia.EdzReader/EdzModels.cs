@@ -8,6 +8,9 @@ namespace Oumijia.EdzReader
     /// <summary>Portable, factual part data extracted from a part XML inside an EDZ.</summary>
     public sealed class EdzPartInfo
     {
+        /// <summary>Key of the manifest &lt;package type="part"&gt; this part came from.</summary>
+        public string PackageKey { get; set; }
+
         public string PartNumber { get; set; }
         public string TypeNumber { get; set; }
         public string OrderNumber { get; set; }

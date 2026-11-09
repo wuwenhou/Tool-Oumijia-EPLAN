@@ -39,7 +39,10 @@ namespace Oumijia.EdzReader
             part.PartNumber = Find(props, new[] { "PARTNR", "PARTNUMBER", "PART_NO", "ARTIKELNR" });
             part.TypeNumber = Find(props, new[] { "TYPENR", "TYPENUMBER", "TYPEDESIGNATION" });
             part.OrderNumber = Find(props, new[] { "ORDERNR", "ORDERNUMBER", "BESTELLNR" });
-            part.Designation = Find(props, new[] { "DESIGNATION", "DESCR1", "DESCRIPTION", "BENENNUNG" });
+            // DESCR1 is stored as "en_US@Text;de_DE@Text;…" — keep one readable language,
+            // otherwise the Nhập EDZ tree would show a 300-char multilingual blob.
+            part.Designation = EdzText.CleanMultiLanguage(
+                Find(props, new[] { "DESIGNATION", "DESCR1", "DESCRIPTION", "BENENNUNG" }));
             part.ProductGroup = Find(props, new[] { "PRODUCTTOPGROUP", "PRODUCTGROUP", "PRODUCTSUBGROUP", "WARENGRUPPE" });
             part.EClassCode = Find(props, new[] { "ECLASS" });
 
@@ -62,6 +65,10 @@ namespace Oumijia.EdzReader
 
                 foreach (XAttribute attr in el.Attributes())
                 {
+                    // EPLAN stores part data AS ATTRIBUTES (e.g. P_ARTICLE_PARTNR="FES.195716").
+                    // Capture each attribute as a property so Find() can locate PARTNR/MANUFACTURER/…
+                    AddProperty(props, attr.Name.LocalName, attr.Value);
+                    // Legacy: <property id|name|key="KEY">VALUE</property> style XML.
                     string attrName = attr.Name.LocalName;
                     if (String.Equals(attrName, "id", StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(attrName, "name", StringComparison.OrdinalIgnoreCase) ||

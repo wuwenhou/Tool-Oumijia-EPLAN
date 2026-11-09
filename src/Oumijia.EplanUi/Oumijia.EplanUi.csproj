@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>Oumijia.EplanUi</RootNamespace>
     <AssemblyName>Oumijia.EplanUi</AssemblyName>
-    <Version>0.6.0-rc.1</Version>
+    <Version>0.7.0</Version>
     <Authors>wuwenhou</Authors>
     <Company>Tool Oumijia</Company>
     <Product>Tool Oumijia (EPLAN)</Product>

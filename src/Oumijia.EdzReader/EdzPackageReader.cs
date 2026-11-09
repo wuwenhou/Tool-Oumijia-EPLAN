@@ -58,7 +58,9 @@ namespace Oumijia.EdzReader
                     else info.OtherDataEntries.Add(e.Key);
                 }
 
-                info.ManifestVersion = ReadManifestVersion(archive, entries);
+                string manifest = ReadManifestText(archive, entries);
+                info.ManifestVersion = ReadManifestVersionFromText(manifest);
+                Dictionary<string, string> packageMap = ReadPartPackageMap(manifest);
                 List<string> candidates = SelectPartXmlEntries(entries);
                 int parsed = 0;
                 foreach (string key in candidates)
@@ -70,6 +72,7 @@ namespace Oumijia.EdzReader
                     try { part = PartXmlParser.Parse(text, key); } catch { /* Broken XML cannot break the whole read. */ }
                     if (part != null)
                     {
+                        part.PackageKey = ResolvePackageKey(packageMap, key, part);
                         info.Parts.Add(part);
                         parsed++;
                     }
@@ -78,23 +81,78 @@ namespace Oumijia.EdzReader
             }
         }
 
-        private static string ReadManifestVersion(EdzArchive archive, List<EdzArchiveEntry> entries)
+        private static string ReadManifestText(EdzArchive archive, List<EdzArchiveEntry> entries)
         {
             string manifest = archive.ReadEntryText("manifest.xml", 1024 * 1024);
-            if (manifest == null)
+            if (manifest != null) return manifest;
+            foreach (EdzArchiveEntry entry in entries)
             {
-                foreach (EdzArchiveEntry entry in entries)
-                {
-                    if (entry.IsDirectory) continue;
-                    if (!String.Equals(Path.GetFileName(entry.Key), "manifest.xml", StringComparison.OrdinalIgnoreCase)) continue;
-                    manifest = archive.ReadEntryText(entry.Key, 1024 * 1024);
-                    if (manifest != null) break;
-                }
+                if (entry.IsDirectory) continue;
+                if (!String.Equals(Path.GetFileName(entry.Key), "manifest.xml", StringComparison.OrdinalIgnoreCase)) continue;
+                manifest = archive.ReadEntryText(entry.Key, 1024 * 1024);
+                if (manifest != null) return manifest;
             }
+            return null;
+        }
 
+        private static string ReadManifestVersionFromText(string manifest)
+        {
             if (manifest == null) return null;
             Match m = ManifestVersionRegex.Match(manifest);
             return m.Success ? m.Groups[1].Value : null;
+        }
+
+        /// <summary>
+        /// Maps "items/partxml/&lt;locator&gt;" to the manifest part package key.
+        /// The key is what EPLAN uses to identify one part inside a multi-part EDZ.
+        /// </summary>
+        private static Dictionary<string, string> ReadPartPackageMap(string manifest)
+        {
+            Dictionary<string, string> map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (String.IsNullOrWhiteSpace(manifest)) return map;
+            try
+            {
+                System.Xml.Linq.XDocument doc = System.Xml.Linq.XDocument.Parse(manifest);
+                foreach (System.Xml.Linq.XElement package in doc.Descendants("package"))
+                {
+                    string type = (string)package.Attribute("type");
+                    if (!String.Equals(type, "part", StringComparison.OrdinalIgnoreCase)) continue;
+                    string key = (string)package.Attribute("key");
+                    if (String.IsNullOrWhiteSpace(key)) continue;
+
+                    foreach (System.Xml.Linq.XElement item in package.Descendants("item"))
+                    {
+                        string itemType = (string)item.Attribute("type");
+                        string itemName = (string)item.Attribute("name");
+                        if (!String.Equals(itemType, "partxml", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!String.Equals(itemName, "part", StringComparison.OrdinalIgnoreCase)) continue;
+                        string locator = (string)item.Attribute("locator");
+                        if (String.IsNullOrWhiteSpace(locator)) continue;
+                        string entryKey = "items/partxml/" + locator.Replace('\\', '/').TrimStart('/');
+                        map[entryKey] = key.Trim();
+                    }
+                }
+            }
+            catch
+            {
+                // A broken manifest only disables per-part filtering, not preview.
+            }
+            return map;
+        }
+
+        private static string ResolvePackageKey(Dictionary<string, string> map, string entryKey, EdzPartInfo part)
+        {
+            string key;
+            if (map != null && map.TryGetValue(entryKey ?? String.Empty, out key) && !String.IsNullOrWhiteSpace(key))
+                return key;
+            return FirstNonEmpty(part.PartNumber, part.TypeNumber, part.OrderNumber);
+        }
+
+        private static string FirstNonEmpty(params string[] values)
+        {
+            foreach (string value in values)
+                if (!String.IsNullOrWhiteSpace(value)) return value.Trim();
+            return null;
         }
 
         private static List<string> SelectPartXmlEntries(List<EdzArchiveEntry> entries)

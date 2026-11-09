@@ -5,7 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — 2026-11-09
+
+Bản phát hành cho **EPLAN Electric P8 2022.0.3** (Add-in `net48`) và **EPLAN Education 2026.0.3** (Script Edition, shared runtime mới). Pre-release; chưa nhập thật vào Parts Database trong quá trình phát triển.
+
+### Added
+- **Nhập EDZ theo từng part.** Cây `gói EDZ → part` có **checkbox**: tick gói = chọn hết part trong gói; bỏ tick một part = loại nó khỏi lần nhập. Thêm nút toolbar **Chọn hết / Bỏ chọn**; status `Chọn: X/Y part`; nút `NHẬP VÀO PARTS DATABASE ▸` chỉ gửi `MDPartsManagement.ImportParts` các part đã tick. Không tick part nào trong gói → bỏ qua gói đó (log); EDZ preview lỗi vẫn nhập nguyên gói như trước.
+- `Oumijia.EdzReader.EdzPackageFilter`: tạo EDZ tạm chỉ chứa `manifest.xml` đã lọc `<package type="part">` + các file được package đó tham chiếu (`items/partxml|picture|document|macro|dxf/...`), rồi nhập tệp tạm; tự xóa sau khi nạp xong; báo locator không tìm thấy trong archive.
+- `Oumijia.EdzReader.SevenZipCopyWriter`: writer 7z tối thiểu (một folder, coder Copy) — EDZ tạm là 7z chuẩn, không phụ thuộc 7-Zip/EPLAN's 7z.dll trên máy người dùng.
+- `EdzPartInfo.PackageKey` lấy từ `manifest.xml` để lọc đúng part kể cả khi `PARTNR` khác package key.
+
+### Fixed
+- `PartXmlParser.HarvestXml` bỏ qua toàn bộ attribute của XML part (`PARTNR`, `MANUFACTURER`, …) → EDZ hợp lệ (ví dụ do Tool xuất) bị báo "Không tìm thấy part trong EDZ" / preview 0 part. Nay attribute được ghi nhận làm property (test: `parts.edz` 15 part FESTO/Rittal; `SIE.6ES7131-4BD01-0AA0.edz` 1 part).
+- Nhập EDZ hiển thị chuỗi đa ngôn ngữ thô (`cs_CZ@…;de_DE@…;en_US@…`) và `??_??@X`. Thêm `EdzText.CleanMultiLanguage()` (ưu tiên `en_US` → `de_DE` → đoạn hợp lệ) cho Tên 1/2/3 và mô tả; nhãn cây đổi sang `PARTNR (Designation)`; tooltip giữ nguyên văn bản đầy đủ.
+- Xuất EDZ che mất dòng `→ sẽ tạo: …` (`_outputGroup` khởi tạo 126 px trong khi nội dung cần ~138 px; `UpdateModes()` chỉ chạy khi đổi radio). Nay gọi `UpdateModes()` khi dựng form: 158 px (chế độ cây) / 228 px (theo loại bản ghi), panel đáy 340/400 px.
+
+### Changed
+- Đồng bộ giao diện Nhập/Xuất qua `EdzDialogStyle`: cùng 1120×780, header 10F bold `#173858`, toolbar 34/28 px, hint 20 px, split 54%, caption trên cây, details 190/320, action row 44 px, nút chính 34 px, log Consolas 8.5F. Title Xuất: `Tool Oumijia — Xuất EDZ`; header: `Parts Database: … — N part`.
+
+### Verified
+- Build net48 (Platform 2022.0.3 API): **0 warning / 0 error**; EDZ tạm qua `7z t` ("Everything is Ok") và đọc lại bằng reader; GUI Nhập EDZ trên EPLAN thật: tick/untick part, untick gói, **Chọn hết/Bỏ chọn**, status `15/15 → 14/15 → 0/15`, nút nhập enable/disable; GUI Xuất EDZ không ghi DB/file.
+- **Chưa làm:** nhập EDZ thật vào Parts Database (kể cả database test); shared runtime mới trong `Tool-Oumijia-v0.7.0-2026.zip` chưa GUI UAT trên EPLAN Education 2026.0.3.
+
+### Packages
+- `Tool-Oumijia-v0.7.0-2022.zip` — Add-in net48 cho Electric P8 2022.0.3.
+- `Tool-Oumijia-v0.7.0-2026.zip` — Script Edition cho Education 2026.0.3; shared runtime net48 cập nhật; **chưa GUI UAT trên 2026**.
+- Backup build trước khi chép in-place: `%LOCALAPPDATA%\Tool Oumijia\backups\pre-2022-uifix-20261109-104820`.
+
 ## [Unreleased]
+
+### In-place test Electric P8 2022.0.3 — 2026-11-08 (chưa Finalize)
+
+- Changed: hai nút **Eplan Cloud dashboard** và **Data Portal** của Tool 2022 không còn bind `XMVCCloudSolutionAction /Url:...` (pane CEF không render); thay bằng action `OumijiaOpenDashboard` / `OumijiaOpenDataPortal` mở trình duyệt mặc định của hệ thống tới `https://apps.eplan.com/` và `https://dataportal.eplan.com/`.
+- Ribbon migration: gỡ command Cloud bind `XMVCCloudSolutionAction ... eplan.com` khỏi nhóm Eplan Cloud khi add-in khởi động; thêm lại 2 nút theo action mới (Dashboard → Data Portal).
+- Đăng ký: `OumijiaRegister2022.cs`, `OumijiaRegister.cs`, `OumijiaReadReg.cs` đã đăng ký/kiểm tra thêm `OumijiaOpenDashboard` (ordinal 27) và `OumijiaOpenDataPortal` (ordinal 28).
+- Không thay đổi `Nhập EDZ`, `Xuất EDZ`, `Menu bar`; không đụng 2026; không thay `libcef.dll`; không WebView2.
+- Ghi chú: bản in-place chỉ để test nhanh; muốn phát hành vẫn cần Finalize/Rollback theo `tools/install-all/Install-2022.ps1`.
+
+**Kết quả test in-place (2026-11-08):** không đạt yêu cầu — trình duyệt mở được nhưng tài khoản không có nút tải EDZ trên Data Portal web (entitlement/SSA). Đã rollback về v0.6.0 gốc: khôi phục STATION 2022 từ `pre-2022-inplace-20261108-114443-bc3544ec` (9 file station), chép lại DLL v0.6.0 (`Oumijia.EplAddin.EDZ.dll` = `5B1126186CAC65468609DF8E4D9279C5E0B059C002B834784699BB6B159EF456`), headless Verify với script gốc PASS (`OK: verified ...\AddIn\2022\Oumijia.EplAddin.EDZ.dll`, 2026-11-08T12:19:35). Trạng thái sau rollback = v0.6.0 Finalized như trước khi sửa. Snapshot trước rollback: `pre-2022-inplace2-20261108-121844`.
 
 ### UAT Electric P8 2022.0.3 — 2026-11-08
 
@@ -251,7 +288,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   macro geometry (`.ema` is treated as an opaque attachment).
 - Vendor data is never committed to this repository; `examples/` contains synthetic files only.
 
-[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.7.0
 [0.6.0]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.6.0
 [0.5.3]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.3
 [0.5.2]: https://github.com/wuwenhou/Tool-Oumijia-EPLAN/releases/tag/v0.5.2

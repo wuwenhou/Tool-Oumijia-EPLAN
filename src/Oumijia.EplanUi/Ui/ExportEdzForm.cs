@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Windows.Forms;
 using Eplan.EplApi.MasterData;
 
@@ -71,6 +70,7 @@ namespace Oumijia.EplanUi
         private readonly Label _countLabel = new Label();
         private readonly Button _exportButton = new Button();
         private readonly TextBox _log = new TextBox();
+        private Panel _bottomPanel;
 
         private readonly Timer _searchTimer = new Timer();
 
@@ -82,11 +82,7 @@ namespace Oumijia.EplanUi
 
         public ExportEdzForm()
         {
-            Text = "Tool Oumijia — Xuất EDZ (chọn part cần xuất)";
-            ClientSize = new Size(1080, 780);
-            MinimumSize = new Size(940, 640);
-            StartPosition = FormStartPosition.CenterScreen;
-            Font = new Font("Segoe UI", 9F);
+            EdzDialogStyle.ApplyForm(this, "Tool Oumijia — Xuất EDZ");
             BuildUi();
         }
 
@@ -95,19 +91,17 @@ namespace Oumijia.EplanUi
         private void BuildUi()
         {
             // ----- hàng trên
-            var topPanel = new Panel { Dock = DockStyle.Top, Height = 92 };
+            var topPanel = new Panel { Dock = DockStyle.Top, Height = 96, Padding = new Padding(8, 6, 8, 0) };
 
-            _dbLabel.Dock = DockStyle.Top;
-            _dbLabel.Height = 24;
-            _dbLabel.Padding = new Padding(4, 4, 0, 0);
-            _dbLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _dbLabel.Text = "Parts Database: …";
+            EdzDialogStyle.ApplyHeader(_dbLabel);
 
             var searchRow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
                 Height = 34,
                 WrapContents = false,
-                Padding = new Padding(4, 2, 0, 0)
+                Padding = new Padding(0, 4, 0, 0)
             };
 
             var lblSearch = new Label { Text = "Tìm:", AutoSize = true, Margin = new Padding(0, 7, 4, 0) };
@@ -115,19 +109,20 @@ namespace Oumijia.EplanUi
             _searchBox.Margin = new Padding(0, 4, 8, 0);
 
             _btnSelectAll.Text = "Chọn tất cả";
-            _btnSelectAll.Size = new Size(96, 26);
-            _btnSelectAll.Margin = new Padding(0, 3, 4, 0);
+            _btnSelectAll.Size = new Size(96, EdzDialogStyle.ToolbarButtonHeight);
             _btnSelectAll.Click += OnSelectAllClicked;
 
             _btnClear.Text = "Bỏ chọn";
-            _btnClear.Size = new Size(80, 26);
-            _btnClear.Margin = new Padding(0, 3, 4, 0);
+            _btnClear.Size = new Size(80, EdzDialogStyle.ToolbarButtonHeight);
             _btnClear.Click += OnClearAllClicked;
 
             _btnFromPartsMgmt.Text = "Lấy từ Parts Management ▸";
-            _btnFromPartsMgmt.Size = new Size(190, 26);
-            _btnFromPartsMgmt.Margin = new Padding(0, 3, 0, 0);
+            _btnFromPartsMgmt.Size = new Size(190, EdzDialogStyle.ToolbarButtonHeight);
             _btnFromPartsMgmt.Click += OnUseSelectionClicked;
+
+            EdzDialogStyle.ApplyToolbarButton(_btnSelectAll);
+            EdzDialogStyle.ApplyToolbarButton(_btnClear);
+            EdzDialogStyle.ApplyToolbarButton(_btnFromPartsMgmt);
 
             searchRow.Controls.Add(lblSearch);
             searchRow.Controls.Add(_searchBox);
@@ -135,10 +130,7 @@ namespace Oumijia.EplanUi
             searchRow.Controls.Add(_btnClear);
             searchRow.Controls.Add(_btnFromPartsMgmt);
 
-            _hintLabel.Dock = DockStyle.Top;
-            _hintLabel.Height = 22;
-            _hintLabel.Padding = new Padding(4, 0, 0, 0);
-            _hintLabel.ForeColor = Color.DimGray;
+            EdzDialogStyle.ApplyHint(_hintLabel);
             _hintLabel.Text = "Mẹo: tick ô vuông trước mỗi mục để chọn; tick nhóm = chọn cả nhánh · bấm dòng để xem chi tiết.";
 
             topPanel.Controls.Add(_hintLabel);
@@ -146,16 +138,11 @@ namespace Oumijia.EplanUi
             topPanel.Controls.Add(_dbLabel);
 
             // ----- giữa: cây | chi tiết
+            EdzDialogStyle.ApplyTree(_tree);
             _tree.Dock = DockStyle.Fill;
-            _tree.BorderStyle = BorderStyle.FixedSingle;
-            _tree.HideSelection = false;
-            _tree.ShowLines = true;
-            _tree.ShowRootLines = true;
-            _tree.ItemHeight = 22;
             _tree.CheckBoxes = true;
             _tree.AfterCheck += OnTreeAfterCheck;
             _tree.AfterSelect += (s, e) => ShowDetails(e.Node);
-            EnableDoubleBuffering(_tree);
 
             _detailsHeader.Dock = DockStyle.Top;
             _detailsHeader.Height = 24;
@@ -163,15 +150,18 @@ namespace Oumijia.EplanUi
             _detailsHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             _detailsHeader.Text = "Chi tiết";
 
-            _details.Dock = DockStyle.Fill;
-            _details.View = View.Details;
-            _details.FullRowSelect = true;
-            _details.MultiSelect = false;
-            _details.HideSelection = false;
-            _details.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            _details.Columns.Add("Thuộc tính", 190);
-            _details.Columns.Add("Giá trị", 320);
+            EdzDialogStyle.ApplyDetails(_details);
             _details.DoubleClick += OnDetailsDoubleClick;
+
+            var listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 8, 4, 8) };
+            var listCaption = new Label { Text = "Parts Database → part (chọn part để xuất)" };
+            EdzDialogStyle.ApplyCaption(listCaption);
+            listPanel.Controls.Add(_tree);
+            listPanel.Controls.Add(listCaption);
+
+            var detailPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8, 8, 10, 8) };
+            detailPanel.Controls.Add(_details);
+            detailPanel.Controls.Add(_detailsHeader);
 
             _split = new SplitContainer
             {
@@ -180,36 +170,36 @@ namespace Oumijia.EplanUi
             };
             // Lưu ý: Panel1MinSize/Panel2MinSize và SplitterDistance chỉ đặt được khi
             // SplitContainer đã có kích thước thật — sẽ áp dụng trong OnShown (có guard).
-            _split.Panel1.Controls.Add(_tree);
-            _split.Panel2.Controls.Add(_details);
-            _split.Panel2.Controls.Add(_detailsHeader);
-            _split.Panel2.Resize += (s, e) => AdjustDetailsColumns();
-            _split.SplitterMoved += (s, e) => AdjustDetailsColumns();
+            _split.Panel1.Controls.Add(listPanel);
+            _split.Panel2.Controls.Add(detailPanel);
+            _split.Panel2.Resize += (s, e) => EdzDialogStyle.AdjustDetailsColumns(_details);
+            _split.SplitterMoved += (s, e) => EdzDialogStyle.AdjustDetailsColumns(_details);
 
             // ----- đáy: tùy chọn + đếm + log
-            var bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 330 };
+            _bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 340 };
 
             BuildOutputGroup();
 
-            var actionPanel = new Panel { Dock = DockStyle.Top, Height = 42 };
+            var actionPanel = new Panel { Dock = DockStyle.Top, Height = EdzDialogStyle.ActionRowHeight };
             var actionLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 1
+                RowCount = 1,
+                Padding = new Padding(10, 4, 10, 4)
             };
             actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             _countLabel.Text = "Đã chọn: 0 part";
             _countLabel.AutoSize = true;
-            _countLabel.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            EdzDialogStyle.ApplyStatus(_countLabel);
             _countLabel.Anchor = AnchorStyles.Left;
             _countLabel.Margin = new Padding(4, 10, 0, 0);
 
             _exportButton.Text = "XUẤT RA EDZ ▸";
-            _exportButton.Size = new Size(160, 32);
-            _exportButton.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _exportButton.Size = new Size(200, EdzDialogStyle.PrimaryButtonHeight);
+            EdzDialogStyle.ApplyPrimaryButton(_exportButton);
             _exportButton.Enabled = false;
             _exportButton.Dock = DockStyle.Right;
             _exportButton.Click += OnExportClicked;
@@ -218,19 +208,14 @@ namespace Oumijia.EplanUi
             actionLayout.Controls.Add(_exportButton, 1, 0);
             actionPanel.Controls.Add(actionLayout);
 
-            _log.Dock = DockStyle.Fill;
-            _log.Multiline = true;
-            _log.ReadOnly = true;
-            _log.ScrollBars = ScrollBars.Both;
-            _log.WordWrap = false;
-            _log.Font = new Font("Consolas", 8.5F);
+            EdzDialogStyle.ApplyLog(_log);
 
-            bottomPanel.Controls.Add(_log);
-            bottomPanel.Controls.Add(actionPanel);
-            bottomPanel.Controls.Add(_outputGroup);
+            _bottomPanel.Controls.Add(_log);
+            _bottomPanel.Controls.Add(actionPanel);
+            _bottomPanel.Controls.Add(_outputGroup);
 
             Controls.Add(_split);
-            Controls.Add(bottomPanel);
+            Controls.Add(_bottomPanel);
             Controls.Add(topPanel);
 
             // ----- tìm kiếm (debounce)
@@ -248,12 +233,16 @@ namespace Oumijia.EplanUi
                 _searchTimer.Stop();
                 _searchTimer.Start();
             };
+
+            // Initial layout: the output group must already have its tree-mode height,
+            // otherwise the "→ sẽ tạo" row is clipped until the user changes a radio.
+            UpdateModes();
         }
 
         private void BuildOutputGroup()
         {
             _outputGroup.Dock = DockStyle.Top;
-            _outputGroup.Height = 126;
+            _outputGroup.Height = 158;
             _outputGroup.Text = "Cách xuất";
 
             // ----- hàng "phạm vi"
@@ -317,7 +306,7 @@ namespace Oumijia.EplanUi
             targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
             targetLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26f));
 
-            _rbSingle.Text = "Một file EDZ (vào thư mục):";
+            _rbSingle.Text = "Một tệp EDZ (vào thư mục):";
             _rbSingle.AutoSize = true;
             _rbSingle.Checked = true;
             _rbSingle.Anchor = AnchorStyles.Left;
@@ -333,7 +322,7 @@ namespace Oumijia.EplanUi
             _browseFile.Margin = new Padding(0, 2, 0, 0);
             _browseFile.Click += OnBrowseFileClicked;
 
-            _rbPerPart.Text = "Mỗi part một file (vào thư mục):";
+            _rbPerPart.Text = "Mỗi part một tệp (vào thư mục):";
             _rbPerPart.AutoSize = true;
             _rbPerPart.Anchor = AnchorStyles.Left;
             _rbPerPart.Margin = new Padding(0, 4, 8, 0);
@@ -392,33 +381,9 @@ namespace Oumijia.EplanUi
             base.Dispose(disposing);
         }
 
-        private static void EnableDoubleBuffering(Control control)
-        {
-            try
-            {
-                typeof(Control)
-                    .GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .SetValue(control, true, null);
-            }
-            catch
-            {
-                // Chỉ là tối ưu vẽ.
-            }
-        }
-
         private void AdjustDetailsColumns()
         {
-            try
-            {
-                if (_details.Columns.Count >= 2)
-                {
-                    _details.Columns[1].Width = Math.Max(120, _details.ClientSize.Width - _details.Columns[0].Width - 26);
-                }
-            }
-            catch
-            {
-                // bỏ qua
-            }
+            EdzDialogStyle.AdjustDetailsColumns(_details);
         }
 
         // ================================================================ nạp dữ liệu
@@ -431,8 +396,8 @@ namespace Oumijia.EplanUi
             // SplitContainer ném lỗi nếu min-size vượt quá bề rộng hiện tại).
             try
             {
-                _split.Panel1MinSize = 380;
-                _split.Panel2MinSize = 250;
+                _split.Panel1MinSize = 340;
+                _split.Panel2MinSize = 360;
             }
             catch
             {
@@ -440,7 +405,7 @@ namespace Oumijia.EplanUi
             }
             try
             {
-                _split.SplitterDistance = Math.Max(400, (int)(_split.Width * 0.58));
+                _split.SplitterDistance = Math.Max(380, (int)(_split.Width * 0.54));
             }
             catch
             {
@@ -448,6 +413,7 @@ namespace Oumijia.EplanUi
             }
 
             AdjustDetailsColumns();
+            UpdateModes();
 
             LoadLastFolders();
             UpdateTargetPreview();
@@ -479,7 +445,7 @@ namespace Oumijia.EplanUi
 
             UseWaitCursor = true;
             var dbName = SafeDatabaseName();
-            _dbLabel.Text = "Database: " + dbName + " — đang tải danh sách part…";
+            _dbLabel.Text = "Parts Database: " + dbName + " — đang tải danh sách part…";
             try
             {
                 var stopwatch = Stopwatch.StartNew();
@@ -497,7 +463,7 @@ namespace Oumijia.EplanUi
                 AddinLog.Write("Export: nạp " + parts.Count + " part (enum=" + enumMs +
                                " ms, đọc property=" + stopwatch.ElapsedMilliseconds + " ms)");
 
-                _dbLabel.Text = "Database: " + dbName + " — " + parts.Count + " part";
+                _dbLabel.Text = "Parts Database: " + dbName + " — " + parts.Count + " part";
                 RebuildTree();
                 Log("Đã nạp " + parts.Count + " part từ database '" + dbName + "'.");
             }
@@ -583,7 +549,11 @@ namespace Oumijia.EplanUi
 
             foreach (var entry in node.Entries)
             {
-                treeNode.Nodes.Add(new TreeNode(entry.Label) { Tag = entry });
+                treeNode.Nodes.Add(new TreeNode(EdzDialogStyle.Shorten(entry.Label))
+                {
+                    Tag = entry,
+                    ToolTipText = entry.Label
+                });
             }
             foreach (var child in node.Children.Values)
             {
@@ -927,6 +897,10 @@ namespace Oumijia.EplanUi
             _recordsPanel.Visible = records;
             _recordsHint.Visible = records;
             _outputGroup.Height = records ? 228 : 158;
+            if (_bottomPanel != null)
+            {
+                _bottomPanel.Height = records ? 400 : 340;
+            }
 
             _btnSelectAll.Enabled = !records;
             _btnClear.Enabled = !records;
@@ -1038,7 +1012,7 @@ namespace Oumijia.EplanUi
                 }
                 else
                 {
-                    _targetPreview.Text = "→ mỗi part 1 file, tên = mã sản phẩm (trong thư mục trên)";
+                    _targetPreview.Text = "→ mỗi part 1 tệp, tên = mã sản phẩm (trong thư mục trên)";
                 }
             }
             catch

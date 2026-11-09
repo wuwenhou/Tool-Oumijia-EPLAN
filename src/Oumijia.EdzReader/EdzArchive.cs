@@ -110,6 +110,23 @@ namespace Oumijia.EdzReader
             return bytes == null ? null : DecodeText(bytes);
         }
 
+        /// <summary>
+        /// Opens one entry for streaming (used by the EDZ filter to copy entries
+        /// into a temporary package without loading large macros into memory).
+        /// The caller must dispose the returned stream before disposing the archive.
+        /// </summary>
+        public Stream OpenEntryStream(string key)
+        {
+            if (String.IsNullOrEmpty(key)) return null;
+            foreach (IArchiveEntry entry in _archive.Entries)
+            {
+                if (entry.IsDirectory) continue;
+                if (!String.Equals(entry.Key, key, StringComparison.OrdinalIgnoreCase)) continue;
+                return entry.OpenEntryStream();
+            }
+            return null;
+        }
+
         /// <summary>Decodes text with BOM detection and a non-throwing UTF-8 fallback.</summary>
         public static string DecodeText(byte[] bytes)
         {
